@@ -297,11 +297,24 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
         param.qmmm.qmmm != simulation::qmmm_off &&
         ! (param.qmmm.qmmm == simulation::qmmm_mechanical &&
             param.qmmm.qm_ch == simulation::qm_ch_constant &&
-            (param.qmmm.software == simulation::qm_schnetv1 || param.qmmm.software == simulation::qm_schnetv2)
+            (param.qmmm.software == simulation::qm_schnetv1 || param.qmmm.software == simulation::qm_schnetv2 || param.qmmm.software == simulation::qm_mace)
          )) {
       io::messages.add("QMMM block: Perturbation allowed only with ME, constant charge, Schnet v1 or Schnet v2 and standard pairlist",
                          "In_Parameter", io::message::error);
     }
+
+    // QMMM with perturbation is allowed only for mechanical embedding with NN
+    // and standard pairlist
+    if (param.perturbation.dlamt &&
+        param.qmmm.qmmm != simulation::qmmm_off &&
+        ! (param.qmmm.qmmm == simulation::qmmm_mechanical &&
+            param.qmmm.qm_ch == simulation::qm_ch_constant &&
+            (param.qmmm.software == simulation::qm_schnetv1 || param.qmmm.software == simulation::qm_schnetv2 || param.qmmm.software == simulation::qm_mace)
+         )) {
+      io::messages.add("QMMM block: Slow Growth allowed only with ME, constant charge, Schnet v1 or Schnet v2 and standard pairlist",
+                         "In_Parameter", io::message::error);
+    }
+
     // Polarisable FF should be only used with polarisable QMMM
     if (param.polarise.cos
         && param.qmmm.qmmm

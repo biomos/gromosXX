@@ -26,6 +26,8 @@
 #ifndef INCLUDED_NN_WORKER_H
 #define	INCLUDED_NN_WORKER_H
 
+#include <limits>
+
 #ifdef HAVE_PYBIND11
   #include <pybind11/embed.h>
   namespace py = pybind11;
@@ -90,8 +92,16 @@ namespace interaction {
      * run the NN worker
      */
     int run_QM(topology::Topology& topo
-                     , configuration::Configuration& conf
-                     , simulation::Simulation& sim, interaction::QM_Zone & qm_zone) override;
+             , configuration::Configuration& conf
+             , simulation::Simulation& sim
+             , interaction::QM_Zone& qm_zone) override;
+
+    int run_QM(topology::Topology& topo,
+              configuration::Configuration& conf,
+              simulation::Simulation& sim,
+              interaction::QM_Zone& qm_zone,
+              int charge,
+              bool br_only = false) override;
   };
 }
 

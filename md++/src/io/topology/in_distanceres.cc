@@ -627,9 +627,9 @@ void io::In_Distanceres::read_PERTDISRESSPEC(topology::Topology &topo,
 
       block.get_next_parameter("N", n, "", "");
       block.get_next_parameter("M", m, "", "");
-      block.get_next_parameter("A_R0", A_r0, ">=0", "");
+      block.get_next_parameter("A_R0", A_r0, "", "");
       block.get_next_parameter("A_W0", A_w0, ">=0", "");
-      block.get_next_parameter("B_R0", B_r0, ">=0", "");
+      block.get_next_parameter("B_R0", B_r0, "", "");
       block.get_next_parameter("B_W0", B_w0, ">=0", "");
       block.get_next_parameter("RAH", rah, "", "");
 

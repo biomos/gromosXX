@@ -189,6 +189,18 @@ int interaction::QM_Worker::run_QM(topology::Topology& topo
   return 0;
 }
 
+int interaction::QM_Worker::run_QM(topology::Topology& topo
+                                 , configuration::Configuration& conf
+                                 , simulation::Simulation& sim
+                                 , interaction::QM_Zone& qm_zone
+                                 , int charge
+                                 , bool br_only) {
+  // Generic QM workers do not use the optional charge override.
+  // The override is currently consumed only by NN_Worker for standard NN buffer evaluations.
+  return this->run_QM(topo, conf, sim, qm_zone);
+}
+
+
 int interaction::QM_Worker::process_input(const topology::Topology& topo
                                       , const configuration::Configuration& conf
                                       , const simulation::Simulation& sim

@@ -1631,7 +1631,7 @@ void io::In_QMMM::read_pert_qmzone(simulation::Simulation& sim
 
   if (!buffer.size()) {
     io::messages.add("No PERTQMZONE block in QM/MM specification file",
-            "In_QMMM", io::message::error);
+            "In_QMMM", io::message::warning);
     return;
   }
   std::string line(buffer[1]);

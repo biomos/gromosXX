@@ -70,6 +70,17 @@ namespace interaction {
                      , interaction::QM_Zone & qm_zone);
 
     /**
+     * run the QM worker with an optional total charge override.
+     * Default implementation ignores the override and forwards to run_QM(...).
+     */
+    virtual int run_QM(topology::Topology& topo
+                     , configuration::Configuration& conf
+                     , simulation::Simulation& sim
+                     , interaction::QM_Zone & qm_zone
+                     , int charge
+                     , bool br_only = false);
+
+    /**
      * accessor to the name of the QM worker
      */
     const std::string & name() const { return m_name; }

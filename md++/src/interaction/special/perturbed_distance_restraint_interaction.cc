@@ -81,6 +81,159 @@ static int _calculate_perturbed_distance_restraint_interactions(topology::Topolo
   for (; it != to; ++it, ++ave_it, ++ene_it, ++d_it)
   {
 
+
+    // ----------------------------------------------------------------------
+    // Signed distance-difference restraint extension.
+    // Activate by setting RAH = 999 in the PERTDISRESSPEC line and by giving
+    // two atoms in each virtual atom definition:
+    //   v1 atoms: pair 1 (a,b)  -> d1 = |r_a - r_b|
+    //   v2 atoms: pair 2 (c,d)  -> d2 = |r_c - r_d|
+    // restrained coordinate:
+    //   q = d1 - d2
+    // This allows negative and positive reference values A_R0/B_R0.
+    // ----------------------------------------------------------------------
+    if (it->rah == 999)
+    {
+      if (it->v1.size() != 2 || it->v2.size() != 2)
+      {
+        std::ostringstream msg;
+        msg << "Signed distance-difference perturbed restraint requires exactly "
+            << "two atoms in v1 and two atoms in v2. Use RAH=999." << std::endl;
+        io::messages.add(msg.str(),
+                         "Perturbed_distance_restraints",
+                         io::message::error);
+        error = 1;
+        return error;
+      }
+
+      math::Vec v_d1, v_d2;
+      periodicity.nearest_image(conf.current().pos(it->v1.atom(0)),
+                                conf.current().pos(it->v1.atom(1)),
+                                v_d1);
+      periodicity.nearest_image(conf.current().pos(it->v2.atom(0)),
+                                conf.current().pos(it->v2.atom(1)),
+                                v_d2);
+
+      const double d1 = abs(v_d1);
+      const double d2 = abs(v_d2);
+      const double q = d1 - d2;
+      (*d_it) = q;
+
+      const double l = topo.individual_lambda(simulation::disres_lambda)
+                           [topo.atom_energy_group()[it->v1.atom(0)]]
+                           [topo.atom_energy_group()[it->v1.atom(0)]];
+      const double l_deriv = topo.individual_lambda_derivative(simulation::disres_lambda)
+                                 [topo.atom_energy_group()[it->v1.atom(0)]]
+                                 [topo.atom_energy_group()[it->v1.atom(0)]];
+
+      const double w0 = (1.0 - l) * it->A_w0 + l * it->B_w0;
+      const double q0 = (1.0 - l) * it->A_r0 + l * it->B_r0;
+      const double K = sim.param().distanceres.K;
+      const double r_l = sim.param().distanceres.r_linear;
+      const double D_q0 = it->B_r0 - it->A_r0;
+      const double D_w0 = it->B_w0 - it->A_w0;
+
+      (*ave_it) = 0.0; // signed coordinate: no r^-3 time averaging
+
+      double prefactor = pow(2.0, it->n + it->m) * pow(l, it->n) * pow(1.0 - l, it->m);
+      const double diff = q - q0;
+
+      double en_term_signed = 0.0;
+      double dEdq = 0.0;
+      if (fabs(diff) < r_l)
+      {
+        en_term_signed = 0.5 * K * diff * diff;
+        dEdq = K * diff;
+      }
+      else if (diff < 0.0)
+      {
+        en_term_signed = -K * (diff + 0.5 * r_l) * r_l;
+        dEdq = -K * r_l;
+      }
+      else
+      {
+        en_term_signed = K * (diff - 0.5 * r_l) * r_l;
+        dEdq = K * r_l;
+      }
+
+      if (abs(sim.param().distanceres.distanceres) == 1)
+      {
+        // no extra scaling
+      }
+      else if (abs(sim.param().distanceres.distanceres) == 2)
+      {
+        en_term_signed *= w0;
+        dEdq *= w0;
+      }
+      else
+      {
+        en_term_signed = 0.0;
+        dEdq = 0.0;
+      }
+
+      energy = prefactor * en_term_signed;
+      dEdq *= prefactor;
+
+      // Forces for q = d1 - d2:
+      // F_a = -dU/dq * (r_a-r_b)/d1
+      // F_b = +dU/dq * (r_a-r_b)/d1
+      // F_c = +dU/dq * (r_c-r_d)/d2
+      // F_d = -dU/dq * (r_c-r_d)/d2
+      if (d1 > 0.0)
+      {
+        math::Vec f1 = -dEdq * v_d1 / d1;
+        conf.current().force(it->v1.atom(0)) += f1;
+        conf.current().force(it->v1.atom(1)) -= f1;
+      }
+      if (d2 > 0.0)
+      {
+        math::Vec f2 =  dEdq * v_d2 / d2;
+        conf.current().force(it->v2.atom(0)) += f2;
+        conf.current().force(it->v2.atom(1)) -= f2;
+      }
+
+      (*ene_it) = energy;
+      conf.current().energies.distanceres_energy[topo.atom_energy_group()
+                                                     [it->v1.atom(0)]] += energy;
+
+      double dlam_term_signed = 0.0;
+      if (abs(sim.param().distanceres.distanceres) == 1)
+      {
+        if (fabs(diff) < r_l)
+          dlam_term_signed = -K * diff * D_q0;
+        else if (diff < 0.0)
+          dlam_term_signed = K * D_q0 * r_l;
+        else
+          dlam_term_signed = -K * D_q0 * r_l;
+      }
+      else if (abs(sim.param().distanceres.distanceres) == 2)
+      {
+        if (fabs(diff) < r_l)
+          dlam_term_signed = 0.5 * K * D_w0 * diff * diff - K * w0 * diff * D_q0;
+        else if (diff < 0.0)
+          dlam_term_signed = -K * D_w0 * (diff + 0.5 * r_l) * r_l + K * w0 * D_q0 * r_l;
+        else
+          dlam_term_signed = K * D_w0 * (diff - 0.5 * r_l) * r_l - K * w0 * D_q0 * r_l;
+      }
+
+      double dprefndl = 0.0, dprefmdl = 0.0;
+      if (it->n != 0)
+        dprefndl = it->n * pow(l, it->n - 1) * pow(1.0 - l, it->m);
+      if (it->m != 0)
+        dprefmdl = it->m * pow(l, it->n) * pow(1.0 - l, it->m - 1);
+      double dprefdl = pow(2.0, it->m + it->n) * (dprefndl - dprefmdl) * en_term_signed;
+      double dpotdl = prefactor * dlam_term_signed;
+      energy_derivativ = l_deriv * (dprefdl + dpotdl);
+
+      conf.current().perturbed_energy_derivatives.distanceres_energy[topo.atom_energy_group()[it->v1.atom(0)]] +=
+          energy_derivativ;
+
+      // Note: ext_TI pre-calculation for this signed coordinate is intentionally
+      // not added here. Add it analogously to the normal perturbed distance code
+      // if you need AB_disres output for multiple lambda values.
+      continue;
+    }
+
     periodicity.nearest_image(it->v1.pos(conf, topo), it->v2.pos(conf, topo), v);
 
 #ifndef NDEBUG

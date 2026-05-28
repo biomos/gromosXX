@@ -47,6 +47,11 @@ class MACE_GROMOS_Calculator:
         self.nn_valid_maxF = 0.0
         self.sextet_weight = 0.0
 
+        # Committee energies from the most recent standard BuRQM component calls.
+        # These are kept in ASE/MACE energy units (eV).
+        self._committee_energies_irbr: np.ndarray | None = None
+        self._committee_energies_br: np.ndarray | None = None
+
     def get_calculator(self, model_path: str) -> MACECalculator:
         path = Path(model_path)
         # Accept either a direct model file or a training directory containing a common model filename.
@@ -87,6 +92,17 @@ class MACE_GROMOS_Calculator:
             val_energies.append(e_val)
         return val_energies
 
+    @staticmethod
+    def committee_std(committee_energies: Sequence[float]) -> float:
+        arr = np.asarray(committee_energies, dtype=float)
+        if arr.size <= 1:
+            return 0.0
+        if arr.size == 2:
+            # Historical two-model convention: std([E_pred, E_val], ddof=1)
+            # equals |E_pred - E_val| / sqrt(2).
+            return float(abs(arr[0] - arr[1]) / np.sqrt(2.0))
+        return float(arr.std(ddof=1))
+
     def validate_prediction_maxForceDeviation(self, system: ase.Atoms):
         model_forces = [np.linalg.norm(self.forces, axis=1)]
         for val_calculator in self.val_calculators:
@@ -103,9 +119,15 @@ class MACE_GROMOS_Calculator:
         atomic_numbers: Sequence[int],
         positions: Sequence[Sequence[float]],
         time_step: int,
+        total_charge: int | None = None,
         n_caps: int = 0,
+        br_only: bool = False,
     ) -> None:
+        if total_charge is not None:
+            self.total_charge = int(total_charge)
+
         system = ase.Atoms(numbers=list(atomic_numbers), positions=list(positions))
+        system.info["charge"] = self.total_charge
 
         self.energy, self.forces = self.predict_energy_and_forces(system, self.pred_calculator)
         self.sextet_weight = 0.0
@@ -113,12 +135,44 @@ class MACE_GROMOS_Calculator:
         if len(self.val_calculators) > 0 and int(time_step) % self.nn_valid_freq == 0:
             val_energies = self.validate_prediction(system)
             self.nn_valid_maxF = self.validate_prediction_maxForceDeviation(system)
-            if len(val_energies) == 1:
-                self.nn_valid_ene = abs(self.energy - val_energies[0]) / np.sqrt(2.0)
+
+            # Keep the prediction model first, followed by validation models.
+            # This preserves model-to-model pairing between IR+BR and BR calls,
+            # so the BuRQM uncertainty can be computed directly on
+            # E_k(IR+BR) - E_k(BR).
+            committee_energies = np.asarray([self.energy] + val_energies, dtype=float)
+            self.nn_valid_ene = self.committee_std(committee_energies)
+
+            if br_only:
+                self._committee_energies_br = committee_energies
+                self._append_nnvalidation_file("BR", int(time_step))
+                if self._committee_energies_irbr is not None:
+                    if self._committee_energies_irbr.shape == self._committee_energies_br.shape:
+                        burqm_committee = self._committee_energies_irbr - self._committee_energies_br
+                        self.nn_valid_ene = self.committee_std(burqm_committee)
+                    else:
+                        raise ValueError(
+                            "IR+BR and BR validation committees have different sizes: "
+                            f"{self._committee_energies_irbr.shape} vs {self._committee_energies_br.shape}"
+                        )
             else:
-                arr = np.array(val_energies + [self.energy], dtype=float)
-                self.nn_valid_ene = float(arr.std(ddof=1))
+                self._committee_energies_irbr = committee_energies
+                self._append_nnvalidation_file("IRBR", int(time_step))
         return None
+    
+    def _append_nnvalidation_file(self, label: str, time_step: int) -> None:
+        """Write per-evaluation validation so repeated NN calls do not overwrite each other.
+
+        Values are written in Python/ASE units: energy in eV and max-force spread in eV/Angstrom.
+        GROMOS still converts the scalar legacy getters to GROMOS units for the normal energy output.
+        """
+        path = Path(f"nnvalidation_{label}.dat")
+        eV2kJpmol = 96.4869
+        
+        if not path.exists():
+            path.write_text("# step nn_valid_ene_kJpmol nn_valid_maxF_kJpmol_per_Ang\n")
+        with path.open("a") as handle:
+            handle.write(f"{time_step:12d} {self.nn_valid_ene*eV2kJpmol:20.12e} {self.nn_valid_maxF*eV2kJpmol*10:20.12e}\n")
 
     def get_energy(self):
         return float(self.energy)
@@ -134,3 +188,7 @@ class MACE_GROMOS_Calculator:
 
     def get_sextet_weight(self):
         return float(self.sextet_weight)
+    
+    def get_derivative(self):
+        return float(0)
+        

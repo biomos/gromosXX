@@ -244,7 +244,8 @@ int interaction::QMMM_Interaction::calculate_interactions(topology::Topology& to
         delete m_qm_buffer;
         m_qm_buffer = m_qm_zone->create_buffer_zone(topo, sim);
         m_timer.start_subtimer(m_worker->name());
-        err = m_worker->run_QM(topo, conf, sim, *m_qm_buffer);
+        err = m_worker->run_QM(topo, conf, sim, *m_qm_buffer,
+                               sim.param().qmmm.buffer_zone.charge,true);
         m_timer.stop_subtimer(m_worker->name());
         if (err) return err;
         // Calculate QM energy and QM forces as difference

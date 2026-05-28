@@ -69,10 +69,10 @@ interaction::NN_Worker::NN_Worker() : QM_Worker("NN Worker"),
                                       guard(),
                                       mlp_calculator() {};
 
-int interaction::NN_Worker::init(const topology::Topology& topo
-                               , const configuration::Configuration& conf
-                               , simulation::Simulation& sim
-                               , const interaction::QM_Zone& qm_zone) {
+int interaction::NN_Worker::init(const topology::Topology& topo,
+                                 const configuration::Configuration& conf,
+                                 simulation::Simulation& sim,
+                                 const interaction::QM_Zone& qm_zone) {
   DEBUG(15, "Initializing " << this->name());
 
 #ifdef HAVE_PYBIND11
@@ -121,8 +121,12 @@ int interaction::NN_Worker::init(const topology::Topology& topo
   // How often to write energy
   py::int_ write_energy_step = sim.param().write.energy;
 
-  // Determine the total_charge
-  int system_charge = sim.param().qmmm.qm_zone.charge + sim.param().qmmm.buffer_zone.charge;
+
+  // Default total charge used only for initial Python calculator construction.
+  // The effective per-call charge is computed in run_QM() and passed to calculate_next_step().
+  int system_charge =
+      sim.param().qmmm.qm_zone.charge +
+      sim.param().qmmm.buffer_zone.charge;
   py::int_ total_charge = system_charge;
 
   // Determine the spin multiplicity
@@ -200,8 +204,9 @@ int interaction::NN_Worker::init(const topology::Topology& topo
 
     if (model_has_elecEmbed) {
       std::ostringstream msg;
-      msg << "Model is using electronic + nuclear embedding with Total Charge: " 
-        << system_charge << " and Spin Multiplicity: " << spin_mult << ".";
+      msg << "Model is using electronic + nuclear embedding. Initial total charge: "
+        << system_charge << ", spin multiplicity: " << spin_mult
+        << ". Effective total charge is passed at each NN evaluation.";
       io::messages.add(msg.str(), "NN_Worker", io::message::notice);
     }
     else {
@@ -235,9 +240,9 @@ int interaction::NN_Worker::init(const topology::Topology& topo
       io::messages.add("Dynamic QM charges are not implemented for the minimal MACE interface.",
         "NN_Worker", io::message::error);
     }
-    if (sim.param().perturbation.perturbation) {
+    if (sim.param().perturbation.perturbation || sim.param().perturbation.dlamt) {
       io::messages.add("Perturbation / dE/dlambda is not implemented for the minimal MACE interface.",
-        "NN_Worker", io::message::error);
+        "NN_Worker", io::message::warning);
     }
     if (sim.param().qmmm.nn.model_type != simulation::nn_model_type_standard) {
       io::messages.add("The minimal MACE interface currently supports only nn_model_type_standard.",
@@ -266,6 +271,14 @@ interaction::NN_Worker::~NN_Worker() = default;
 int interaction::NN_Worker::run_QM(topology::Topology& topo
                      , configuration::Configuration& conf
                      , simulation::Simulation& sim, interaction::QM_Zone & qm_zone) {
+  return this->run_QM(topo, conf, sim, qm_zone, 0, false);
+}
+
+int interaction::NN_Worker::run_QM(topology::Topology& topo
+                     , configuration::Configuration& conf
+                     , simulation::Simulation& sim, interaction::QM_Zone & qm_zone
+                     , int charge
+                     , bool br_only) {
 #ifdef HAVE_PYBIND11
   // run NN interface 
 
@@ -278,6 +291,38 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
 
   // Atomic numbers
   std::vector<uint32_t> atom_nums;
+
+  // Determine the total_charge
+  int system_charge;
+
+  if (sim.param().qmmm.nn.model_type == simulation::nn_model_type_standard) {
+
+    // For standard models:
+    // use explicitly provided charge if available,
+    // otherwise default to QM + buffer charge
+
+    if (br_only) {
+      system_charge = charge;
+
+    } else {
+      system_charge =
+          sim.param().qmmm.qm_zone.charge +
+          sim.param().qmmm.buffer_zone.charge;
+    }
+
+  } else {
+
+    // For BuRNN delta models:
+    // always use full system charge definition
+    // and ignore optional charge argument entirely
+
+    system_charge =
+        sim.param().qmmm.qm_zone.charge +
+        sim.param().qmmm.buffer_zone.charge;
+  }
+  DEBUG(7, "System charge: " << system_charge);
+
+  py::int_ total_charge = system_charge;
 
   // Coordinates
   py::list system_coordinates;
@@ -316,8 +361,17 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
   // Get time step
   py::int_ step = sim.steps();
 
-  // Run the method calculate_next_step to predict energy, forces and NN validation
-  mlp_calculator.attr("calculate_next_step")(atomic_numbers, system_coordinates, step);
+  // Run the method calculate_next_step to predict energy, forces and NN validation.
+  // For SchNet v2 / MACE, the effective total charge is an evaluation-time input.
+  // SchNet v1 keeps the historical three-argument interface.
+  if (sim.param().qmmm.software == simulation::qm_schnetv1) {
+    mlp_calculator.attr("calculate_next_step")(atomic_numbers, system_coordinates, step);
+  } else {
+    py::int_ n_caps = static_cast<int>(qm_zone.link.size());
+    py::bool_ py_br_only = br_only;
+    mlp_calculator.attr("calculate_next_step")(atomic_numbers, system_coordinates, step,
+                                                total_charge, n_caps, py_br_only);
+  }
   
   // Store predicted energy
   const double energy = mlp_calculator.attr("get_energy")().cast<double>() * this->param->unit_factor_energy;
@@ -349,7 +403,7 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
   }
 
   // Free energy derivative if perturbation is performed
-  if (sim.param().perturbation.perturbation) {
+  if (sim.param().perturbation.perturbation || sim.param().perturbation.dlamt) {
     const double energy_derivative = mlp_calculator.attr("get_derivative")().cast<double>() * this->param->unit_factor_energy;
     qm_zone.QM_energy_derivative() = energy_derivative;
   }
@@ -379,21 +433,40 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
   if (!sim.param().qmmm.nn.val_model_paths.empty()
       && (sim.steps() % sim.param().qmmm.nn.val_steps == 0
        || sim.steps() % sim.param().write.energy == 0)) {
-    
-    // Store NN valid. deviation
-    const double nn_valid_ene = mlp_calculator.attr("get_nn_valid_ene")().cast<double>() * this->param->unit_factor_energy;
-    conf.current().energies.nn_valid = nn_valid_ene;
 
-    // Store NN valid. maximum force committee disagreement among all atoms if requested in .qmmm input file
-    if(sim.param().qmmm.nn.nnvalid == simulation::nn_valid_maxF) {
-      const double nn_valid_maxF = mlp_calculator.attr("get_nn_valid_maxF")().cast<double>() * this->param->unit_factor_force;
-      conf.current().energies.nn_valid_maxF = nn_valid_maxF;
-    }
+    const bool standard_model =
+        sim.param().qmmm.nn.model_type == simulation::nn_model_type_standard;
 
-    if (fabs(nn_valid_ene) > sim.param().qmmm.nn.val_thresh) {
+    // For standard subtractive BuRQM, the physically relevant validation value is
+    // the committee disagreement of the final subtractive energy:
+    // E_k(BuRQM) = E_k(IR+BR) - E_k(BR).
+    // The Python wrapper can only compute this after the BR-only call. Therefore
+    // the IR+BR call stores its committee internally, but does not overwrite the
+    // GROMOS scalar validation value.
+    const bool store_final_validation = (!standard_model || br_only);
+
+    if (store_final_validation) {
+      // Store NN valid. deviation. For standard_model && br_only this is already
+      // the direct BuRQM/subtractive committee deviation returned by Python.
+      const double nn_valid_ene =
+          mlp_calculator.attr("get_nn_valid_ene")().cast<double>() * this->param->unit_factor_energy;
+      conf.current().energies.nn_valid = nn_valid_ene;
+
+      // Store NN valid. maximum force committee disagreement among all atoms if requested in .qmmm input file.
+      // For standard subtractive BuRQM this remains the value from the final BR-only evaluation unless
+      // a subtractive force validation is implemented analogously in the Python wrapper.
+      if (sim.param().qmmm.nn.nnvalid == simulation::nn_valid_maxF) {
+        const double nn_valid_maxF =
+            mlp_calculator.attr("get_nn_valid_maxF")().cast<double>() * this->param->unit_factor_force;
+        conf.current().energies.nn_valid_maxF = nn_valid_maxF;
+      }
+
+      if (fabs(nn_valid_ene) > sim.param().qmmm.nn.val_thresh) {
         std::ostringstream msg;
-        msg << "Deviation from validation model above threshold in step " << sim.steps() << " : " << nn_valid_ene;
+        msg << "Deviation from validation model above threshold in step "
+            << sim.steps() << " : " << nn_valid_ene;
         io::messages.add(msg.str(), this->name(), io::message::notice);
+      }
     }
   }
 #endif
