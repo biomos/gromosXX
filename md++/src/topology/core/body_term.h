@@ -672,6 +672,118 @@ namespace topology {
     int m;
   };
  
+/**
+   * coordnum restraint information
+   */
+  struct coordnum_restraint_struct {
+    /**
+     * Constructor.
+     */
+    coordnum_restraint_struct() {on=false;};
+    coordnum_restraint_struct(bool on, std::vector<util::Virtual_Atom > atoms1,
+            std::vector<util::Virtual_Atom > atoms2, double cont0, double w0,
+            double rcut, int nn, int mm)
+      : on(on), atoms1(atoms1), atoms2(atoms2), cont0(cont0), w0(w0),
+      rcut(rcut), nn(nn), mm(mm){
+    }
+    /**
+     * is a restraint specified
+     */
+    bool on;
+    /**
+     * atom group 1.
+     */
+    std::vector<util::Virtual_Atom > atoms1;
+    /**
+     * atom group 2.
+     */
+    std::vector<util::Virtual_Atom > atoms2;
+    /**
+     * Reference value (number of coordinations)
+     */
+    double cont0;
+    /**
+     * weight for multiplying with the colvar force constant
+     */
+    double w0;
+    /**
+     * cutoff distance
+     */
+    double rcut;
+    /**
+     * enumerator exponent
+     */
+    int nn;
+    /**
+     * denomiator exponent
+     */
+    int mm;
+    /** 
+     * mass cutoff for atom selection
+     */
+    double masscut;
+  };
+  
+  /**
+   * perturbed coordnum restraint information
+   */
+  struct perturbed_coordnum_restraint_struct {
+    /**
+     * Constructor.
+     */
+    perturbed_coordnum_restraint_struct() {on=false;};
+    perturbed_coordnum_restraint_struct(bool on, std::vector<util::Virtual_Atom > atoms1,
+            std::vector<util::Virtual_Atom > atoms2, double cont0A, double w0A, double cont0B, double w0B,
+            double rcut, int nn, int mm, double masscut)
+      : on(on), atoms1(atoms1), atoms2(atoms2), cont0A(cont0A), w0A(w0A), cont0B(cont0B), w0B(w0B), 
+       rcut(rcut), nn(nn), mm(mm), masscut(masscut) {
+    }
+    /**
+     * is a restraint specified
+     */
+    bool on;
+    /**
+     * atom group 1.
+     */
+    std::vector<util::Virtual_Atom > atoms1;
+    /**
+     * atom group 2.
+     */
+    std::vector<util::Virtual_Atom > atoms2;
+    /**
+     * Reference value (number of coordinations) for state A
+     */
+    double cont0A;
+    /**
+     * weight for multiplying with the colvar force constant for state A
+     */
+    double w0A;
+    /**
+     * Reference value (number of coordinations) for state B
+     */
+    double cont0B;
+    /**
+     * weight for multiplying with the colvar force constant for state B
+     */
+    double w0B;
+    /**
+     * cutoff distance
+     */
+    double rcut;
+    /**
+     * enumerator exponent
+     */
+    int nn;
+    /**
+     * denomiator exponent
+     */
+    int mm;
+    /** 
+     * mass cutoff for atom selection
+     */
+    double masscut;
+  };
+
   /**
    * eds distance restraints information.
    */

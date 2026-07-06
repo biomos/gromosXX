@@ -587,7 +587,7 @@ class Pert_SchNet_V1_Calculator(SchNet_V1_Calculator):
         # Initialize the perturbed forces array, shape (qm zone size + buffer size, 3).
         forces = np.zeros((self.qmzone_size + (len(self.states['A']['forces_burnn']) - len(self.states['A']['forces_vac'])), 3), dtype=float)
 
-        def calculate_forces(state, indices, lam_factor, shift: int = 0)->None:
+        def calculate_forces(state, indices, lam_factor)->None:
             """
             Calculate the forces for a given state and set of indices.
 
@@ -595,13 +595,13 @@ class Pert_SchNet_V1_Calculator(SchNet_V1_Calculator):
                 state (int): The state for which to calculate the forces.
                 indices (list of int): The indices of the particles for which to calculate the forces.
                 lam_factor (float): The lambda factor used to interpolate between two sets of forces.
-                shift (int, optional): The shift to apply to the indices when accessing the forces. Defaults to 0.
 
             Returns:
                 None
             """
-            for j, i in enumerate(indices):
-                forces[i] = lam_factor * self.states[state]['forces_burnn'][j + shift] + (1 - lam_factor) * self.states[state]['forces_vac'][j + shift]
+            for i in indices:
+                i_state = self.states_idx[state].index(i)
+                forces[i] = lam_factor * self.states[state]['forces_burnn'][i_state] + (1 - lam_factor) * self.states[state]['forces_vac'][i_state]
         
         def calculate_forces_both(indices, lam_factor)->None:
             """
@@ -618,8 +618,10 @@ class Pert_SchNet_V1_Calculator(SchNet_V1_Calculator):
             Returns:
                 None: The function updates the `forces` array in place.
             """
-            for j, i in enumerate(indices):
-                forces[i] = lam_factor * self.states['A']['forces_burnn'][j] + (1 - lam_factor) * self.states['A']['forces_vac'][j] + (1 - lam_factor) * self.states['B']['forces_burnn'][j] + lam_factor * self.states['B']['forces_vac'][j]
+            for i in indices:
+                i_a = self.states_idx['A'].index(i)
+                i_b = self.states_idx['B'].index(i)
+                forces[i] = lam_factor * self.states['A']['forces_burnn'][i_a] + (1 - lam_factor) * self.states['A']['forces_vac'][i_a] + (1 - lam_factor) * self.states['B']['forces_burnn'][i_b] + lam_factor * self.states['B']['forces_vac'][i_b]
 
         # Case when only one state (A) is present.
         if len(self.states.keys()) == 1:
@@ -635,9 +637,9 @@ class Pert_SchNet_V1_Calculator(SchNet_V1_Calculator):
                 # Calculate forces for atoms in both states.
                 calculate_forces_both(self.states_idx['both'], 1 - self.lam)
                 # Calculate forces for atoms only in state A.
-                calculate_forces('A', self.states_idx['only_A'], 1 - self.lam, shift=len(self.states_idx['both']))
+                calculate_forces('A', self.states_idx['only_A'], 1 - self.lam)
                 # Calculate forces for atoms only in state B.
-                calculate_forces('B', self.states_idx['only_B'], self.lam, shift=len(self.states_idx['both']))
+                calculate_forces('B', self.states_idx['only_B'], self.lam)
             else:
                 # Calculate forces for atoms in state A.
                 calculate_forces('A', self.states_idx['A'], 1 - self.lam)

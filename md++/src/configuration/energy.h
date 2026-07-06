@@ -157,6 +157,10 @@ namespace configuration
      */
     double disfieldres_total;
     /**
+     *  total energy of the colvarres restraint interaction
+     */
+    double colvarres_total;
+    /**
      *  total energy of the angle restraint interaction
      */
     double angrest_total;
@@ -436,6 +440,10 @@ namespace configuration
      * distancefield restraint energy term
      */
     std::vector<double> disfieldres_energy;
+    /**
+     * colvarres restraint energy term
+     */
+    std::vector<double> colvarres_energy;
     /**
      * angle restraint energy term
      */

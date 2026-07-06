@@ -180,44 +180,49 @@ int interaction::NN_Worker::init(const topology::Topology& topo
     // Initialize schnet_v2 module
     py::module_ schnet_v2 = py::module_::import("schnet_v2");
 
+    // Access the SchNet_V2_Calculator class
+    py::object schnet_class = schnet_v2.attr("SchNet_V2_Calculator");
+    // Check if model was trained on partial charges
+    py::object model_trained_on_charges_func = schnet_class.attr("model_trained_on_partial_charges");
+    bool model_has_charges = model_trained_on_charges_func(model_path).cast<bool>();
+
+    // If dynamic charges requested but model not trained for charges, throw error
+    if (sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic && !model_has_charges) {
+        io::messages.add(
+            "Dynamic QM charges requested but model was NOT trained to predict partial charges - check that your charge_key of your model is called charges",
+            "NN_Worker", io::message::error
+        );
+    }
+
+    // Check if the model has electronic embedding
+    py::object model_trained_with_elecEmb = schnet_class.attr("model_trained_with_electronic_embedding");
+    bool model_has_elecEmbed = model_trained_with_elecEmb(model_path).cast<bool>();
+
+    if (model_has_elecEmbed) {
+      std::ostringstream msg;
+      msg << "Model is using electronic + nuclear embedding with Total Charge: " 
+        << system_charge << " and Spin Multiplicity: " << spin_mult << ".";
+      io::messages.add(msg.str(), "NN_Worker", io::message::notice);
+    }
+    else {
+      io::messages.add("Model is using nuclear embedding",
+            "NN_Worker", io::message::notice);
+    }
+
     // Decide if perturbation is performed or not
     if (sim.param().perturbation.perturbation) {
-      io::messages.add("Perturbation not implemented with schnet_v2 only schnet_v1", io::message::error);
+      // get lambda parameter
+      py::float_ lambda = py::cast(sim.param().perturbation.lambda);
+
+      // get perturbed QM states
+      py::list perturbed_qm_states = py::cast(sim.param().qmmm.nn.pertqm_state);
+
+      // Initialize mlp_calculator Pert_SchNet_V2_Calculator Python object
+      mlp_calculator = schnet_v2.attr("Pert_SchNet_V2_Calculator")(model_path, val_models_paths, write_val_step, write_energy_step, spin_mult, total_charge, lambda, perturbed_qm_states);
     }
 
     else {
-      // Import schnet_v2 module
-      py::module_ schnet_v2 = py::module_::import("schnet_v2");
-      // Access the SchNet_V2_Calculator class
-      py::object schnet_class = schnet_v2.attr("SchNet_V2_Calculator");
-      // Check if model was trained on partial charges
-      py::object model_trained_on_charges_func = schnet_class.attr("model_trained_on_partial_charges");
-      bool model_has_charges = model_trained_on_charges_func(model_path).cast<bool>();
-
-      // If dynamic charges requested but model not trained for charges, throw error
-      if (sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic && !model_has_charges) {
-          io::messages.add(
-              "Dynamic QM charges requested but model was NOT trained to predict partial charges - check that your charge_key of your model is called charges",
-              "NN_Worker", io::message::error
-          );
-      }
-
-      // Check if the model has electronic embedding
-      py::object model_trained_with_elecEmb = schnet_class.attr("model_trained_with_electronic_embedding");
-      bool model_has_elecEmbed = model_trained_with_elecEmb(model_path).cast<bool>();
-
-      if (model_has_elecEmbed) {
-        std::ostringstream msg;
-        msg << "Model is using electronic + nuclear embedding with Total Charge: " 
-         << system_charge << " and Spin Multiplicity: " << spin_mult << ".";
-        io::messages.add(msg.str(), "NN_Worker", io::message::notice);
-      }
-      else {
-        io::messages.add("Model is using nuclear embedding",
-              "NN_Worker", io::message::notice);
-      }
-
-      // Initialize the SchNet_V2_Calculator
+      // Initialize SchNet_V2_Calculator
       mlp_calculator = schnet_class(model_path, val_models_paths, write_val_step, write_energy_step, spin_mult, total_charge);
     }
 }

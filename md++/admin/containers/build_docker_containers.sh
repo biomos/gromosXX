@@ -22,7 +22,10 @@ gitlab_project_tag=gromosx.boku.ac.at:5005/gromos/gromosxx/
 #args[${#args[@]}]="--debian 12 --mpi"  #this one for MPI
 #args[${#args[@]}]="--debian 11 --mpi"
 #args[${#args[@]}]="--debian 10 --mpi"
-args[${#args[@]}]="--debian 12 --cuda"  #this one for CUDA
+args[${#args[@]}]="--debian 12"  # debian 12 plain
+args[${#args[@]}]="--debian 12 --mpi"  # debian12 mpi
+args[${#args[@]}]="--debian 12 --cuda"  # debian12 cuda
+args[${#args[@]}]="--debian 12 --mpi --cuda"  # debian12 mpi and cuda (for peter)
 #args[${#args[@]}]="--debian 11 --cuda"
 #args[${#args[@]}]="--debian 10 --cuda"
 

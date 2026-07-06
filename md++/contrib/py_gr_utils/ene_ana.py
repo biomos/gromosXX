@@ -248,7 +248,7 @@ class EnergyTrajectory():
 
 if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser(description="read GROMOS format (free) energy trajectory")
+    parser = argparse.ArgumentParser(fromfile_prefix_chars='@', description="read GROMOS format (free) energy trajectory")
     parser.add_argument('-l', '--library', type=str, help="ene_ana library")
     parser.add_argument('--def_lib', default=False, action='store_true', help='use library file from the same git repo as the script')
     parser.add_argument('-e', '--en_files', type=str, nargs='+', help="energy trajectory files (GROMOS format)")
