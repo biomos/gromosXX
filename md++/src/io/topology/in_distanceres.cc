@@ -56,6 +56,7 @@ io::In_Distanceres::read(topology::Topology& topo,
     os << "DISTANCE RESTRAINTS\n";
 
   read_DISTANCERESSPEC(topo, sim, os);
+  read_MDISTANCERESSPEC(topo, sim, os);
   read_PERTDISRESSPEC(topo, sim, os);
   read_DFRESSPEC(topo, sim, os);
   read_PERTDFRESSPEC(topo, sim, os);
@@ -65,9 +66,10 @@ io::In_Distanceres::read(topology::Topology& topo,
 
   if (sim.param().distanceres.distanceres) {
     if (block_read.count("DISTANCERESSPEC") == 0
+     && block_read.count("MDISTANCERESSPEC") == 0
      && block_read.count("PERTDISRESSPEC") == 0
      && block_read.count("MDISRESSPEC") == 0)
-      io::messages.add("Distance restraints are on but neither DISTANCERESSPEC nor PERTDISRESSPEC nor MDISRESSPEC found",
+      io::messages.add("Distance restraints are on but neither DISTANCERESSPEC nor MDISTANCERESSPEC nor PERTDISRESSPEC nor MDISRESSPEC found",
                "In_Distanceres",
                io::message::error);
   }
@@ -91,7 +93,6 @@ io::In_Distanceres::read(topology::Topology& topo,
                io::message::warning);
     }
   }
-
 }
 
 /**
@@ -297,6 +298,186 @@ void io::In_Distanceres::read_DISTANCERESSPEC(topology::Topology &topo,
     block.get_final_messages();
   } // if block content
 } // DISTANCERES
+
+/**
+ * @section distanceresspec MDISTANCERESSPEC block
+ * The MDISTANCERESSPEC block is read from the distance restraints specification
+ * file.
+ *
+ * \c DISH is the carbon-hydrogen, \c DISC the carbon-carbon distance.
+ * See @ref util::virtual_type for valid virtual atom types.
+ * \c r0 is the restraint distance, \c w0 a weight factor (multiplied by the force 
+ * constant specified in the input file, \c CDIR) and rah specifies the type of 
+ * restraint (half harmonic repulsive, full harmonic, half harmonic attractive). 
+ * The restraint may be applied in a reduced set of dimensions, which is also set
+ * by the value of \c rah. Allowed values of rah are \c dim - 1, \c dim or 
+ * \c dim + 1, where dim can take the following values:
+ * - dim = 0  : dimensions to apply distance restraint: X, Y, Z
+ * - dim = 10 : dimensions to apply distance restraint: X, Y
+ * - dim = 20 : dimensions to apply distance restraint: X, Z
+ * - dim = 30 : dimensions to apply distance restraint: Y, Z
+ * - dim = 40 : dimension to apply distance restraint: X
+ * - dim = 50 : dimension to apply distance restraint: Y
+ * - dim = 60 : dimension to apply distance restraint: Z
+ *
+ * The type of restraint is determined as follows:
+ * - rah = dim - 1: half harmonic repulsive distance restraint
+ * - rah = dim: full harmonic distance restraint
+ * - rah = dim + 1: half harmonic attractive distance restraint
+ *
+ * @todo add documentation for further rah values for restraining only x,y,z or combinations
+ *
+ * @snippet snippets/snippets.cc MDISTANCERESSPEC
+ * @sa util::virtual_type util::Virtual_Atom
+ */
+void io::In_Distanceres::read_MDISTANCERESSPEC(topology::Topology &topo,
+                      simulation::Simulation &sim,
+                      std::ostream & os)  { // MDISTANCERES
+  DEBUG(10, "MDISTANCERESSPEC block");
+
+  std::stringstream exampleblock;
+  // lines starting with 'exampleblock<<"' and ending with '\n";' (spaces don't matter)
+  // will be used to generate snippets that can be included in the doxygen doc;
+  // the first line is the tag
+  exampleblock << "MDISTANCERESSPEC\n";
+  exampleblock << "# DISH, DISC carbon-hydrogen/carbon-carbon distance\n";
+  exampleblock << "# n i1 i2 ... in   number of atoms comprising the virtual atom followed by atoms\n";
+  exampleblock << "# type   virtual atom type\n";
+  exampleblock << "# r0, w0  target distance and force constant weighting factor\n";
+  exampleblock << "# rah    form and dimension of the potential\n";
+  exampleblock << "# full harmonic:\n";
+  exampleblock << "#     0: x,y,z\n";
+  exampleblock << "#    10: x,y\n";
+  exampleblock << "#    20: x,z\n";
+  exampleblock << "#    30: y,z\n";
+  exampleblock << "#    40: x\n";
+  exampleblock << "#    50: y\n";
+  exampleblock << "#    60: z\n";
+  exampleblock << "#  subtract or add 1 from these numbers to select a half harmonic\n";
+  exampleblock << "#  repulsive or attractive potential\n";
+  exampleblock << "# DISH  DISC\n";
+  exampleblock << "  0.1   0.153\n";
+  exampleblock << "# Example\n";
+  exampleblock << "# n  i1 type        n i1 i2 i3 i4 type    r0    w0    rah\n";
+  exampleblock << "  1  1  0           4 10 12 11 13 3       0.2   1.0   0\n";
+  exampleblock << "END\n";
+
+  std::string blockname = "MDISTANCERESSPEC";
+  Block block(blockname, exampleblock.str());
+
+  if (block.read_buffer(m_block[blockname], false) != 0) return;
+  block_read.insert(blockname);
+
+  DEBUG(10, "reading in MDISTANCERES data");
+
+  if (!quiet) {
+      switch (sim.param().distanceres.distanceres) {
+        case 0:
+          os << "\tDistance restraints OFF\n";
+          // how did you get here?
+          break;
+        case 1:
+          os << "\tDistance restraints ON\n";
+          break;
+        case -1:
+          os << "\tDistance restraints ON\n"
+                  << "\ttime averaging ON\n";
+          break;
+        case 2:
+          os << "\tDistance restraints ON\n"
+                  << "\t\t(using force constant K*w0)\n";
+          break;
+        case -2:
+          os << "\tDistance restraints ON\n"
+                  << "\ttime averaging ON\n"
+                  << "\t\t(using force constant K*w0)\n";
+          break;
+        default:
+          os << "\tDistance restraints ERROR\n";
+      }
+  }
+
+  double dish = 0.0, disc = 0.0;
+  block.get_next_parameter("DISH", dish, ">0", "");
+  block.get_next_parameter("DISC", disc, ">0", "");
+
+  if (!quiet) {
+    os << std::setw(10) << "DISH" << std::setw(10) << "DISC" << "\n"
+       << std::setw(10) << dish << std::setw(10) << disc << "\n";
+  }
+
+  unsigned int num = block.numlines() - 3; // skip DISH/DISC lines
+  for (unsigned int line_number = 0; line_number < num; ++line_number) {
+    DEBUG(11, "\tnr " << line_number);
+
+    std::vector<int> atom1, atom2;
+    int type1 = 0, type2 = 0;
+    double r0 = 0.0, w0 = 0.0;
+    int rah = 0;
+
+    // Virtual Atom 1
+    unsigned int n_atoms1 = 0;
+    block.get_next_parameter("N_ATOMS", n_atoms1, ">0", "");
+    for (unsigned int i = 0; i < n_atoms1; ++i) {
+      unsigned int atom = 0;
+      block.get_next_parameter("ATOM[" + io::to_string(i) + "]", atom, ">0", "");
+      if (atom > topo.num_atoms()) {
+        std::ostringstream msg;
+        msg << blockname << " block: atom number out of range: " << atom
+            << ", last atom is " << topo.num_atoms();
+        io::messages.add(msg.str(), "In_Distanceres", io::message::error);
+      }
+      atom1.push_back(atom - 1);
+    }
+    block.get_next_parameter("TYPE", type1, "", "-2,-1,0,1,2,3,4,5,6,7");
+
+    // Virtual Atom 2
+    unsigned int n_atoms2 = 0;
+    block.get_next_parameter("N_ATOMS", n_atoms2, ">0", "");
+    for (unsigned int i = 0; i < n_atoms2; ++i) {
+      unsigned int atom = 0;
+      block.get_next_parameter("ATOM[" + io::to_string(i) + "]", atom, ">0", "");
+      if (atom > topo.num_atoms()) {
+        std::ostringstream msg;
+        msg << blockname << " block: atom number out of range: " << atom
+            << ", last atom is " << topo.num_atoms();
+        io::messages.add(msg.str(), "In_Distanceres", io::message::error);
+      }
+      atom2.push_back(atom - 1);
+    }
+    block.get_next_parameter("TYPE", type2, "", "-2,-1,0,1,2,3,4,5,6,7");
+
+    // Distance parameters
+    block.get_next_parameter("R0", r0, ">=0", "");
+    block.get_next_parameter("W0", w0, ">=0", "");
+    block.get_next_parameter("RAH", rah, "", "");
+
+    // Store virtual atoms
+    if (!block.error()) {
+      util::Virtual_Atom v1(util::virtual_type(type1), atom1, dish, disc);
+      util::Virtual_Atom v2(util::virtual_type(type2), atom2, dish, disc);
+      topo.distance_restraints().push_back(
+          topology::distance_restraint_struct(v1, v2, r0, w0, rah));
+
+      // Print atoms
+      if (!quiet) {
+        for (unsigned int i = 0; i < n_atoms1; ++i)
+          os << std::setw(i == 0 ? 10 : 8) << (atom1[i] + 1);
+        os << std::setw(5) << type1;
+
+        for (unsigned int i = 0; i < n_atoms2; ++i)
+          os << std::setw(i == 0 ? 10 : 8) << (atom2[i] + 1);
+        os << std::setw(5) << type2
+           << std::setw(8) << r0
+           << std::setw(8) << w0
+           << std::setw(4) << rah
+           << "\n";
+      }
+    }
+  }
+
+  block.get_final_messages();
+} // MDISTANCERES
 
 /**
  * @section pertdisresspec PERTDISRESSPEC block

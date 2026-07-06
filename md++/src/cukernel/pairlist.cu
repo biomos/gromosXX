@@ -27,7 +27,9 @@
 #include "gpu_status.h"
 
 #include "lib/math.h"
+#include "lib/utils.h"
 #include "../util/debug.h"
+
 
 #undef MODULE
 #undef SUBMODULE
@@ -119,6 +121,8 @@ extern "C" void cudaCalcPairlist(gpu_status * gpu_stat) {
       std::cout << "CUDA: Overflow. Recalculating pairlist. This is a performance issue "
               "increase size estimate." << std::endl;
     }
+    if (cudakernel::checkError("during pairlist calculation"))
+      return;
   } while (overflow); // recalculate the pairlist
   
 }

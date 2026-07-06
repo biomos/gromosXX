@@ -26,6 +26,8 @@
 #ifndef INCLUDED_FORCEFIELD_H
 #define INCLUDED_FORCEFIELD_H
 
+#include <vector>
+
 namespace configuration{
 	class Configuration;
 }

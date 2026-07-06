@@ -22,10 +22,14 @@
  * @file argument.h
  * argument parsing.
  */
-#include <stdheader.h>
-
 #ifndef INCLUDED_ARGUMENT_H
 #define INCLUDED_ARGUMENT_H
+
+#include <istream>
+#include <map>
+#include <set>
+#include <string>
+#include <vector>
 
 namespace util
 {

@@ -68,6 +68,7 @@ namespace io {
      * read distance restraint specification block.
      */
     void read_DISTANCERESSPEC(topology::Topology &topo, simulation::Simulation &sim, std::ostream & os = std::cout);
+    void read_MDISTANCERESSPEC(topology::Topology &topo, simulation::Simulation &sim, std::ostream & os = std::cout);
     void read_PERTDISRESSPEC(topology::Topology &topo, simulation::Simulation &sim, std::ostream & os = std::cout);
     void read_DFRESSPEC(topology::Topology &topo, simulation::Simulation &sim, std::ostream & os = std::cout);
     void read_PERTDFRESSPEC(topology::Topology &topo, simulation::Simulation &sim, std::ostream & os = std::cout);

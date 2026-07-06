@@ -26,6 +26,8 @@
 #ifndef INCLUDED_CREATE_SIMULATION_H
 #define INCLUDED_CREATE_SIMULATION_H
 
+#include <string>
+
 namespace configuration{
 	class Configuration;
 }

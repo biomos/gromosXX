@@ -22,8 +22,18 @@
  * @file parse_verbosity.h
  */
 
+#ifndef INCLUDED_PARSE_VERBOSITY_H
+#define INCLUDED_PARSE_VERBOSITY_H
+
+#include <iostream>
+#include <string>
+
+namespace io { class Argument; }
+
 namespace util
 {
-  int parse_verbosity(io::Argument &args, std::string flag = "verb", 
+  int parse_verbosity(io::Argument &args, std::string flag = "verb",
 		      std::ostream &os = std::cout);
 }
+
+#endif

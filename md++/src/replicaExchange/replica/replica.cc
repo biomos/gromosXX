@@ -32,6 +32,7 @@
 #endif
 
 
+#include <stdheader.h>
 #include <io/argument.h>
 #include <util/error.h>
 #include <math/volume.h>

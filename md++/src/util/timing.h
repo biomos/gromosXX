@@ -26,6 +26,11 @@
 #ifndef HAVE_INCLUDED_TIMING_H
 #define HAVE_INCLUDED_TIMING_H
 
+#include <limits>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
 namespace simulation{
 	class Simulation;
 }
