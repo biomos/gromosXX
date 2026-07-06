@@ -228,7 +228,7 @@ void io::Out_Configuration::init(io::Argument & args,
      || param.dihrest.write || param.print.monitor_dihedrals
      || param.localelev.write || param.electric.dip_write || param.electric.cur_write 
      || param.addecouple.write || param.nemd.write || param.orderparamrest.write || param.rdc.write
-     || param.bsleus.write || param.colvarres.write;    // add others if there are any
+     || param.bsleus.write || param.colvar_write_enabled();   // add others if there are any
 
   if (args.count(argname_trs) > 0)
     special_trajectory(args[argname_trs], param.polarise.write, 
@@ -237,7 +237,7 @@ void io::Out_Configuration::init(io::Argument & args,
             param.print.monitor_dihedrals,param.localelev.write, 
             param.electric.dip_write, param.electric.cur_write, param.addecouple.write,
             param.nemd.write, param.orderparamrest.write, param.rdc.write,
-            param.bsleus.write,param.colvarres.write);
+            param.bsleus.write, param.colvarres.ntwcv);
   else if (m_write_special)
     io::messages.add("write special trajectory but no trs argument",
           "Out_Configuration",
@@ -2513,6 +2513,8 @@ void io::Out_Configuration::_print_colvar_restraints(
   std::vector<double>::const_iterator v_it = conf.special().colvarres.values.begin(),
           v_to = conf.special().colvarres.values.end();
   std::vector<double>::const_iterator ene_it = conf.special().colvarres.energies.begin();
+  std::vector<std::string>::const_iterator type_it = conf.special().colvarres.types.begin(),
+          type_to = conf.special().colvarres.types.end();
 
   os.setf(std::ios::fixed, std::ios::floatfield);
   os.precision(m_colvar_restraint_precision);
@@ -2526,8 +2528,15 @@ void io::Out_Configuration::_print_colvar_restraints(
     
     int i;
     for (i = 1; v_it != v_to; ++v_it, ++ene_it, ++i) {
+       if (type_it != type_to) {
+         os << std::setw(m_width) << *type_it;
+         ++type_it;
+       }
+       else {
+         os << std::setw(m_width) << "UNKNOWN";
+       }
        os << std::setw(m_width) << *v_it
-       << std::setw(m_width) << *ene_it;
+          << std::setw(m_width) << *ene_it;
        os << std::endl;
     }
     os << "END" << std::endl;

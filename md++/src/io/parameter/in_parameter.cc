@@ -5986,6 +5986,7 @@ COLVARRES
 END
 @endverbatim
  */
+/**
 void io::In_Parameter::read_COLVARRES(simulation::Parameter &param,
         std::ostream & os) {
   DEBUG(8, "read COLVARRES");
@@ -6049,4 +6050,79 @@ void io::In_Parameter::read_COLVARRES(simulation::Parameter &param,
     io::messages.add("COLVARRES block: VCVR should be 0 or 1",
           "In_Parameter", io::message::error);
 
+}*/ // COLVARRES
+
+
+
+/**
+ * @section colvarres COLVARRES block
+ * Switch collective-variable restraints on or off. The individual restraint
+ * definitions and their bias settings are read from the COLVAR restraints
+ * specification file.
+ *
+ * @verbatim
+COLVARRES
+# NCV: 0,1 controls collective variable restraining
+#      0: no restraining
+#      1: restraining turned on
+# NTWCV: write every nth step to special trajectory
+#        0: do not write
+#    NCV      NTWCV
+       1          1
+END
+@endverbatim
+ */
+void io::In_Parameter::read_COLVARRES(simulation::Parameter &param,
+        std::ostream & os) {
+  DEBUG(8, "read COLVARRES");
+
+  const std::string blockname = "COLVARRES";
+  std::vector<std::string> buffer = m_block[blockname];
+  if (!buffer.size()) return;
+
+  block_read.insert(blockname);
+
+  param.colvarres.bias_specs.clear();
+
+  _lineStream.clear();
+  std::string s;
+  _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
+
+  int colvarres = 0;
+  int ntwcv = 0;
+  _lineStream >> colvarres >> ntwcv;
+
+  switch (colvarres) {
+    case 0:
+      param.colvarres.colvarres = simulation::colvar_restr_off;
+      break;
+    case 1:
+      param.colvarres.colvarres = simulation::colvar_restr_harmonic;
+      break;
+    default:
+      io::messages.add("COLVARRES block: NCV must be 0 or 1.",
+                       "In_Parameter", io::message::error);
+      param.colvarres.colvarres = simulation::colvar_restr_off;
+  }
+
+  if (_lineStream.fail()) {
+    io::messages.add("bad line in COLVARRES block: expected NCV NTWCV",
+                     "In_Parameter", io::message::error);
+  }
+
+  if (ntwcv < 0) {
+    io::messages.add("COLVARRES block: NTWCV must be >= 0.",
+                     "In_Parameter", io::message::error);
+  }
+  else {
+    param.colvarres.ntwcv = static_cast<unsigned int>(ntwcv);
+  }
+
+  if (!quiet) {
+    os << "COLVARRES\n"
+       << "\t" << std::setw(10) << "NCV"
+       << std::setw(10) << "NTWCV" << "\n"
+       << "\t" << std::setw(10) << colvarres
+       << std::setw(10) << param.colvarres.ntwcv << "\n";
+  }
 } // COLVARRES

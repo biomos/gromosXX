@@ -41,6 +41,8 @@ static int _calculate_coordnum_colvar(
   ct = 0;
   std::fill(derivatives.begin(), derivatives.end(), math::Vec(0));
 
+  const double tiny = 1.0e-12;
+
   for (size_t i = 0; i < (*params).atoms1.size(); i++) {
     for (size_t j = 0; j < (*params).atoms2.size(); j++) {
       math::Vec v;
@@ -51,10 +53,17 @@ static int _calculate_coordnum_colvar(
         v);
       double rdist = math::abs(v);
 
+      if (rdist < tiny) {
+        continue;
+      }
+
       func = switching_function(rdist / (*params).rcut, dfunc, (*params).nn, (*params).mm);
       ct += func;
 
-      math::Vec d = dfunc * v / rdist;
+      // switching_function differentiates with respect to its argument.
+      // The argument here is rdist / rcut, so the chain rule contributes
+      // an additional factor 1 / rcut.
+      math::Vec d = (dfunc / (*params).rcut) * v / rdist;
       derivatives[i] += d;
       derivatives[(*params).atoms1.size() + j] -= d;
     }
@@ -78,17 +87,16 @@ int Coordnum_Colvar::init(topology::Topology &topo,
                           bool quiet)
 {
   targetvalue = (*params).cont0;
-  rcut = (*params).rcut;
-  mm = (*params).mm;
-  nn = (*params).nn;
   w0 = (*params).w0;
 
+  atoms.clear();
   for (auto &a : (*params).atoms1)
     atoms.push_back(&a);
   for (auto &a : (*params).atoms2)
     atoms.push_back(&a);
 
   derivatives.resize((*params).atoms1.size() + (*params).atoms2.size());
+  std::fill(derivatives.begin(), derivatives.end(), math::Vec(0));
 
   if (!quiet)
     os << "Coordnum restraint interaction\n";

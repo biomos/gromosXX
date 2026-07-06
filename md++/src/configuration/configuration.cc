@@ -193,6 +193,7 @@ configuration::Configuration::Configuration
 
   special().colvarres.energies=conf.special().colvarres.energies;
   special().colvarres.values=conf.special().colvarres.values;
+  special().colvarres.types=conf.special().colvarres.types;
   special().colvarres.totv=conf.special().colvarres.totv;
   special().colvarres.tote=conf.special().colvarres.tote;
   
@@ -331,6 +332,7 @@ configuration::Configuration & configuration::Configuration::operator=
 
   special().colvarres.energies=conf.special().colvarres.energies;
   special().colvarres.values=conf.special().colvarres.values;
+  special().colvarres.types=conf.special().colvarres.types;
   special().colvarres.totv=conf.special().colvarres.totv;
   special().colvarres.tote=conf.special().colvarres.tote;
   

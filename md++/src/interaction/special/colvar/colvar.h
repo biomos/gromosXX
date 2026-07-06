@@ -6,6 +6,8 @@
 #ifndef INCLUDED_COLVAR_H
 #define INCLUDED_COLVAR_H
 
+#include "../../../stdheader.h"
+
 namespace configuration{
   class Configuration;
 }

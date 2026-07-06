@@ -174,7 +174,7 @@ int io::read_special(io::Argument const & args,
                 "\n" + util::frame_text(ip.title),
                 "read special", io::message::notice);
       }
-    }    
+    }
   } // COLVARRES
 
   // ANGREST

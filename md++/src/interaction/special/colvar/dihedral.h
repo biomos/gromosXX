@@ -1,16 +1,17 @@
-#ifndef INCLUDED_COORDNUM_COLVAR
-#define INCLUDED_COORDNUM_COLVAR
+#ifndef INCLUDED_DIHEDRAL_COLVAR
+#define INCLUDED_DIHEDRAL_COLVAR
 
 #include "colvar.h"
-#include "../../topology/topology.h"
+#include "../../../topology/topology.h"
+#include "../../../util/virtual_atom.h"
 
 namespace interaction {
 
-class Coordnum_Colvar : public Colvar {
+class Dihedral_Colvar : public Colvar {
 public:
-  Coordnum_Colvar() : Colvar("CoordinationNumber") {}
+  Dihedral_Colvar() : Colvar("Dihedral") {}
 
-  topology::coordnum_restraint_struct *params;
+  topology::dihedral_restraint_struct *params;
 
   int init(
     topology::Topology &topo,
@@ -23,6 +24,9 @@ public:
     topology::Topology &topo,
     configuration::Configuration &conf,
     simulation::Simulation &sim);
+
+private:
+  std::vector<util::Virtual_Atom> m_atoms;
 };
 
 }

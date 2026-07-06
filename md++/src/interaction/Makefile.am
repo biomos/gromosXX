@@ -105,9 +105,12 @@ xxintnbspecial_HEADERS = special/create_special.h\
 xxintspecialcolvardir = $(includedir)/md++/interaction/special/colvar
 xxintspecialcolvar_HEADERS = special/colvar/colvar.h\
 	special/colvar/colvar_utils.h\
+	special/colvar/angle.h\
 	special/colvar/coordnum.h\
-	special/colvar/perturbed_coordnum.h
-
+	special/colvar/dihedral.h\
+	special/colvar/colvar_bias.h\
+	special/colvar/distance.h
+	
 xxintspecialxraydir = $(includedir)/md++/interaction/special/xray
 xxintspecialxray_HEADERS = special/xray/dens.h\
 	special/xray/sf.h\
@@ -209,8 +212,11 @@ libgrointeraction_la_SOURCES = interaction.cc\
 	special/perturbed_colvar_restraint_interaction.cc\
     special/colvar/colvar.cc\
     special/colvar/colvar_utils.cc\
+	special/colvar/angle.cc\
 	special/colvar/coordnum.cc\
-	special/colvar/perturbed_coordnum.cc\
+	special/colvar/dihedral.cc\
+	special/colvar/distance.cc\
+	special/colvar/colvar_bias.cc\
 	qmmm/qm_link.cc\
 	qmmm/qm_zone.cc\
 	qmmm/qm_worker.cc\

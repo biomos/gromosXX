@@ -1,16 +1,17 @@
-#ifndef INCLUDED_COORDNUM_COLVAR
-#define INCLUDED_COORDNUM_COLVAR
+#ifndef INCLUDED_ANGLE_COLVAR
+#define INCLUDED_ANGLE_COLVAR
 
 #include "colvar.h"
-#include "../../topology/topology.h"
+#include "../../../topology/topology.h"
+#include "../../../util/virtual_atom.h"
 
 namespace interaction {
 
-class Coordnum_Colvar : public Colvar {
+class Angle_Colvar : public Colvar {
 public:
-  Coordnum_Colvar() : Colvar("CoordinationNumber") {}
+  Angle_Colvar() : Colvar("Angle") {}
 
-  topology::coordnum_restraint_struct *params;
+  topology::angle_restraint_struct *params;
 
   int init(
     topology::Topology &topo,
@@ -23,6 +24,9 @@ public:
     topology::Topology &topo,
     configuration::Configuration &conf,
     simulation::Simulation &sim);
+
+private:
+  std::vector<util::Virtual_Atom> m_atoms;
 };
 
 }

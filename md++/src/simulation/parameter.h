@@ -4650,48 +4650,58 @@ namespace simulation
     } dfunct;
 
     /**
-    * @struct colvarres_struct
+    * @struct colvar_bias_spec
     * colvarres block
     */
-    struct colvarres_struct {
-      /**
-       * Constructor
-       * Default values:
-       * - colvarres 0 (no colvar restraints)
-       * - K 0
-       * - read 0
-       * - write 0
-       */
+    struct colvar_bias_spec {
+      std::string type;
 
-      colvarres_struct() : colvarres(colvar_restr_off), K(0.0), read(0), virial(0), tau(10.0), write(0){}
-      
-      /** 
-       * colvar restraints on/off
-       */
-      colvar_restr_enum colvarres;
-      
-      /**
-       * force constant K
-       */
-      double K;  
-      /**
-       * read on/off (not supported)
-       */
-      bool read;
-      /**
-       * compute virial contribution
-       */
-      unsigned int virial;     
-      /**
-       * memory time for time averaging 
-       */
+      double target;
+      double k;
+
+      int rah;           // raw RAH value for legacy distance dimensionality
+      int averaging;     // decoded AVG: 0 NONE, 1 TIME/EXP, 2 INV3
       double tau;
-      /**
-       * write on/off
-       */
-      unsigned int write;
-      
-    }/** colvar restraints parameters */ colvarres;    
+
+      unsigned int virial;
+      double linear_tail;
+
+      int force_scale;
+
+      colvar_bias_spec()
+        : type(""),
+          target(0.0),
+          k(0.0),
+          rah(0),
+          averaging(0),
+          tau(0.0),
+          virial(0),
+          linear_tail(0.0),
+          force_scale(0)
+      {}
+    };
+
+
+    /**
+     * @struct colvarres_struct
+     * colvarres block
+     */
+    struct colvarres_struct {
+      colvarres_struct()
+        : colvarres(colvar_restr_off),
+          ntwcv(0)
+      {}
+
+      colvar_restr_enum colvarres;
+      unsigned int ntwcv;
+
+      std::vector<colvar_bias_spec> bias_specs;
+
+    } colvarres;
+
+    bool colvar_write_enabled() const {
+      return colvarres.colvarres != colvar_restr_off && colvarres.ntwcv > 0;
+    }
 
     /**
      A struct to mark parts of the code as "under development"

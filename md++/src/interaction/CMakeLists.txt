@@ -62,8 +62,11 @@ set(INTERACTION_CC
     special/nemd.cc
     special/colvar_restraint_interaction.cc
     special/perturbed_colvar_restraint_interaction.cc
+    special/colvar/angle.cc
+    special/colvar/colvar_bias.cc
     special/colvar/coordnum.cc
-    special/colvar/perturbed_coordnum.cc
+    special/colvar/dihedral.cc
+    special/colvar/distance.cc
     special/colvar/colvar_utils.cc
     special/colvar/colvar.cc
     special/xray/dens.cc

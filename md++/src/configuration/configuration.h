@@ -488,6 +488,10 @@ namespace configuration {
          */
         std::vector<double> values;
         /**
+         * the collective variable type names
+         */
+        std::vector<std::string> types;
+        /**
          * the energies
          */
         std::vector<double> energies;
@@ -1008,5 +1012,4 @@ namespace configuration {
 } // configuration
 
 #endif
-
 

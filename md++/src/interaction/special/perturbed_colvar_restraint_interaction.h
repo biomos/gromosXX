@@ -32,22 +32,27 @@ namespace interaction
      * init
      */
     virtual int init(topology::Topology &topo, 
-		     configuration::Configuration &conf,
-		     simulation::Simulation &sim,
-		     std::ostream &os = std::cout,
-		     bool quiet = false);
+                     configuration::Configuration &conf,
+                     simulation::Simulation &sim,
+                     std::ostream &os = std::cout,
+                     bool quiet = false);
     /**
      * calculate the interactions.
      */
     virtual int calculate_interactions(topology::Topology & topo,
-				       configuration::Configuration & conf,
-				       simulation::Simulation & sim);
+                                       configuration::Configuration & conf,
+                                       simulation::Simulation & sim);
     
   private:
     /**
      * store pointers to all specified colvars
      */  
      std::vector<Colvar *> m_colvars;
+
+    /**
+     * per-CV force constants read from COLVARRES bias_specs
+     */
+     std::vector<double> m_force_constants;
 
     /**
      * put the bias on the sum of all collective variables
@@ -65,7 +70,8 @@ namespace interaction
      double apply_restraint(topology::Topology & topo,
       configuration::Configuration & conf, simulation::Simulation & sim, 
       std::vector< util::Virtual_Atom* > atoms, 
-      math::VArray &derivatives, double &curr, double &target, double weight) ;
+      math::VArray &derivatives, double &curr, double &target, double weight,
+      double K) ;
     
   };
   
