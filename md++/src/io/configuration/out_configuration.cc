@@ -2528,14 +2528,17 @@ void io::Out_Configuration::_print_colvar_restraints(
     
     int i;
     for (i = 1; v_it != v_to; ++v_it, ++ene_it, ++i) {
+       std::string type = "UNKNOWN";
        if (type_it != type_to) {
-         os << std::setw(m_width) << *type_it;
+         type = *type_it;
          ++type_it;
        }
-       else {
-         os << std::setw(m_width) << "UNKNOWN";
+       double value = *v_it;
+       if (type == "ANGLE" || type == "DIHEDRAL") {
+         value *= 180.0 / math::Pi;
        }
-       os << std::setw(m_width) << *v_it
+       os << std::setw(m_width) << type
+          << std::setw(m_width) << value
           << std::setw(m_width) << *ene_it;
        os << std::endl;
     }

@@ -93,6 +93,11 @@ const char *force_scale_name(interaction::Colvar_Bias::Force_Scale_Mode mode)
   return "none";
 }
 
+bool angular_type(const std::string &type)
+{
+  return type == "ANGLE" || type == "DIHEDRAL";
+}
+
 template<math::boundary_enum B>
 static void _apply_colvar_virial(
   topology::Topology &topo,
@@ -309,6 +314,14 @@ double interaction::Colvar_Restraint_Interaction
         << " dE/dinstant " << result.dE_dinstant
         << " force_scale " << result.force_scale);
 
+  if (angular_type(type)) {
+    DEBUG(9, "COLVARRES angular step " << sim.steps()
+          << " type " << type
+          << " value_deg " << curr * 180.0 / math::Pi
+          << " restrained_value_deg " << result.value * 180.0 / math::Pi
+          << " target_deg " << settings.target * 180.0 / math::Pi);
+  }
+
   if (result.linear) {
     DEBUG(9, "COLVARRES linearized step " << sim.steps()
           << " type " << type
@@ -434,6 +447,12 @@ int interaction::Colvar_Restraint_Interaction::init(topology::Topology &topo,
           << " use_time_average " << settings.use_time_average
           << " tau_exp " << settings.exponential_term
           << " force_scale " << force_scale_name(settings.force_scale_mode));
+
+    if (angular_type(spec.type)) {
+      DEBUG(9, "COLVARRES init angular cv " << i + 1
+            << " type " << spec.type
+            << " target_deg " << settings.target * 180.0 / math::Pi);
+    }
 
     Colvar_Bias *bias = new Colvar_Bias(settings);
 

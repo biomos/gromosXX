@@ -255,6 +255,7 @@ void io::In_Colvarres::read(topology::Topology& topo,
         const double input_target = spec.target;
         if (spec.type == "ANGLE" || spec.type == "DIHEDRAL") {
           spec.target *= math::Pi / 180.0;
+          spec.linear_tail *= math::Pi / 180.0;
         }
 
         spec.rah = rah;
