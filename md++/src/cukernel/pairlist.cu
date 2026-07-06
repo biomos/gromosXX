@@ -27,6 +27,7 @@
 #include <cukernel/gpu_status.h>
 
 #include <cukernel/lib/math.h>
+#include <cukernel/lib/utils.h>
 #include <util/debug.h>
 
 
