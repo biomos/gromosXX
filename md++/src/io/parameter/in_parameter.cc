@@ -1907,7 +1907,7 @@ void io::In_Parameter::read_DISTANCERES(simulation::Parameter &param,
     exampleblock << "#         0: generate initial averages\n";
     exampleblock << "#         1: read from configuration\n";
     exampleblock << "#    CDIR >= 0.0 force constant for distance restraining\n";
-    exampleblock << "#    DIR0 > 0.0 distance offset in restraining function\n";
+    exampleblock << "#    RLIN > 0.0 distance offset after which restraining is linearized\n";
     exampleblock << "#  TAUDIR > 0.0 coupling time for time averaging\n";
     exampleblock << "# FORCESCALE 0..2 controls approximation of force scaling\n";
     exampleblock << "#         0: approximate d<r>/dr = 1\n";
@@ -1917,7 +1917,7 @@ void io::In_Parameter::read_DISTANCERES(simulation::Parameter &param,
     exampleblock << "#         0: no contribution\n";
     exampleblock << "#         1: distance restraints contribute to virial\n";
     exampleblock << "#  NTWDIR >= 0 write every NTWDIRth step dist. restr. information to external file\n";
-    exampleblock << "#   NTDIR  NTDIRA    CDIR    DIR0  TAUDIR  FORCESCALE  VDIR  NTWDIR\n";
+    exampleblock << "#   NTDIR  NTDIRA    CDIR    RLIN  TAUDIR  FORCESCALE  VDIR  NTWDIR\n";
     exampleblock << "        0       0     0.0     1.0     0.0           0     0       0\n";
     exampleblock << "END\n";
 
@@ -1932,7 +1932,7 @@ void io::In_Parameter::read_DISTANCERES(simulation::Parameter &param,
         block.get_next_parameter("NTDIR", param.distanceres.distanceres, "", "0, 1, -1, 2, -2");
         block.get_next_parameter("NTDIRA", ntdira, "", "0,1");
         block.get_next_parameter("CDIR", param.distanceres.K, ">=0", "");
-        block.get_next_parameter("DIR0", param.distanceres.r_linear, ">=0", "");
+        block.get_next_parameter("RLIN", param.distanceres.r_linear, ">0", "");
         block.get_next_parameter("TAUDIR", param.distanceres.tau, ">0", "");
         block.get_next_parameter("FORCESCALE", param.distanceres.forcescale, "", "0, 1, 2");
         block.get_next_parameter("VDIR", param.distanceres.virial, "", "0,1");
@@ -1951,8 +1951,7 @@ void io::In_Parameter::read_DISTANCERES(simulation::Parameter &param,
             io::messages.add("DISTANCERES block: NTDIRA=1 but NTDIR > 0 - DISRESEXPAVE ignored",
                              "In_Parameter", io::message::warning);
         }
-
-        block.get_final_messages();
+	block.get_final_messages();
     }
 } // DISTANCERES
 
