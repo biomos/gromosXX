@@ -1907,7 +1907,7 @@ void io::In_Parameter::read_DISTANCERES(simulation::Parameter &param,
     exampleblock << "#         0: generate initial averages\n";
     exampleblock << "#         1: read from configuration\n";
     exampleblock << "#    CDIR >= 0.0 force constant for distance restraining\n";
-    exampleblock << "#    RLIN > 0.0 distance offset in restraining function\n";
+    exampleblock << "#    RLIN > 0.0 distance offset after which restraining is linearized\n";
     exampleblock << "#  TAUDIR > 0.0 coupling time for time averaging\n";
     exampleblock << "# FORCESCALE 0..2 controls approximation of force scaling\n";
     exampleblock << "#         0: approximate d<r>/dr = 1\n";
@@ -1932,7 +1932,7 @@ void io::In_Parameter::read_DISTANCERES(simulation::Parameter &param,
         block.get_next_parameter("NTDIR", param.distanceres.distanceres, "", "0, 1, -1, 2, -2");
         block.get_next_parameter("NTDIRA", ntdira, "", "0,1");
         block.get_next_parameter("CDIR", param.distanceres.K, ">=0", "");
-        block.get_next_parameter("RLIN", param.distanceres.r_linear, ">=0", "");
+        block.get_next_parameter("RLIN", param.distanceres.r_linear, ">0", "");
         block.get_next_parameter("TAUDIR", param.distanceres.tau, ">0", "");
         block.get_next_parameter("FORCESCALE", param.distanceres.forcescale, "", "0, 1, 2");
         block.get_next_parameter("VDIR", param.distanceres.virial, "", "0,1");
@@ -1951,12 +1951,6 @@ void io::In_Parameter::read_DISTANCERES(simulation::Parameter &param,
             io::messages.add("DISTANCERES block: NTDIRA=1 but NTDIR > 0 - DISRESEXPAVE ignored",
                              "In_Parameter", io::message::warning);
         }
-	if (param.distanceres.r_linear == 0.0 && param.distanceres.distanceres != 0) {
-            io::messages.add("DISTANCERES block: RLIN is set to 0.0.\n"
-                     "         The harmonic restraining potential is linearized at the potential minimum;\n"
-                     "         therefore, the restraining potential will always be zero.",
-                     "In_Parameter", io::message::warning);
-	}
 	block.get_final_messages();
     }
 } // DISTANCERES
