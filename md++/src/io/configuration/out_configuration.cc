@@ -2549,6 +2549,8 @@ void io::Out_Configuration::_print_colvar_restraints(
   std::vector<double>::const_iterator pv_it = conf.special().pertcolvarres.values.begin(),
           pv_to = conf.special().pertcolvarres.values.end();
   std::vector<double>::const_iterator pene_it = conf.special().pertcolvarres.energies.begin();
+  std::vector<std::string>::const_iterator ptype_it = conf.special().pertcolvarres.types.begin(),
+          ptype_to = conf.special().pertcolvarres.types.end();
   
   if (conf.special().pertcolvarres.values.size() > 0) {
     os << "PERTCOLVARRESDATA" << std::endl;
@@ -2556,8 +2558,18 @@ void io::Out_Configuration::_print_colvar_restraints(
         
     int i;
     for (i = 1; pv_it != pv_to; ++pv_it, ++pene_it, ++i) {
-       os << std::setw(m_width) << *pv_it
-       << std::setw(m_width) << *pene_it;
+       std::string type = "UNKNOWN";
+       if (ptype_it != ptype_to) {
+         type = *ptype_it;
+         ++ptype_it;
+       }
+       double value = *pv_it;
+       if (type == "ANGLE" || type == "DIHEDRAL") {
+         value *= 180.0 / math::Pi;
+       }
+       os << std::setw(m_width) << type
+          << std::setw(m_width) << value
+          << std::setw(m_width) << *pene_it;
        os << std::endl;
     }
     os << "END" << std::endl;

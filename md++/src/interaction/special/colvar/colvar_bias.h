@@ -74,6 +74,7 @@ namespace interaction {
     explicit Colvar_Bias(const Settings &settings);
 
     void set_settings(const Settings &settings);
+    void update_settings_preserve_state(const Settings &settings);
     const Settings &settings() const;
 
     void reset_average(double instant_value);

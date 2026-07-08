@@ -7,6 +7,8 @@
 #define INCLUDED_PERTURBED_COLVAR_RESTRAINT_INTERACTION_H
 
 #include "../../interaction/special/colvar/colvar.h"
+#include "../../interaction/special/colvar/colvar_bias.h"
+#include "../../simulation/parameter.h"
 
 namespace interaction
 {
@@ -44,15 +46,19 @@ namespace interaction
                                        simulation::Simulation & sim);
     
   private:
-    /**
-     * store pointers to all specified colvars
-     */  
-     std::vector<Colvar *> m_colvars;
+    struct Term {
+      Term() : cv(NULL), bias(NULL) {}
+      Colvar *cv;
+      Colvar_Bias *bias;
+      simulation::Parameter::colvar_bias_spec A;
+      simulation::Parameter::colvar_bias_spec B;
+      std::string type;
+    };
 
     /**
-     * per-CV force constants read from COLVARRES bias_specs
-     */
-     std::vector<double> m_force_constants;
+     * store all specified perturbed colvars
+     */  
+     std::vector<Term> m_terms;
 
     /**
      * put the bias on the sum of all collective variables
@@ -68,10 +74,13 @@ namespace interaction
      * using the biasing function specified in the COLVARRES block
      */
      double apply_restraint(topology::Topology & topo,
-      configuration::Configuration & conf, simulation::Simulation & sim, 
-      std::vector< util::Virtual_Atom* > atoms, 
-      math::VArray &derivatives, double &curr, double &target, double weight,
-      double K) ;
+      configuration::Configuration & conf, simulation::Simulation & sim,
+      Term &term, double lambda, double lambda_derivative,
+      unsigned int energy_group);
+
+     Colvar_Bias::Settings settings_from_spec(
+      const simulation::Parameter::colvar_bias_spec &spec,
+      simulation::Simulation &sim) const;
     
   };
   

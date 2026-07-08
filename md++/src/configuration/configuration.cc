@@ -196,6 +196,12 @@ configuration::Configuration::Configuration
   special().colvarres.types=conf.special().colvarres.types;
   special().colvarres.totv=conf.special().colvarres.totv;
   special().colvarres.tote=conf.special().colvarres.tote;
+
+  special().pertcolvarres.energies=conf.special().pertcolvarres.energies;
+  special().pertcolvarres.values=conf.special().pertcolvarres.values;
+  special().pertcolvarres.types=conf.special().pertcolvarres.types;
+  special().pertcolvarres.totv=conf.special().pertcolvarres.totv;
+  special().pertcolvarres.tote=conf.special().pertcolvarres.tote;
   
   special().angleres.energy = conf.special().angleres.energy;
   special().angleres.d = conf.special().angleres.d;
@@ -335,6 +341,12 @@ configuration::Configuration & configuration::Configuration::operator=
   special().colvarres.types=conf.special().colvarres.types;
   special().colvarres.totv=conf.special().colvarres.totv;
   special().colvarres.tote=conf.special().colvarres.tote;
+
+  special().pertcolvarres.energies=conf.special().pertcolvarres.energies;
+  special().pertcolvarres.values=conf.special().pertcolvarres.values;
+  special().pertcolvarres.types=conf.special().pertcolvarres.types;
+  special().pertcolvarres.totv=conf.special().pertcolvarres.totv;
+  special().pertcolvarres.tote=conf.special().pertcolvarres.tote;
   
   special().angleres.energy = conf.special().angleres.energy;
   special().angleres.d = conf.special().angleres.d;

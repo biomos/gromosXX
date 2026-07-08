@@ -98,6 +98,18 @@ bool angular_type(const std::string &type)
   return type == "ANGLE" || type == "DIHEDRAL";
 }
 
+size_t count_specs(
+    const std::vector<simulation::Parameter::colvar_bias_spec> &specs,
+    const std::string &type)
+{
+  size_t n = 0;
+  for (std::vector<simulation::Parameter::colvar_bias_spec>::const_iterator
+       it = specs.begin(), to = specs.end(); it != to; ++it) {
+    if (it->type == type) ++n;
+  }
+  return n;
+}
+
 template<math::boundary_enum B>
 static void _apply_colvar_virial(
   topology::Topology &topo,
@@ -365,6 +377,14 @@ int interaction::Colvar_Restraint_Interaction::init(topology::Topology &topo,
 
   const std::vector<simulation::Parameter::colvar_bias_spec> &specs =
     sim.param().colvarres.bias_specs;
+  const size_t pert_distance_count =
+    count_specs(sim.param().colvarres.pert_bias_specs, "DISTANCE") / 2;
+  const size_t pert_angle_count =
+    count_specs(sim.param().colvarres.pert_bias_specs, "ANGLE") / 2;
+  const size_t pert_dihedral_count =
+    count_specs(sim.param().colvarres.pert_bias_specs, "DIHEDRAL") / 2;
+  const size_t pert_coordnum_count =
+    count_specs(sim.param().colvarres.pert_bias_specs, "COORDNUM") / 2;
 
   for (size_t i = 0; i < specs.size(); ++i) {
     const simulation::Parameter::colvar_bias_spec &spec = specs[i];
@@ -435,7 +455,9 @@ int interaction::Colvar_Restraint_Interaction::init(topology::Topology &topo,
     Colvar_Bias::Settings settings = settings_from_spec(spec, sim);
 
     DEBUG(9, "COLVARRES init cv " << i + 1
+          << " index " << spec.index
           << " type " << spec.type
+          << " method " << spec.method
           << " target " << settings.target
           << " K " << settings.k
           << " weight " << settings.weight
@@ -467,22 +489,22 @@ int interaction::Colvar_Restraint_Interaction::init(topology::Topology &topo,
     m_colvar_types.push_back(spec.type);
   }
 
-  if (distance_index < topo.distance_restraints().size()) {
+  if (distance_index + pert_distance_count < topo.distance_restraints().size()) {
     io::messages.add("DISTANCERESSPEC contains more geometries than COLVARRES DISTANCE entries; extra geometries are ignored.",
                      "Colvar", io::message::warning);
   }
 
-  if (angle_index < topo.angle_restraints().size()) {
+  if (angle_index + pert_angle_count < topo.angle_restraints().size()) {
     io::messages.add("ANGRESSPEC contains more geometries than COLVARRES ANGLE entries; extra geometries are ignored.",
                      "Colvar", io::message::warning);
   }
 
-  if (dihedral_index < topo.dihedral_restraints().size()) {
+  if (dihedral_index + pert_dihedral_count < topo.dihedral_restraints().size()) {
     io::messages.add("DIHEDRALRESSPEC contains more geometries than COLVARRES DIHEDRAL entries; extra geometries are ignored.",
                      "Colvar", io::message::warning);
   }
 
-  if (coordnum_index < topo.coordnum_restraint().size()) {
+  if (coordnum_index + pert_coordnum_count < topo.coordnum_restraint().size()) {
     io::messages.add("COORDNUMRESSPEC contains more geometries than COLVARRES COORDNUM entries; extra geometries are ignored.",
                      "Colvar", io::message::warning);
   }

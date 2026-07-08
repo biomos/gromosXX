@@ -172,15 +172,15 @@ int interaction::create_special(interaction::Forcefield & ff,
       os <<"\tCollective variable restraints\n";
     interaction::Colvar_Restraint_Interaction *cr =
       new interaction::Colvar_Restraint_Interaction();
-      
+
     ff.push_back(cr);
     DEBUG(10, "COLVAR interaction pushed back");
 
     if (param.perturbation.perturbation){
       if(!quiet)
-  os <<"\tCollective variable restraints\n";
+        os <<"\tPerturbed collective variable restraints\n";
       interaction::Perturbed_Colvar_Restraint_Interaction *pcr =
-  new interaction::Perturbed_Colvar_Restraint_Interaction();
+        new interaction::Perturbed_Colvar_Restraint_Interaction();
       
       ff.push_back(pcr);
     }

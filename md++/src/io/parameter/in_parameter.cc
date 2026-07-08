@@ -6083,6 +6083,7 @@ void io::In_Parameter::read_COLVARRES(simulation::Parameter &param,
   block_read.insert(blockname);
 
   param.colvarres.bias_specs.clear();
+  param.colvarres.pert_bias_specs.clear();
 
   _lineStream.clear();
   std::string s;

@@ -4654,30 +4654,36 @@ namespace simulation
     * colvarres block
     */
     struct colvar_bias_spec {
+      unsigned int index;
       std::string type;
 
       double target;
       double k;
 
       int rah;           // raw RAH value for legacy distance dimensionality
-      int averaging;     // decoded AVG: 0 NONE, 1 TIME/EXP, 2 INV3
+      int method;        // raw METHOD value from the COLVAR restraint file
+      int averaging;     // decoded METHOD: 0 NONE, 1 TIME/EXP, 2 INV3
       double tau;
 
       unsigned int virial;
       double linear_tail;
 
       int force_scale;
+      bool constraining;
 
       colvar_bias_spec()
-        : type(""),
+        : index(0),
+          type(""),
           target(0.0),
           k(0.0),
           rah(0),
+          method(0),
           averaging(0),
           tau(0.0),
           virial(0),
           linear_tail(0.0),
-          force_scale(0)
+          force_scale(0),
+          constraining(false)
       {}
     };
 
@@ -4696,6 +4702,7 @@ namespace simulation
       unsigned int ntwcv;
 
       std::vector<colvar_bias_spec> bias_specs;
+      std::vector<colvar_bias_spec> pert_bias_specs;
 
     } colvarres;
 

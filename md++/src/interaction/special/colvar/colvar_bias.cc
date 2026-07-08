@@ -109,6 +109,11 @@ void Colvar_Bias::set_settings(const Settings &settings)
   m_average_state = 0.0;
 }
 
+void Colvar_Bias::update_settings_preserve_state(const Settings &settings)
+{
+  m_settings = settings;
+}
+
 const Colvar_Bias::Settings &Colvar_Bias::settings() const
 {
   return m_settings;
