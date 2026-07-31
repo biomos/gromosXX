@@ -497,13 +497,19 @@ AC_DEFUN([AM_WITH_SCHNETPACK],[
           dnl for Python >=3.8
           : ${PYLDFLAGS="$(${PYTHON}-config --ldflags --embed)"}
         fi
+        PYLIBDIR=$(${PYTHON} -c "import sysconfig; print(sysconfig.get_config_var('LIBDIR'))")
+        if test -n "${PYLIBDIR}"; then
+          PYLDFLAGS="${PYLDFLAGS} -Wl,-rpath,${PYLIBDIR}"
+        fi
         AC_MSG_CHECKING([for pybind11])
         working_pb11=no
         cat>conftest.cc<<EOF
         #include <pybind11/embed.h>
         int main() { pybind11::scoped_interpreter g; }
 EOF
-        if ${CXX} ${MY_CXXFLAGS} ${PYFLAGS} conftest.cc -o conftest.o ${PYLDFLAGS} && test -f conftest.o; then
+        if ${CXX} ${MY_CXXFLAGS} ${PYFLAGS} conftest.cc -o conftest.o ${PYLDFLAGS} \
+            && test -f conftest.o \
+            && ./conftest.o >/dev/null 2>&1; then
           working_pb11=yes
         fi
         rm -f conftest.cc conftest.o
