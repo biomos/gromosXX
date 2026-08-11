@@ -499,7 +499,7 @@ AC_DEFUN([AM_WITH_SCHNETPACK],[
         fi
         PYLIBDIR=$(${PYTHON} -c "import sysconfig; print(sysconfig.get_config_var('LIBDIR'))")
         if test -n "${PYLIBDIR}"; then
-          PYLDFLAGS="${PYLDFLAGS} -Wl,-rpath,${PYLIBDIR}"
+          PYLDFLAGS="${PYLDFLAGS} -Wl,--enable-new-dtags,-rpath,${PYLIBDIR}"
         fi
         AC_MSG_CHECKING([for pybind11])
         working_pb11=no
