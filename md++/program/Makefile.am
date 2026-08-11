@@ -1,5 +1,6 @@
 AM_CXXFLAGS = @MY_CXXFLAGS@
 AM_CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/src
+AM_LDFLAGS = $(PYLDFLAGS)
 
 include_HEADERS =
 
