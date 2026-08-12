@@ -15,11 +15,11 @@ option(USE_CUDA "Enable CUDA support" OFF)
 
 if(USE_CUDA)
     find_package(CUDAToolkit REQUIRED)
+    set(CMAKE_CUDA_ARCHITECTURES 80 86 89 90)
     enable_language(CUDA)
     set(CMAKE_CUDA_STANDARD 17)
     set(CMAKE_CUDA_STANDARD_REQUIRED ON)
     set(CMAKE_CUDA_SEPARABLE_COMPILATION ON)
-    set(CMAKE_CUDA_ARCHITECTURES 80 86 89 90)
     add_compile_definitions(USE_CUDA)
     
     # Add CUDA include dirs and compile defs globally:
