@@ -136,3 +136,64 @@ check — plug it into the existing GROMOS regression-test infrastructure.
   streams and events.
 - Don't put GPU-mirror state back into `topology::Topology` or
   `configuration::Configuration`.
+
+## Git workflow
+
+- Always work on a branch named `claude/<short-task-description>`, never commit directly to `main`
+- Commit after each logical, working change with a clear message
+- Never force-push
+- Never merge to `main` yourself — leave that for human review
+- Run tests before every commit; do not commit code that fails tests
+
+## Build
+
+Build out-of-tree in a dedicated directory so source stays clean:
+
+​```bash
+mkdir -p build && cd build
+../Config.sh          # only needed once, or after configure.ac changes
+../configure --disable-debug --disable-shared --enable-static --enable-openmp --with-cuda
+make -j $(nproc)
+make check
+​```
+
+Rules:
+- Do not run `Config.sh` on every build — only if `configure` is missing or `configure.ac`/`Makefile.am` changed.
+- Always run from a clean `build/` directory if you changed `configure` flags; run `make clean` first if switching flags on an existing build dir.
+- A build is only "done" when `make -j $(nproc)` exits 0 AND `make check` exits 0. Do not report success otherwise.
+
+## Build/test failure procedure
+
+If `configure` fails:
+1. Read the exact error in the output (not just the summary at the end).
+2. Check `config.log` for the specific failing check.
+3. Do not disable a feature to work around a missing dependency — report what's missing instead, unless explicitly told the dependency is optional.
+
+If `make` fails:
+1. Fix the actual compile/link error shown — do not suppress warnings-as-errors by weakening flags unless the warning is a false positive you can justify in the commit message.
+2. Re-run `make -j $(nproc)` after each fix; do not batch multiple unverified fixes before re-testing.
+
+If `make check` fails:
+1. Identify which specific test(s) failed and read their output/log (usually in `build/*.log` or `test-suite.log`).
+2. Distinguish a real bug (code produces wrong result) from a broken test (test itself is outdated/incorrect) — fix the actual bug by default; only modify a test if you can justify the test itself is wrong.
+3. Re-run only the failed test first if possible, then the full suite, before considering it fixed.
+4. If a fix is non-obvious after 2-3 attempts, stop and leave a clear note in the commit/PR description rather than making increasingly speculative changes.
+
+## Writing new tests
+
+- New tests go in src/check
+- Follow the existing test file naming/structure — look at 2-3 existing tests before writing a new one
+- Register new test files in the relevant `Makefile.am` (`TESTS = ...` list) so `make check` picks them up automatically
+- Every bug fix should come with a regression test that fails before the fix and passes after, where practical
+- Run `make check` after adding a test to confirm it's actually being picked up by the harness (not silently skipped)
+
+## CUDA build notes
+- Verify `nvcc --version` succeeds before building; if CUDA isn't found, do not silently drop `--with-cuda` — report it.
+- If a specific GPU compute capability / arch flag is required and not autodetected, check `configure --help` output for a `--with-cuda-arch`-style flag rather than guessing.
+
+## Standard workflow
+1. Make code change
+2. Build (`make -j $(nproc)`)
+3. Test (`make check`)
+4. If failures: diagnose → fix → rebuild → retest (do not skip straight to committing)
+5. Commit only once build + full test suite pass
