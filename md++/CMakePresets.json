@@ -11,6 +11,7 @@
             "displayName": "CUDA Enabled",
             "description": "Build with CUDA support",
             "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/cuda-on",
             "cacheVariables": {
                 "USE_CUDA": "ON",
                 "CMAKE_BUILD_TYPE": "Release"
@@ -21,6 +22,7 @@
             "displayName": "CUDA Disabled",
             "description": "Build without CUDA support",
             "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/cuda-off",
             "cacheVariables": {
                 "USE_CUDA": "OFF",
                 "CMAKE_BUILD_TYPE": "Release"
@@ -29,8 +31,9 @@
         {
             "name": "cuda-on-debug",
             "displayName": "CUDA Enabled Debug",
-            "description": "Debug Build with CUDA support",
+            "description": "Debug build with CUDA support",
             "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/cuda-on-debug",
             "cacheVariables": {
                 "USE_CUDA": "ON",
                 "CMAKE_BUILD_TYPE": "Debug"
@@ -39,8 +42,9 @@
         {
             "name": "cuda-off-debug",
             "displayName": "CUDA Disabled Debug",
-            "description": "Debug Build without CUDA support",
+            "description": "Debug build without CUDA support",
             "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/cuda-off-debug",
             "cacheVariables": {
                 "USE_CUDA": "OFF",
                 "CMAKE_BUILD_TYPE": "Debug"
@@ -49,28 +53,48 @@
     ],
     "buildPresets": [
         {
-            "name": "build-cuda-on",
-            "configurePreset": "cuda-on"
+            "name": "cuda-on",
+            "configurePreset": "cuda-on",
+            "jobs": 0
         },
         {
-            "name": "build-cuda-off",
-            "configurePreset": "cuda-off"
+            "name": "cuda-off",
+            "configurePreset": "cuda-off",
+            "jobs": 0
         },
         {
-            "name": "build-cuda-on-debug",
-            "configurePreset": "cuda-on-debug"
+            "name": "cuda-on-debug",
+            "configurePreset": "cuda-on-debug",
+            "jobs": 0
         },
         {
-            "name": "build-cuda-off-debug",
-            "configurePreset": "cuda-off-debug"
+            "name": "cuda-off-debug",
+            "configurePreset": "cuda-off-debug",
+            "jobs": 0
         }
     ],
     "testPresets": [
         {
-            "name": "test-cuda-on-debug",
-            "description": "Minimal tests",
+            "name": "cuda-on",
+            "configurePreset": "cuda-on",
+            "output": { "outputOnFailure": true }
+        },
+        {
+            "name": "cuda-off",
+            "configurePreset": "cuda-off",
+            "output": { "outputOnFailure": true }
+        },
+        {
+            "name": "cuda-on-debug",
             "displayName": "Minimal tests",
-            "configurePreset": "cuda-on-debug"
+            "description": "Minimal tests",
+            "configurePreset": "cuda-on-debug",
+            "output": { "outputOnFailure": true }
+        },
+        {
+            "name": "cuda-off-debug",
+            "configurePreset": "cuda-off-debug",
+            "output": { "outputOnFailure": true }
         }
     ]
 }
