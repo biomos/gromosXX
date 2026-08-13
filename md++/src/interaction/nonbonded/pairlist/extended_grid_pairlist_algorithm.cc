@@ -78,7 +78,9 @@ int interaction::Extended_Grid_Pairlist_Algorithm::init
     return 1;
   }
   
-  set_cutoff(sim.param().pairlist.cutoff_short, 
+  warn_if_skin_ignored(sim, "Extended_Grid_Pairlist_Algorithm");
+
+  set_cutoff(sim.param().pairlist.cutoff_short,
 	     sim.param().pairlist.cutoff_long);
 
   grid_properties(topo, conf, sim);

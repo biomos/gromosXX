@@ -1,0 +1,232 @@
+# Real tile-based GPU pairlist: design
+
+Status: **design proposal, not yet implemented.** This is `PLAN.md` §10
+roadmap step 5 ("port the legacy grid/cell pairlist onto
+`Container`/`TileVecT`/`Periodicity`" — "the largest single piece of new
+work"). `PLAN.md` D5/D6 and §6.2 already fixed the high-level shape (one
+GPU-native pairlist, candidate-build + short/long-classify as two phases,
+chargegroup/atomic as a template axis); this document works out the
+concrete kernels, data structures, and gaps needed to actually build it,
+and flags the sub-decisions that still need sign-off before code gets
+written.
+
+## 1. Inventory: what already exists and what's missing
+
+**Usable as-is:**
+- `gpu::Interaction_TileT<32,32>` / `TileVecT` / `TileContainerT` (tile.h) —
+  the tile type and the atomic-`push_back`, overflow-tracked unified-memory
+  vector holding them. `TileVecT::push_back` is finished and correct.
+- `gpu::Container<T>` (container.h) — pitched jagged array with atomic
+  `push_back`/`reserve_strip`. Good fit for a fixed-capacity cell list.
+- `gpu::Periodicity<BOUNDARY>::set_cell_size`/`get_cell`/
+  `prepare_chargegroup` (math/periodicity.h) — cell sizing and per-
+  chargegroup cell assignment + cog computation + box-wrapping.
+  **Gap: `set_cell_size` only has real logic for `vacuum` and
+  `rectangular`; `triclinic`/`truncoct` fall into an unimplemented branch
+  (prints to `std::cerr`, leaves cell size zero).** See §4.
+- `gpu::prepare_cog_kernel`/`put_chargegroups_into_box_kernel`
+  (kernels/periodicity.cu) — real, mostly-working: computes cog, wraps into
+  box, computes cell id (`ushort4` with a Morton index in `.w`) per
+  chargegroup, explicitly instantiated for vacuum/rectangular/triclinic
+  (triclinic instantiated but not functionally correct per the gap above).
+  **Bug to fix while touching this: `CUDA_Pairlist_Algorithm_Impl_gpu.cu`'s
+  `_prepare_cog` launches it with `dim3 dimGrid(1)` — a single block
+  regardless of chargegroup count.**
+
+**Real prior art, not reusable verbatim (`gpu_legacy`):**
+- `cukernel::interaction::GridT<T>` (grid.h/grid.cu) — 3-pass cell-list
+  build (count via atomic increment, then an **O(cells) serial scan** per
+  thread to compute each cell's start pointer, then scatter). The middle
+  pass is the wrong instinct for a from-scratch implementation --
+  `gpu::Container<T>`'s atomic `reserve_strip`/`push_back` gets the same
+  result in one pass without a prefix-sum-shaped placeholder. Also
+  contains a literal syntax error (`cuinteraction::::assign_cells`,
+  double-colon) confirming this file doesn't currently compile — read for
+  the algorithm shape, not the code.
+- `cukernel::interaction::find_pairs_neighbour`/`find_pairs_self`
+  (grid_pairlist.h/.cu) — real, documented (measured "+15% unordered",
+  "100x monolith-over-looping") cell-pair distance-test kernels. Useful
+  reference for the shared-memory staging pattern and the atomic
+  `reserve_strip` offset-reservation idea, **but it produces a flat,
+  per-atom pairlist (conceptually the same ragged shape as CPU `Pairlist`,
+  just built on GPU), not tiles, and has no exclusion handling at all.**
+  It answers "how do you find neighbor pairs from a cell grid on GPU," not
+  "how do you fill an `Interaction_TileT`."
+
+**Missing entirely (new work, not stubs to fill in):**
+1. **Exclusions are not represented on the GPU side at all.**
+   `gpu::TopologyView` today has `iac`/`mass`/`inverse_mass`/`charge`/
+   `chargegroup` and counts — nothing for 1-2/1-3/1-4 exclusions.
+   `topology::Topology::exclusion(i)` returns a sorted `std::vector<int>`
+   of `j > i` partners, host-side, ragged, built once at topology-read time
+   and static for the rest of a normal (non-perturbed-topology-reload) run.
+   This needs a GPU-friendly precomputed form, built once (not per pairlist
+   rebuild), that a tile-classification kernel can query to bake exclusion
+   bits into `Interaction_TileT::mask`.
+2. **The `skin` parameter (`PLAN.md` D7) doesn't exist on `plist_struct`
+   yet.** Needed as the candidate-build radius offset
+   (`cutoff_long + skin`).
+3. **No atom-level (as opposed to chargegroup-level) cell assignment
+   exists**, needed for the `atomic_cutoff` axis of D6.
+4. **No cluster/block formation.** See §2 -- this is the actual "how do
+   32 atoms become a tile row" question, and nothing in the tree answers
+   it yet.
+
+## 2. The central design decision: how do 32 atoms become a tile row?
+
+`Interaction_TileT<32,32>` needs its 32-atom "row" and 32-atom "column" to
+be *fixed-size, contiguous* blocks of *some* ordering of atoms/chargegroups
+-- a cell from `Periodicity::get_cell` is not fixed-size (a cell can have 3
+atoms or 80, depending on local density). Two ways to reconcile that:
+
+- **(A) Cell-native, padded tiles.** Keep cells as the unit; when a cell
+  has fewer than 32 members, pad the tile with sentinel/invalid entries
+  (masked off). Tiles get generated per cell-pair (self + neighbor cells,
+  as in `gpu_legacy`'s `find_pairs_self`/`find_pairs_neighbour`). Simple
+  mentally, closely follows the legacy code's structure, but wastes
+  occupancy whenever cells are smaller than 32 (common unless cell size is
+  tuned so each cell holds close to 32 atoms, which fights against
+  "cell size just above the cutoff" from `set_cell_size`), and produces a
+  variable, data-dependent number of tiles per cell-pair that's awkward to
+  reason about for the short/long classification pass.
+- **(B) Sorted fixed-size blocks ("cluster list"), GROMACS/OpenMM-style.**
+  Reorder chargegroups (or atoms, for `atomic_cutoff`) once per rebuild
+  into a single spatially-coherent sequence (sort by cell id, using the
+  Morton index already computed in `ushort4.w` as the sort key -- so
+  spatially close atoms end up index-adjacent), then simply chunk that
+  sequence into fixed 32-wide blocks. A block's bounding sphere/box is
+  compared against neighboring blocks' bounding volumes (not full N×N)
+  to decide which block-pairs become candidate tiles. This is the
+  standard, well-proven approach (GROMACS "nbnxm" cluster pairlist, OpenMM
+  similarly) specifically because it fits fixed-width SIMD/warp tiles
+  without padding waste, and it makes "how many tiles total" driven by
+  block-bounding-volume tests rather than raw cell occupancy.
+
+**Recommendation: (B).** It's the reason `Interaction_TileT` is fixed at
+32×32 in the first place (matches one warp) -- committing to that shape
+and then padding cell-native tiles fights the format instead of using it.
+It costs one extra pass (the sort/reorder), which `gpu::Periodicity`
+already computes the sort key for (Morton index), and it directly reuses
+`prepare_chargegroup`'s existing cog+cell computation.
+
+## 3. Proposed pipeline (candidate build, D6 phase 1)
+
+Per rebuild (every `pairlist.skip_step` steps, unchanged cadence):
+
+1. **Cell assignment** (chargegroup-cutoff case; atomic case uses atom
+   position directly instead of cog -- same kernel shape, different input
+   array): reuse/extend `prepare_cog_kernel` to also emit a sort key
+   (`ushort4.w`, the Morton index already computed). *New:* launch it with
+   a correct grid size (`(num_units + threads - 1) / threads`, not a
+   hardcoded single block).
+2. **Sort by cell/Morton key** into a permutation array (`unsigned* order`)
+   -- one `thrust::sort_by_key` call (CUDA Thrust is already a CUDA
+   Toolkit dependency, no new library to introduce) on `(cell_key,
+   original_index)` pairs. This is the "reorder" step `reorder()` is
+   already stubbed out for in `CUDA_Pairlist_Algorithm_Impl<gpuBackend>`.
+3. **Block formation**: chunk the sorted order into fixed 32-wide blocks
+   (`num_blocks = ceil(num_units / 32)`, last block padded with a sentinel
+   index that every later kernel treats as "never interacts" -- simplest
+   correctness-preserving pad, avoids a separate valid-count check
+   everywhere). Compute each block's bounding sphere (center + radius from
+   the 32 positions) in a small kernel -- cheap, O(num_blocks).
+4. **Block-pair candidate search**: for each block, walk its own cell's
+   neighbor cells (the existing 3D cell grid from step 1 still tells you
+   which blocks are spatially near, since blocks are Morton-contiguous
+   chunks of a cell-sorted order) and test bounding-sphere distance against
+   `cutoff_long + skin`. Surviving block pairs get pushed into
+   `solute_candidates`/`solvent_candidates` (`TileVecT::push_back`) as an
+   `Interaction_TileT` with `index` encoding the two block ids and an
+   all-zero mask (mask gets filled in step 5, not here -- keeps this
+   kernel's job to exactly "which block-pairs are plausibly close").
+5. **Exclusion + short/long classification** (D6 phase 2, per candidate
+   tile, every step -- cheap because it's O(candidates), not O(N²)): for
+   each of the up to 1024 (32×32) pairs in a candidate tile, compute exact
+   distance, compare against `cutoff_short²`/`cutoff_long²`, look up the
+   precomputed GPU exclusion structure (§1 gap 1) for that pair, and set
+   the corresponding bit in the destination tile's mask -- writing into
+   `solute_short`/`solute_long` (or just `solute_short` when
+   `cutoff_short == cutoff_long`, the single-range degenerate case, exactly
+   as `PLAN.md` §6.2 already specifies).
+
+Chargegroup vs. atomic cutoff (D6's third axis) changes only which array
+feeds step 1 (chargegroup cog vs. raw atom position) and, in step 5,
+whether the "pair" being distance-tested is chargegroup-cog-vs-cog
+(chargegroup mode -- and if a cog pair is within range, *all* atom pairs
+between the two chargegroups become candidates/short/long, matching how
+`Standard_Pairlist_Algorithm` does chargegroup-based cutoffs on CPU) or
+atom-vs-atom directly (atomic mode). This needs to be a compile-time
+(`constexpr`/template) switch per D6, not a runtime branch inside the hot
+kernel.
+
+## 4. Scope decisions needed before implementation (not yet decided)
+
+1. **Boundary condition coverage for v1.** `Periodicity<BOUNDARY>::
+   set_cell_size` only has real logic for `vacuum`/`rectangular`.
+   Triclinic cell lists need a skewed-cell nearest-image scheme (GROMACS's
+   own triclinic Verlet-list code is non-trivial for exactly this reason).
+   Recommendation: **v1 supports vacuum + rectangular only**, and the
+   pairlist's `init()` hard-errors (`io::messages`, `io::message::error`)
+   if `accelerator == gpu_cuda` and the boundary is triclinic/truncoct,
+   rather than silently producing wrong cell assignments. Real triclinic
+   support becomes a follow-up roadmap item once vacuum/rectangular is
+   validated end-to-end.
+2. **Chargegroup-cutoff first, or both axes at once?** D6 wants both
+   eventually. Recommendation: implement chargegroup-cutoff first
+   (`prepare_chargegroup` already exists and is closer to done), get it
+   passing the equivalence test against `Standard_Pairlist_Algorithm`
+   (`PLAN.md` §9.1), *then* add the atomic-cutoff template branch as a
+   second, smaller, separately-reviewable step -- not both in one pass.
+3. **`skin` parameter addition.** Add `double skin = 0.0` to
+   `plist_struct` now (small, mechanical, per D7) so the candidate-build
+   radius is `cutoff_long + skin` from the start, even though no
+   displacement-tracking/drift logic (`PLAN.md` §9.4's skin-buffer-drift
+   test) will exist yet -- rebuild cadence stays governed by the existing
+   `skip_step` counter only. Flagging so it's clear "skin support" here
+   means "the candidate radius has a buffer," not "we track whether the
+   buffer was actually enough between rebuilds" -- that's real future work
+   this doesn't claim to do.
+4. **Exclusion upload timing.** Build the GPU exclusion structure once
+   in `CUDA_Pairlist_Algorithm::init()` (topology is static for a normal
+   run), not on every `update()`. If perturbation ever needs a different
+   exclusion set mid-run, that's out of scope here and should hard-error
+   for now rather than silently using stale exclusions.
+
+## 5. Testing (ties to `PLAN.md` §9.1)
+
+Before any force/energy number from this pairlist is trusted:
+- Build a small standalone test (in `src/check`, per `CLAUDE.md`'s testing
+  conventions) that runs both `CUDA_Pairlist_Algorithm` and
+  `Standard_Pairlist_Algorithm` on the same topology/configuration
+  (vacuum and rectangular, solute+solvent mix, at `skin = 0`) and asserts
+  the resulting pair sets are identical -- per atom, per short/long
+  bucket, including exclusions. This is the gate mentioned in `PLAN.md`
+  §9.1; it doesn't exist yet for either the CPU-vs-CPU or CPU-vs-GPU case.
+- Only after that test passes does force/energy comparison (`PLAN.md`
+  §9.3) become meaningful to run.
+
+## 6. Proposed implementation sequence (separately reviewable steps)
+
+1. Add `skin` to `plist_struct` (+ parser, + warning-if-nonzero-and-ignored
+   in the four existing CPU algorithms per D7) -- small, mechanical,
+   unblocks nothing else but is a prerequisite. Low risk.
+2. Build the GPU exclusion structure (gap §1.1) + wire it into
+   `gpu::TopologyView`/`gpu::Topology`, built once in `init()`.
+3. Fix `prepare_cog_kernel`'s launch config bug; extend it to also emit
+   the sort key it already computes but doesn't currently expose for
+   sorting.
+4. Cell/block build: sort-by-key (Thrust) + block-bounding-sphere kernel +
+   block-pair candidate kernel, chargegroup-cutoff only, vacuum/rectangular
+   only, writing into `solute_candidates`/`solvent_candidates`.
+5. Short/long classification + exclusion-mask kernel, chargegroup-cutoff
+   only, writing into `solute_short`/`solute_long` (and the solvent
+   equivalents, exploiting solvent's fixed-size regularity the same way
+   `TileContainerT` already separates solute/solvent).
+6. The pairlist-equivalence test (§5) against `Standard_Pairlist_Algorithm`
+   -- gate before anything downstream trusts this.
+7. Atomic-cutoff axis as a template branch, same kernels, second
+   equivalence test against `Standard_Pairlist_Algorithm_Atomic`.
+
+Step 8 onward (force kernel consuming `TileContainer`, wiring into a real
+`CUDA_Nonbonded_Interaction`) is `PLAN.md` §10 steps 6-9, unchanged, out of
+scope for "build the pairlist" specifically.

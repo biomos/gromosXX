@@ -73,6 +73,7 @@ int interaction::Grid_Cell_Pairlist::init(topology::Topology & topo,
         std::ostream & os,
         bool quiet) {
   DEBUG(5, "Grid_Cell : init");
+  warn_if_skin_ignored(sim, "Grid_Cell_Pairlist");
   mytopo = &topo;
   myconf = &conf;
   mysim = &sim;

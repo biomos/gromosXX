@@ -1767,7 +1767,7 @@ namespace simulation
        */
       plist_struct() : grid(0), skip_step(5), cutoff_short(0.8),
 		       cutoff_long(1.4), grid_size(0.4),
-		       atomic_cutoff(false), print(false) {}
+		       atomic_cutoff(false), print(false), skin(0.0) {}
 
       /**
        * algorithm.
@@ -1798,6 +1798,15 @@ namespace simulation
        * print the pairlist
        */
       bool print;
+
+      /**
+       * Verlet buffer added to cutoff_long when building pairlist
+       * candidates. Default 0.0 (backward compatible: candidate radius
+       * equals cutoff_long exactly, as before this field existed).
+       * Algorithms that don't use it must warn if it's set non-zero
+       * (see src/gpu/PLAN.md D7 / src/gpu/TILE_PAIRLIST_DESIGN.md §4.3).
+       */
+      double skin;
 
     } /** Pairlist method parameters */ pairlist;
 

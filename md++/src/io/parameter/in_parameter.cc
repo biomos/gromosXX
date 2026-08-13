@@ -1393,9 +1393,13 @@ void io::In_Parameter::read_PAIRLIST(simulation::Parameter &param,
     exampleblock << "#       SIZE  >0    grid cell size (or auto = 0.5 * RCUTP)\n";
     exampleblock << "#       TYPE  chargegoup(0) (chargegroup based cutoff)\n";
     exampleblock << "#             atomic(1)     (atom based cutoff)\n";
+    exampleblock << "#       SKIN  >=0.0 (optional) Verlet buffer added to RCUTL when building\n";
+    exampleblock << "#                   pairlist candidates. Default 0.0 (omit for unchanged,\n";
+    exampleblock << "#                   backward-compatible behaviour). Algorithms that ignore\n";
+    exampleblock << "#                   it warn if it is set non-zero.\n";
     exampleblock << "#\n";
-    exampleblock << "#       ALGORITHM       NSNB    RCUTP   RCUTL   SIZE    TYPE\n";
-    exampleblock << "        grid            5       0.8     1.4     auto    chargegroup\n";
+    exampleblock << "#       ALGORITHM       NSNB    RCUTP   RCUTL   SIZE    TYPE       SKIN\n";
+    exampleblock << "        grid            5       0.8     1.4     auto    chargegroup 0.0\n";
     exampleblock << "#\n";
     exampleblock << "END\n";
 
@@ -1414,6 +1418,9 @@ void io::In_Parameter::read_PAIRLIST(simulation::Parameter &param,
         block.get_next_parameter("RCUTL", param.pairlist.cutoff_long, ">="+str_rcutp, "");
         block.get_next_parameter("SIZE", s2, "", "");
         block.get_next_parameter("TYPE", s3, "", "chargegroup, 0, atomic, 1");
+        // SKIN is optional: older PAIRLIST blocks without this column parse
+        // unchanged, leaving param.pairlist.skin at its default (0.0).
+        block.get_next_parameter("SKIN", param.pairlist.skin, ">=0", "", true);
 
         if (s1 == "standard" || s1 == "0") param.pairlist.grid = 0;
         else if (s1 == "grid" || s1 == "1") param.pairlist.grid = 1;

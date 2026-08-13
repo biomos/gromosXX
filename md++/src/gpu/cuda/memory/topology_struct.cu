@@ -34,6 +34,7 @@ gpu::Topology::Topology(const topology::Topology& topo) {
     num_solute_molecules        = topo.num_solute_molecules();
     num_chargegroups            = topo.num_chargegroups();
     num_atoms                   = topo.num_atoms();
+    num_solute_atoms             = topo.num_solute_atoms();
 
     // allocate each array separately for automatic alignment
     cudaMalloc(&iac,          sizeof(int)   * num_atoms);
@@ -43,6 +44,32 @@ gpu::Topology::Topology(const topology::Topology& topo) {
     cudaMalloc(&chargegroup,  sizeof(int)   * (num_chargegroups+1));
 
     update(topo);
+
+    // Build the CSR exclusion list once -- exclusions are static for a
+    // normal run (see header comment); update() deliberately does not
+    // touch excl_ptr/excl_list.
+    std::vector<int> h_excl_ptr(num_solute_atoms + 1);
+    std::vector<int> h_excl_list;
+    h_excl_list.reserve(num_solute_atoms * 4); // rough guess, just avoids realloc churn
+    for (unsigned i = 0; i < num_solute_atoms; ++i) {
+        h_excl_ptr[i] = static_cast<int>(h_excl_list.size());
+        const topology::Exclusions & excl = topo.all_exclusion(i);
+        for (topology::Exclusions::const_iterator it = excl.begin(), to = excl.end(); it != to; ++it) {
+            h_excl_list.push_back(*it);
+        }
+    }
+    h_excl_ptr[num_solute_atoms] = static_cast<int>(h_excl_list.size());
+    num_exclusion_entries = static_cast<unsigned>(h_excl_list.size());
+
+    cudaMalloc(&excl_ptr,  sizeof(int) * (num_solute_atoms + 1));
+    // cudaMalloc(0) is legal but returns a null-ish pointer on some platforms;
+    // guard so excl_list is never dereferenced with a zero-sized allocation.
+    cudaMalloc(&excl_list, sizeof(int) * (num_exclusion_entries > 0 ? num_exclusion_entries : 1));
+
+    cudaMemcpy(excl_ptr,  h_excl_ptr.data(),  sizeof(int) * (num_solute_atoms + 1), cudaMemcpyHostToDevice);
+    if (num_exclusion_entries > 0) {
+        cudaMemcpy(excl_list, h_excl_list.data(), sizeof(int) * num_exclusion_entries, cudaMemcpyHostToDevice);
+    }
 }
 
 
@@ -53,6 +80,8 @@ gpu::Topology::~Topology() {
     cudaFree(inverse_mass);
     cudaFree(charge);
     cudaFree(chargegroup);
+    cudaFree(excl_ptr);
+    cudaFree(excl_list);
 }
 
 void gpu::Topology::update(const topology::Topology& topo) {

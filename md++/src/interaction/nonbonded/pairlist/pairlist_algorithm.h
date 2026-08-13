@@ -193,6 +193,23 @@ namespace interaction
       return false;
     }
 
+    /**
+     * PAIRLIST/SKIN warning for algorithms that don't use a Verlet buffer.
+     * Per src/gpu/PLAN.md D7: skin defaults to 0.0 for backward
+     * compatibility; any algorithm that ignores a non-zero skin must warn,
+     * since it silently means the requested Verlet buffer has no effect.
+     */
+    static inline void warn_if_skin_ignored(const simulation::Simulation & sim,
+                                             const std::string & algorithm_name) {
+      if (sim.param().pairlist.skin != 0.0) {
+        io::messages.add(
+          algorithm_name + " does not use the PAIRLIST SKIN parameter; "
+          "the requested Verlet buffer (" +
+          std::to_string(sim.param().pairlist.skin) + ") has no effect.",
+          "Pairlist_Algorithm", io::message::warning);
+      }
+    }
+
   protected:
     /**
      * nonbonded parameters (needed to construct the Innerloop).

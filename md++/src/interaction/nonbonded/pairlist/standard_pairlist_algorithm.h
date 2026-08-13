@@ -74,6 +74,7 @@ namespace interaction
     {
       if (!quiet)
        os << "\tstandard pairlist algorithm\n";
+      warn_if_skin_ignored(sim, "Standard_Pairlist_Algorithm");
       return 0;
     };
 
