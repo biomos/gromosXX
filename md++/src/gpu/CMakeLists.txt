@@ -30,7 +30,7 @@ set(GPU_HEADERS
     cuda/memory/cuhallocator.h
     cuda/memory/topology_struct.h
     cuda/memory/container.h
-    cuda/interaction/nonbonded/pairlist/cuda_pairlist_algorithm_impl_gpu.h
+    cuda/interaction/nonbonded/pairlist/cuda_pairlist_algorithm_impl.h
 )
 
 if(USE_CUDA)
@@ -49,7 +49,7 @@ if(USE_CUDA)
         cuda/manager/cuda_device_worker.cu
         cuda/manager/cuda_device_manager.cu
         cuda/manager/cuda_memory_manager.cu
-        cuda/interaction/nonbonded/pairlist/cuda_pairlist_algorithm_impl_gpu.cu
+        cuda/interaction/nonbonded/pairlist/cuda_pairlist_algorithm_impl.cu
         cuda/memory/pairlist/tile.cu
     )
 

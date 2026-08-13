@@ -10,7 +10,6 @@ set(INTERACTION_CC
     nonbonded/pairlist/extended_grid.cc
     nonbonded/pairlist/extended_grid_pairlist_algorithm.cc
     nonbonded/pairlist/grid_cell_pairlist.cc
-    nonbonded/pairlist/cuda_pairlist_algorithm.cc
     nonbonded/interaction/nonbonded_interaction.cc
     nonbonded/interaction/omp_nonbonded_interaction.cc
     nonbonded/interaction/mpi_nonbonded_master.cc
@@ -86,6 +85,10 @@ set(INTERACTION_CC
 
 if(XTB)
     list (APPEND INTERACTION_CC "qmmm/xtb_worker.cc")
+endif()
+
+if(USE_CUDA)
+    list (APPEND INTERACTION_CC "nonbonded/pairlist/cuda_pairlist_algorithm.cc")
 endif()
 
 

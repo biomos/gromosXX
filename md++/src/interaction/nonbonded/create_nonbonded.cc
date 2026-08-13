@@ -46,7 +46,9 @@
 #include "../../interaction/nonbonded/pairlist/standard_pairlist_algorithm.h"
 #include "../../interaction/nonbonded/pairlist/extended_grid_pairlist_algorithm.h"
 #include "../../interaction/nonbonded/pairlist/grid_cell_pairlist.h"
+#ifdef USE_CUDA
 #include "../../interaction/nonbonded/pairlist/cuda_pairlist_algorithm.h"
+#endif
 
 #include "../../interaction/nonbonded/interaction/nonbonded_outerloop.h"
 #include "../../interaction/nonbonded/interaction/nonbonded_set.h"
@@ -193,11 +195,11 @@ int interaction::create_g96_nonbonded
 #endif
     // TODO(cleanup): per PAIRLIST_PLAN.md §4/§6, CUDA_Pairlist_Algorithm is
     // currently a dummy placeholder (produces an empty pairlist and warns) --
-    // not the real tile-based GPU pairlist (PLAN.md §10 step 5). It exists
-    // so accelerator=cuda runs don't leave `pa` null.
+    // not the real tile-based GPU pairlist (TILE_PAIRLIST_DESIGN.md). It
+    // exists so accelerator=cuda runs don't leave `pa` null.
     if (sim.param().gpu.accelerator == simulation::gpu_cuda) {
 #ifdef USE_CUDA
-      pa = new CUDA_Pairlist_Algorithm<util::gpuBackend>();
+      pa = new CUDA_Pairlist_Algorithm();
 #else
       io::messages.add("accelerator = cuda requested but this is a CPU-only build.",
              "create_nonbonded", io::message::error);

@@ -1,19 +1,19 @@
 /*
  * This file is part of GROMOS.
- * 
+ *
  * Copyright (c) 2011, 2012, 2016, 2018, 2021, 2023 Biomos b.v.
  * See <https://www.gromos.net> for details.
- * 
+ *
  * GROMOS is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
@@ -21,11 +21,20 @@
 /**
  * @file cuda_pairlist_algorithm.h
  * CUDA accelerated pairlist algorithm
+ *
+ * Only ever included under USE_CUDA -- see create_nonbonded.cc, the only
+ * call site. Per PLAN.md D5 there is exactly one GPU-native pairlist and
+ * it is never dispatched through make_algorithm's Backend-template
+ * mechanism, so this class deliberately isn't a Backend template either
+ * (it used to be; that bought no genericity since the <gpuBackend>
+ * specialization shared nothing with the primary/cpuBackend template
+ * body -- dropped in favor of this plain class + the standard .h/.cc/.cu
+ * split already used for every other GPU-only feature).
  */
 
 #pragma once
 
-#include "cuda_pairlist_algorithm_impl.h"
+#include "gpu/cuda/interaction/nonbonded/pairlist/cuda_pairlist_algorithm_impl.h"
 
 namespace math
 {
@@ -34,20 +43,14 @@ namespace math
 }
 
 namespace interaction
-{ 
+{
   /**
    * @class CUDA_Pairlist_Algorithm
    * create an atomic pairlist on GPU
    * with a chargegroup based or atom
    * based cut-off criterion.
    */
-
-  template <typename Backend = util::cpuBackend>
-  class CUDA_Pairlist_Algorithm : public Pairlist_Algorithm, private algorithm::AlgorithmB<Backend>
-    /**
-     * We have to inherit from Pairlist_Algorithm to have a common class pointer
-     */
-    
+  class CUDA_Pairlist_Algorithm : public Pairlist_Algorithm
   {
   public:
     /**
@@ -63,21 +66,17 @@ namespace interaction
     /**
      * init
      */
-    virtual int init(topology::Topology &topo, 
+    virtual int init(topology::Topology &topo,
 		     configuration::Configuration &conf,
 		     simulation::Simulation &sim,
 		     std::ostream &os = std::cout,
-		     bool quiet = false) 
+		     bool quiet = false)
     {
       if (!quiet)
         os << "\tcuda pairlist algorithm\n";
-      
-      // initialize Cuda variables
-      // maybe also copy simulation constants
-
       return 0;
     };
-    
+
     /**
      * prepare the pairlist(s).
      */
@@ -86,24 +85,13 @@ namespace interaction
                         simulation::Simulation &sim);
 
     /**
-     * @brief 
-     * 
-     * @tparam PairlistContainerType can be interaction::PairlistContainer or gpu::PairlistContainer
-     * @param topo 
-     * @param conf 
-     * @param sim 
-     * @param pairlist 
-     * @param begin 
-     * @param end 
-     * @param stride 
+     * update the pairlist(s).
      */
-    // using PairlistContainerType = interaction::PairlistContainer;
-    // template <typename PairlistContainerType>
     virtual void update(topology::Topology & topo,
                         configuration::Configuration & conf,
                         simulation::Simulation &sim,
                         interaction::PairlistContainer &pairlist,
-                        unsigned int begin, unsigned int end, 
+                        unsigned int begin, unsigned int end,
                         unsigned int stride);
 
     virtual void update_perturbed(topology::Topology & topo,
@@ -119,12 +107,11 @@ namespace interaction
     };
 
   private:
-    CUDA_Pairlist_Algorithm_Impl<Backend> m_impl;
+    CUDA_Pairlist_Algorithm_Impl m_impl;
     // TODO(cleanup): dummy placeholder per PAIRLIST_PLAN.md §5(A) -- update()
-    // just clears the pairlist and warns once. Remove once PLAN.md §10 step 5
-    // lands the real tile-based GPU pairlist.
+    // just clears the pairlist and warns once. Remove once
+    // TILE_PAIRLIST_DESIGN.md's implementation sequence lands the real
+    // tile-based GPU pairlist.
     bool m_warned_dummy = false;
   };
 } // interaction
-
-
