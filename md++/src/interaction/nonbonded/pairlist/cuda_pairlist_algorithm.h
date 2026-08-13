@@ -111,15 +111,19 @@ namespace interaction
                                   simulation::Simulation & sim,
                                   interaction::PairlistContainer & pairlist,
                                   interaction::PairlistContainer & perturbed_pairlist,
-                                  unsigned int begin, unsigned int end, 
+                                  unsigned int begin, unsigned int end,
                                   unsigned int stride) {
-      std::cerr <<__FILE__ << ":" << __LINE__ <<
-      " do not use this overload of update_perturbed on a CUDA pairlist algorithm" << std::endl;
-      // assert(false);
+      io::messages.add(
+        "update_perturbed is not supported by CUDA_Pairlist_Algorithm",
+        "CUDA_Pairlist_Algorithm", io::message::error);
     };
 
   private:
     CUDA_Pairlist_Algorithm_Impl<Backend> m_impl;
+    // TODO(cleanup): dummy placeholder per PAIRLIST_PLAN.md §5(A) -- update()
+    // just clears the pairlist and warns once. Remove once PLAN.md §10 step 5
+    // lands the real tile-based GPU pairlist.
+    bool m_warned_dummy = false;
   };
 } // interaction
 

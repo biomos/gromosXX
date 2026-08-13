@@ -191,24 +191,29 @@ int interaction::create_g96_nonbonded
     pa = new HOOMD_Pairlist_Algorithm(sim); 
   } else { // gromosxx pairlist
 #endif
-    //// TESTING ////////
-    // CUDA has its own pairlist algorithm base
-    io::messages.add("Ignoring pairlist setting, using CUDA pairlist algorithm",
-      "create_nonbonded", io::message::warning);
-    //// END TESTING ////
-    //// TEMPORARILY OFF ////
-    // if (sim.param().pairlist.grid == 0) {
-    //   pa = new Standard_Pairlist_Algorithm();
-    // } else if (sim.param().pairlist.grid == 1) {
-    //   pa = new Extended_Grid_Pairlist_Algorithm();
-    // } else if (sim.param().pairlist.grid == 2) {
-    //   pa = new Grid_Cell_Pairlist(topo, sim);
-    // }  else {
-    //   io::messages.add("unkown pairlist algorithm.", "create_nonbonded",
-    //          io::message::error);
-    //   return 1;
-    // }
-    //// END TEMPORARILY OFF ////
+    // TODO(cleanup): per PAIRLIST_PLAN.md §4/§6, CUDA_Pairlist_Algorithm is
+    // currently a dummy placeholder (produces an empty pairlist and warns) --
+    // not the real tile-based GPU pairlist (PLAN.md §10 step 5). It exists
+    // so accelerator=cuda runs don't leave `pa` null.
+    if (sim.param().gpu.accelerator == simulation::gpu_cuda) {
+#ifdef USE_CUDA
+      pa = new CUDA_Pairlist_Algorithm<util::gpuBackend>();
+#else
+      io::messages.add("accelerator = cuda requested but this is a CPU-only build.",
+             "create_nonbonded", io::message::error);
+      return 1;
+#endif
+    } else if (sim.param().pairlist.grid == 0) {
+      pa = new Standard_Pairlist_Algorithm();
+    } else if (sim.param().pairlist.grid == 1) {
+      pa = new Extended_Grid_Pairlist_Algorithm();
+    } else if (sim.param().pairlist.grid == 2) {
+      pa = new Grid_Cell_Pairlist(topo, sim);
+    }  else {
+      io::messages.add("unkown pairlist algorithm.", "create_nonbonded",
+             io::message::error);
+      return 1;
+	}
 #ifdef HAVE_HOOMD
   }
 #endif
@@ -277,7 +282,7 @@ Nonbonded_Interaction * ni;
     it.read_cg_parameter(ni->parameter().cg_parameter());
   
   // check if DUM really has no LJ interactons.
-  // pa->set_parameter(&ni->parameter());
+  pa->set_parameter(&ni->parameter());
   if ((!sim.param().force.nonbonded_vdw && sim.param().force.interaction_function ==
           simulation::lj_crf_func) ||
           (!sim.param().force.nonbonded_vdw && sim.param().force.interaction_function ==

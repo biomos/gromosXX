@@ -86,14 +86,23 @@ void interaction::CUDA_Pairlist_Algorithm<Backend>::update(topology::Topology & 
                                       configuration::Configuration & conf,
                                       simulation::Simulation &sim,
                                       interaction::PairlistContainer &pairlist,
-                                      unsigned int begin, unsigned int end, 
+                                      unsigned int begin, unsigned int end,
                                       unsigned int stride) {
   DEBUG(0, "cuda pairlist algorithm : update");
-  /** evaluate maximum displacement since last update
-   * For that we need to store reference positions inside the verlet container
-   * if maximum displacement is more than verlet skin, we also update the verlet list
-   * */
-    
+  // TODO(cleanup): dummy placeholder, see PAIRLIST_PLAN.md §5(A)/§6 step 3.
+  // Not the real tile-based GPU pairlist (PLAN.md §10 step 5) -- produces an
+  // intentionally empty pairlist (zero nonbonded pairs) so that selecting
+  // accelerator=cuda fails loudly (visibly wrong, zero energy, plus this
+  // warning) rather than quietly running a plausible-looking but fake result.
+  pairlist.clear();
+  if (!m_warned_dummy) {
+    io::messages.add(
+      "CUDA pairlist algorithm is a placeholder (PAIRLIST_PLAN.md); "
+      "it produces zero nonbonded pairs until the real tile-based GPU "
+      "pairlist (PLAN.md §10 step 5) is implemented.",
+      "CUDA_Pairlist_Algorithm", io::message::warning);
+    m_warned_dummy = true;
+  }
 }
 
 // force instantiation

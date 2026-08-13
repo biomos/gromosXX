@@ -19,7 +19,7 @@
  */
 
 /**
- * @file aladip.t.cc
+ * @file aladip_cuda.t.cc
  * tests using aladip with CUDA acceleration
  */
 
