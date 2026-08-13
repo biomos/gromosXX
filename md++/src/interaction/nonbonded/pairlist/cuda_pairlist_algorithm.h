@@ -64,18 +64,16 @@ namespace interaction
     virtual ~CUDA_Pairlist_Algorithm() {}
 
     /**
-     * init
+     * init. Hard-errors if the boundary type isn't one of the ones the
+     * block/candidate build actually supports (TILE_PAIRLIST_DESIGN.md
+     * §4.1: vacuum + rectangular only for v1 -- gpu::Periodicity::
+     * set_cell_size has no real triclinic/truncoct implementation yet).
      */
     virtual int init(topology::Topology &topo,
 		     configuration::Configuration &conf,
 		     simulation::Simulation &sim,
 		     std::ostream &os = std::cout,
-		     bool quiet = false)
-    {
-      if (!quiet)
-        os << "\tcuda pairlist algorithm\n";
-      return 0;
-    };
+		     bool quiet = false);
 
     /**
      * prepare the pairlist(s).
@@ -113,5 +111,8 @@ namespace interaction
     // TILE_PAIRLIST_DESIGN.md's implementation sequence lands the real
     // tile-based GPU pairlist.
     bool m_warned_dummy = false;
+    // Set once update() has warned about a runtime atomic_cutoff toggle
+    // (see update()'s guard) so it doesn't repeat every call.
+    bool m_warned_atomic_cutoff = false;
   };
 } // interaction

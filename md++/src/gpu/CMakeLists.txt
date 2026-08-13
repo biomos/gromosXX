@@ -31,6 +31,7 @@ set(GPU_HEADERS
     cuda/memory/topology_struct.h
     cuda/memory/container.h
     cuda/interaction/nonbonded/pairlist/cuda_pairlist_algorithm_impl.h
+    cuda/interaction/nonbonded/pairlist/block_pairlist.h
 )
 
 if(USE_CUDA)
@@ -50,18 +51,21 @@ if(USE_CUDA)
         cuda/manager/cuda_device_manager.cu
         cuda/manager/cuda_memory_manager.cu
         cuda/interaction/nonbonded/pairlist/cuda_pairlist_algorithm_impl.cu
+        cuda/interaction/nonbonded/pairlist/block_pairlist.cu
         cuda/memory/pairlist/tile.cu
     )
 
     add_library(grocuda STATIC ${GPU_SOURCES})
 
-    # set_target_properties(grocuda PROPERTIES
-    #     CUDA_SEPARABLE_COMPILATION ON
-    #     POSITION_INDEPENDENT_CODE ON
-    #     CXX_STANDARD 17
-    #     CUDA_ARCHITECTURES "70;75;80;86;89;90"
-    #     CUDA_RUNTIME_LIBRARY Static  # Optional
-    # )
+    # Needed since block_pairlist.cu calls TileVecT<Interaction_Tile>::
+    # push_back (a __device__ function defined in tile.cu) -- resolving a
+    # device-side function call across .cu translation units requires
+    # relocatable device code, unlike a host-launched __global__ kernel
+    # defined in another .cu file (which already worked without this,
+    # e.g. prepare_cog_kernel).
+    set_target_properties(grocuda PROPERTIES
+        CUDA_SEPARABLE_COMPILATION ON
+    )
 
     target_link_libraries(grocuda PUBLIC CUDA::cudart ${CUDAToolkit_LIBRARIES})
     target_compile_definitions(grocuda PRIVATE USE_CUDA)

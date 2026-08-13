@@ -50,8 +50,48 @@ interaction::CUDA_Pairlist_Algorithm::CUDA_Pairlist_Algorithm()
           : Pairlist_Algorithm()
 {}
 
+int interaction::CUDA_Pairlist_Algorithm::init(
+                                      topology::Topology & topo,
+                                      configuration::Configuration & conf,
+                                      simulation::Simulation & sim,
+                                      std::ostream & os,
+                                      bool quiet)
+{
+  const math::boundary_enum b = conf.boundary_type;
+  if (b != math::vacuum && b != math::rectangular) {
+    io::messages.add(
+      "CUDA_Pairlist_Algorithm only supports vacuum and rectangular "
+      "boundary conditions so far (TILE_PAIRLIST_DESIGN.md §4.1); "
+      "triclinic/truncoct cell lists are real future work, not yet done.",
+      "CUDA_Pairlist_Algorithm", io::message::error);
+    return 1;
+  }
+
+  // TILE_PAIRLIST_DESIGN.md §4.2: chargegroup-cutoff first, atomic-cutoff
+  // as a separate follow-up step. Calling with atomic_cutoff=true today
+  // would silently skip the chargegroup cog/cell build this pairlist
+  // currently depends on entirely, producing an empty (wrong) candidate
+  // list rather than a working atomic-cutoff one -- hard-error instead.
+  if (sim.param().pairlist.atomic_cutoff) {
+    io::messages.add(
+      "CUDA_Pairlist_Algorithm does not support atomic_cutoff yet "
+      "(TILE_PAIRLIST_DESIGN.md §4.2: chargegroup-cutoff lands first).",
+      "CUDA_Pairlist_Algorithm", io::message::error);
+    return 1;
+  }
+
+  if (!quiet)
+    os << "\tcuda pairlist algorithm\n";
+  return 0;
+}
+
 /**
- * calculate center of geometries
+ * Runs every step (see Nonbonded_Interaction::calculate_interactions --
+ * "shared memory do this only once [per step]"), unlike update() below,
+ * which only runs on the pairlist.skip_step cadence. Box-wrapping and cog
+ * computation must happen every step since atoms move every step; the
+ * expensive block/candidate build must not (TILE_PAIRLIST_DESIGN.md §3
+ * step 1: "expensive, O(N), infrequent").
  */
 int interaction::CUDA_Pairlist_Algorithm::prepare(
                                       topology::Topology & topo,
@@ -63,19 +103,32 @@ int interaction::CUDA_Pairlist_Algorithm::prepare(
   m_impl.set_cutoff(sim.param().pairlist.cutoff_short,
 	     sim.param().pairlist.cutoff_long);
 
+  // init()'s atomic_cutoff hard-error is a one-time, construction-time
+  // check; sim.param().pairlist.atomic_cutoff can still be flipped at
+  // runtime after init() ran (confirmed by check_forcefield.cc's "atomic
+  // cutoff" comparison test, which reuses one already-initialized
+  // Forcefield/CUDA_Pairlist_Algorithm under both settings) -- prepare_cog
+  // already no-ops when atomic_cutoff is true, so this stays a no-op too,
+  // but don't rely on init() alone to keep that guarantee. See update()'s
+  // matching guard for why this matters beyond just prepare_cog: reorder()/
+  // build_candidates() must not run against a chargegroup-mode cog/cell
+  // build that was silently skipped this call.
   if (!sim.param().pairlist.atomic_cutoff) {
-
-    // first put the chargegroups into the box
     m_impl.prepare_cog(conf, topo, sim);
-  } // chargegroup based cutoff
-
-  // assign all cogs / atoms to grid cells and reorder
-  m_impl.reorder(conf, topo, sim);
+  }
 
   return 0;
-
 }
 
+/**
+ * Runs on the pairlist.skip_step cadence (see Nonbonded_Set::calculate_
+ * interactions' pairlist_update check) -- the real candidate-build work,
+ * per TILE_PAIRLIST_DESIGN.md §3 steps 2-4. Still ends by leaving the
+ * CPU-facing `pairlist` (interaction::PairlistContainer) an explicit,
+ * warned-about dummy: nothing downstream (no force kernel, no
+ * classification pass) consumes m_impl.tiles() yet, so there is nothing
+ * real to report through this container -- see PAIRLIST_PLAN.md §5(A).
+ */
 void interaction::CUDA_Pairlist_Algorithm::update(topology::Topology & topo,
                                       configuration::Configuration & conf,
                                       simulation::Simulation &sim,
@@ -83,12 +136,35 @@ void interaction::CUDA_Pairlist_Algorithm::update(topology::Topology & topo,
                                       unsigned int begin, unsigned int end,
                                       unsigned int stride) {
   DEBUG(0, "cuda pairlist algorithm : update");
-  // TODO(cleanup): dummy placeholder, see PAIRLIST_PLAN.md §5(A)/§6 step 3.
-  // Not the real tile-based GPU pairlist (TILE_PAIRLIST_DESIGN.md) --
-  // produces an intentionally empty pairlist (zero nonbonded pairs) so
-  // that selecting accelerator=cuda fails loudly (visibly wrong, zero
-  // energy, plus this warning) rather than quietly running a
-  // plausible-looking but fake result.
+
+  // Same runtime-toggle concern as prepare()'s guard above: only run
+  // reorder()/build_candidates() when this call's atomic_cutoff setting
+  // actually matches what prepare_cog() built this cycle. Observed for
+  // real: check_forcefield.cc's "atomic cutoff" check flips
+  // sim.param().pairlist.atomic_cutoff to true on an already-initialized
+  // CUDA_Pairlist_Algorithm and calls update() again -- without this
+  // guard, reorder() ran thrust::sort_by_key while the CUDA context was
+  // apparently left in a bad state by that surrounding test sequence
+  // (manifested as "invalid device ordinal" from CUB/Thrust) instead of
+  // cleanly no-op'ing like every other part of this class already does
+  // for atomic_cutoff.
+  if (!sim.param().pairlist.atomic_cutoff) {
+    m_impl.reorder(conf, topo, sim);
+    m_impl.build_candidates(conf, topo, sim);
+  } else if (!m_warned_atomic_cutoff) {
+    io::messages.add(
+      "CUDA_Pairlist_Algorithm does not support atomic_cutoff yet "
+      "(TILE_PAIRLIST_DESIGN.md §4.2); skipping the candidate build this "
+      "call.",
+      "CUDA_Pairlist_Algorithm", io::message::warning);
+    m_warned_atomic_cutoff = true;
+  }
+
+  // TODO(cleanup): dummy placeholder, see PAIRLIST_PLAN.md §5(A). Not the
+  // real force-consumable output -- produces an intentionally empty
+  // pairlist (zero nonbonded pairs) so that selecting accelerator=cuda
+  // fails loudly (visibly wrong, zero energy, plus this warning) rather
+  // than quietly running a plausible-looking but fake result.
   pairlist.clear();
   if (!m_warned_dummy) {
     io::messages.add(

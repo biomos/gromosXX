@@ -1,5 +1,9 @@
 #pragma once
 
+#include "gpu/cuda/memory/precision.h"
+#include "gpu/cuda/memory/cuvector.h"
+#include "gpu/cuda/memory/pairlist/tile.h"
+
 namespace interaction {
   /**
    * @class CUDA_Pairlist_Algorithm_Impl
@@ -39,11 +43,38 @@ namespace interaction {
                         topology::Topology & topo);
 
       /**
-       * order atoms / chargegroups based on their grid cell?
+       * Sort solute and solvent chargegroups (separately) by their
+       * Morton cell key, chunk each sorted sequence into fixed 32-wide
+       * blocks, and compute each block's bounding sphere.
+       * TILE_PAIRLIST_DESIGN.md §3 steps 2-3.
        */
       void reorder(configuration::Configuration & conf,
                   topology::Topology & topo,
                   simulation::Simulation & sim);
+
+      /**
+       * Block-pair candidate search (TILE_PAIRLIST_DESIGN.md §3 step 4):
+       * test every solute-solute, solute-solvent, and solvent-solvent
+       * block-pair's bounding-sphere distance against cutoff_long + skin,
+       * and push survivors into m_tiles.solute_candidates /
+       * m_tiles.solvent_candidates. Must be called after reorder().
+       */
+      void build_candidates(configuration::Configuration & conf,
+                  topology::Topology & topo,
+                  simulation::Simulation & sim);
+
+      template<math::boundary_enum b>
+      void _build_candidates(configuration::Configuration & conf,
+                              topology::Topology & topo,
+                              simulation::Simulation & sim);
+
+      /**
+       * Candidate tiles from the most recent build_candidates() call.
+       * Not yet consumed by anything -- exposed for the classification
+       * pass (TILE_PAIRLIST_DESIGN.md §3 step 5) and the pairlist-
+       * equivalence test (§5), neither of which exist yet.
+       */
+      const gpu::TileContainer & tiles() const { return m_tiles; }
 
     protected:
       /**
@@ -79,5 +110,30 @@ namespace interaction {
        * not one field of a ushort4.
        */
       gpu::cuvector<unsigned> m_cg_sort_key;
+
+      /**
+       * Block-sorted permutations: solute/solvent block-sorted position ->
+       * global chargegroup index (solvent values are offset by
+       * num_solute_chargegroups, since m_cg_cog/m_cg_cells/m_cg_sort_key
+       * are indexed globally). Built by reorder().
+       */
+      gpu::cuvector<unsigned> m_solute_order;
+      gpu::cuvector<unsigned> m_solvent_order;
+
+      /**
+       * Per-block bounding sphere (center + radius), one entry per
+       * ceil(count / gpu::BLOCK_SIZE) block. Built by reorder(), consumed
+       * by build_candidates().
+       */
+      gpu::cuvector<FPL3_TYPE> m_solute_block_center;
+      gpu::cuvector<FPL_TYPE>  m_solute_block_radius;
+      gpu::cuvector<FPL3_TYPE> m_solvent_block_center;
+      gpu::cuvector<FPL_TYPE>  m_solvent_block_radius;
+
+      /**
+       * Candidate (and eventually short/long-classified) tiles. See
+       * tiles() accessor.
+       */
+      gpu::TileContainer m_tiles;
   };
 }

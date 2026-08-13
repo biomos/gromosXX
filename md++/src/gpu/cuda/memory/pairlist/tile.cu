@@ -40,3 +40,9 @@ __device__ bool gpu::TileVecT<TileT>::push_back(const TileT& tile) {
     m_data[i] = tile;
     return true;
 }
+
+// Explicit instantiation: without a call site inside this TU, the compiler
+// has no reason to generate device code for this template method at all
+// (nothing calls push_back from tile.cu itself), so callers in other .cu
+// files (block_pairlist.cu) would otherwise link against an empty object.
+template __device__ bool gpu::TileVecT<gpu::Interaction_Tile>::push_back(const gpu::Interaction_Tile&);

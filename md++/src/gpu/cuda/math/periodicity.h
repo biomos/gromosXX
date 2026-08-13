@@ -216,8 +216,12 @@ namespace gpu {
                 FPL3_TYPE v_box = cog;
                 put_into_box(v_box);
 
-                // optional: store cog
-                if (cg_cog_ptr && cg_i < num_solute_chargegroups) {
+                // optional: store representative (box-wrapped) position --
+                // true cog for solute chargegroups, first-atom position for
+                // solvent (matches the cog computed above); the caller is
+                // responsible for sizing cg_cog_ptr to cover every
+                // chargegroup it intends to pass here, not just solute.
+                if (cg_cog_ptr) {
                     (*cg_cog_ptr)(cg_i) = v_box;
                 }
 
