@@ -61,6 +61,7 @@ void interaction::CUDA_Pairlist_Algorithm_Impl<util::gpuBackend>::prepare_cog(
         const size_t num_cg = topo.num_chargegroups();
         m_cg_cog.resize(num_solute_cg);
         m_cg_cells.resize(num_cg);
+        m_cg_sort_key.resize(num_cg);
         SPLIT_BOUNDARY(_prepare_cog, conf, topo);
     }
 }
@@ -71,18 +72,22 @@ void interaction::CUDA_Pairlist_Algorithm_Impl<util::gpuBackend>::_prepare_cog<B
                                     topology::Topology & topo) {
     DEBUG(10, "putting chargegroups into box");
 
-    dim3 dimGrid(1);
+    const unsigned num_cg = static_cast<unsigned>(topo.num_chargegroups());
     dim3 dimBlock(NUM_THREADS_PER_BLOCK);
+    // TODO(cleanup): was a hardcoded dim3 dimGrid(1) -- a single block
+    // regardless of chargegroup count (TILE_PAIRLIST_DESIGN.md §1, "bug to
+    // fix"). Grid the launch over all chargegroups instead.
+    dim3 dimGrid((num_cg + NUM_THREADS_PER_BLOCK - 1) / NUM_THREADS_PER_BLOCK);
 
     conf.copy_to_gpu();
     gpu::Periodicity<B> periodicity(conf.current().box);
-    std::cout << "m_cutoff_long: " << m_cutoff_long << std::endl;
     periodicity.set_cell_size(m_cutoff_long);
     gpu::prepare_cog_kernel<<<dimGrid, dimBlock>>>(topo.get_gpu_view(),
                                                     conf.get_gpu_view(),
                                                     periodicity,
                                                     m_cg_cog.view(),
-                                                    m_cg_cells.view());
+                                                    m_cg_cells.view(),
+                                                    m_cg_sort_key.view());
 };
 
 void interaction::CUDA_Pairlist_Algorithm_Impl<util::gpuBackend>::set_cutoff(

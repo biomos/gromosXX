@@ -45,5 +45,12 @@ namespace interaction {
        * chargegroup cell indices array.
        */
       gpu::cuvector<ushort4> m_cg_cells;
+      /**
+       * flat copy of m_cg_cells[i].w (Morton cell index), one entry per
+       * chargegroup -- feeds a Thrust sort-by-key in the block-build step
+       * (TILE_PAIRLIST_DESIGN.md §3 step 2), which needs a plain array,
+       * not one field of a ushort4.
+       */
+      gpu::cuvector<unsigned> m_cg_sort_key;
   };
 }

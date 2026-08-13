@@ -45,7 +45,8 @@ __global__ void gpu::prepare_cog_kernel(
     gpu::Configuration::View conf,
     gpu::Periodicity<BOUNDARY> periodicity,
     math::CuVArray::View cg_cog,
-    gpu::cuvector<ushort4>::View cg_cells) {
+    gpu::cuvector<ushort4>::View cg_cells,
+    gpu::cuvector<unsigned>::View sort_key) {
 
     unsigned idx = blockIdx.x * blockDim.x + threadIdx.x;
     unsigned stride = blockDim.x * gridDim.x;
@@ -60,6 +61,7 @@ __global__ void gpu::prepare_cog_kernel(
             &cg_cog,   // store cog
             &cg_cells // store cell
         );
+        sort_key(cg_i) = cg_cells(cg_i).w;
     }
 }
 
@@ -69,20 +71,23 @@ template __global__ void gpu::prepare_cog_kernel(
     gpu::Configuration::View conf,
     gpu::Periodicity<math::vacuum> periodicity,
     math::CuVArray::View cg_cog,
-    gpu::cuvector<ushort4>::View cg_cells);
+    gpu::cuvector<ushort4>::View cg_cells,
+    gpu::cuvector<unsigned>::View sort_key);
 
 template __global__ void gpu::prepare_cog_kernel(
     gpu::Topology::View topo,
     gpu::Configuration::View conf,
     gpu::Periodicity<math::rectangular> periodicity,
     math::CuVArray::View cg_cog,
-    gpu::cuvector<ushort4>::View cg_cells);
+    gpu::cuvector<ushort4>::View cg_cells,
+    gpu::cuvector<unsigned>::View sort_key);
 
 template __global__ void gpu::prepare_cog_kernel(
     gpu::Topology::View topo,
     gpu::Configuration::View conf,
     gpu::Periodicity<math::triclinic> periodicity,
     math::CuVArray::View cg_cog,
-    gpu::cuvector<ushort4>::View cg_cells);
+    gpu::cuvector<ushort4>::View cg_cells,
+    gpu::cuvector<unsigned>::View sort_key);
 
 
