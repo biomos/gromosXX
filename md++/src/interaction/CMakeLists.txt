@@ -13,7 +13,6 @@ set(INTERACTION_CC
     nonbonded/pairlist/cuda_pairlist_algorithm.cc
     nonbonded/interaction/nonbonded_interaction.cc
     nonbonded/interaction/omp_nonbonded_interaction.cc
-    nonbonded/interaction/cuda_nonbonded_interaction.cc
     nonbonded/interaction/mpi_nonbonded_master.cc
     nonbonded/interaction/mpi_nonbonded_slave.cc
     nonbonded/interaction/nonbonded_set.cc

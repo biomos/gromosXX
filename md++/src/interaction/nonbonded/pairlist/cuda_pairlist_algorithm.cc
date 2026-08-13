@@ -39,7 +39,9 @@
 #include "util/debug.h"
 #include "util/template_split.h"
 
+#ifdef USE_CUDA
 #include "gpu/cuda/utils.h"
+#endif
 
 #undef MODULE
 #undef SUBMODULE

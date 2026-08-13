@@ -35,7 +35,9 @@
 #include "../util/umbrella.h"
 #include "../util/bs_umbrella.h"
 
+#ifdef USE_CUDA
 #include "gpu/cuda/memory/configuration_struct.h"
+#endif
 
 // Additional Clipper Headers
 #ifdef HAVE_CLIPPER
@@ -924,6 +926,7 @@ namespace configuration {
      */
     bool check(topology::Topology const & topo, simulation::Simulation & sim);
 
+#ifdef USE_CUDA
     /**
      * get GPU configuration struct of pointers to device memory
      */
@@ -952,6 +955,7 @@ namespace configuration {
     gpu::Configuration::View get_gpu_view() {
       return m_gpu->view();
     }
+#endif
 
     //////////////////////////////////////////////////////////////////////
     // data
@@ -986,11 +990,12 @@ namespace configuration {
      */
     lattice_sum_struct m_lattice_sum;
 
+#ifdef USE_CUDA
     /**
      * access to the GPU stored copy
      */
     std::unique_ptr<gpu::Configuration> m_gpu;
-    // gpu::Configuration* m_gpu;
+#endif
     
     /**
      * check the positions for overlapping atoms.

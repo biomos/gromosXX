@@ -32,14 +32,14 @@ namespace algorithm
    * @class Scaled_Leap_Frog_Velocity
    * implements the leap frog algorithm for the velocities.
    */
-  class Scaled_Leap_Frog_Velocity : public Leap_Frog_Velocity
+  class Scaled_Leap_Frog_Velocity : public Leap_Frog_Velocity<>
   {
   public:
 /**
      * Constructor.
      */
     Scaled_Leap_Frog_Velocity() :
-    Leap_Frog_Velocity() { name = "Scaled_Leap_Frog_Velocity"; }
+    Leap_Frog_Velocity<>() { name = "Scaled_Leap_Frog_Velocity"; }
     /**
      * Destructor.
      */

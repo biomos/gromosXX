@@ -53,7 +53,6 @@
 
 #include "../../interaction/nonbonded/interaction/nonbonded_interaction.h"
 #include "../../interaction/nonbonded/interaction/omp_nonbonded_interaction.h"
-#include "../../interaction/nonbonded/interaction/cuda_nonbonded_interaction.h"
 #include "../../interaction/nonbonded/interaction/mpi_nonbonded_master.h"
 #include "../../interaction/nonbonded/interaction/mpi_nonbonded_slave.h"
 
@@ -233,13 +232,14 @@ using Default_Nonbonded_Interaction =
 Nonbonded_Interaction * ni;
 
 #if defined(USE_CUDA)
-  if (sim.param().gpu.accelerator == simulation::gpu_cuda) {
-    auto * cupa = new CUDA_Pairlist_Algorithm<util::gpuBackend>();
-    pa = cupa;
-    ni = new CUDA_Nonbonded_Interaction(cupa);
-  } else {
-    ni = new Default_Nonbonded_Interaction(pa);
-  }
+  // TODO(cleanup): CUDA_Nonbonded_Interaction was discarded per PLAN.md §7
+  // (CPU pairlist + full per-step upload + one-thread-per-pair kernel,
+  // violates D5/D6). The tile-based replacement, plus the hard-error gate
+  // of PLAN.md §6.1 for accelerator==gpu_cuda, is PLAN.md §10 roadmap step 9
+  // ("CUDA_Nonbonded_Interaction wired end-to-end"). Until then, always
+  // build the default CPU nonbonded interaction; pairing it with
+  // CUDA_Pairlist_Algorithm would be a worse mismatch than not using it.
+  ni = new Default_Nonbonded_Interaction(pa);
 #elif defined(XXMPI)
   if (sim.mpi_enabled()){
     if (sim.mpiControl().threadID == sim.mpiControl().masterID)

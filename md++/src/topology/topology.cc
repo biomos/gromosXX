@@ -52,7 +52,9 @@ namespace simulation {
 #include "../simulation/parameter.h"
 #include <limits>
 
+#ifdef USE_CUDA
 #include "gpu/cuda/memory/topology_struct.h"
+#endif
 
 #undef MODULE
 #undef SUBMODULE
@@ -1590,6 +1592,7 @@ double topology::Topology::sum_squared_charges() const {
 // }
 
 
+#ifdef USE_CUDA
 const gpu::Topology::View topology::Topology::get_gpu_view(bool sync) const {
   // we cache the gpu::Topology and only update on demand
   if (!m_gpu) {
@@ -1599,6 +1602,7 @@ const gpu::Topology::View topology::Topology::get_gpu_view(bool sync) const {
   }
   return m_gpu->view();
 }
+#endif
 
 namespace topology {
 

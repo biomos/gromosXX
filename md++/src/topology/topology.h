@@ -36,7 +36,9 @@
 #include "../interaction/interaction_types.h"
 #include "../util/virtual_atom.h"
 
+#ifdef USE_CUDA
 #include "gpu/cuda/memory/topology_struct.h"
+#endif
 
 namespace simulation
 {
@@ -1638,11 +1640,13 @@ namespace topology
      */
     // void init_gpu();
 
+#ifdef USE_CUDA
     /**
      * const accessor to GPU-stored topology
      *  @param sync to GPU (default false)
      */
     const gpu::Topology::View get_gpu_view(bool sync = false) const;
+#endif
 
   private:
     /**
@@ -2175,10 +2179,12 @@ namespace topology
      */
     std::vector<lj_exception_struct> m_qm_lj_exceptions;
 
+#ifdef USE_CUDA
     /**
      * access to the GPU stored copy of the topology.
      */
     mutable std::unique_ptr<gpu::Topology> m_gpu;
+#endif
 
   }; // topology
 
