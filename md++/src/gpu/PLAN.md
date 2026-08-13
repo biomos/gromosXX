@@ -126,6 +126,43 @@ consistent with how `sim.cuda()`/`sim.mpi()`/`sim.openmp()` already expose
 cross-cutting concerns through `Simulation`, which is already the fixed 3rd
 argument of every `Algorithm::init/apply`. No new call-site plumbing needed.
 
+**Cache key lifetime (must resolve before implementing, not after):** keying
+purely on object address (`const topology::Topology*`) is unsafe on its own —
+if a `Topology`/`Configuration` is destroyed and a new, unrelated object
+happens to be allocated at the same address, the cache would silently hand
+back a stale GPU mirror for the wrong object. This is worse than a crash: it
+is silent wrong-data corruption, which conflicts directly with this
+project's #1 goal (numerical correctness first). Removing `get_gpu_view()`/
+`copy_to_gpu()` from `Topology`/`Configuration` (which is the right call, for
+the header-dependency reasons above) also removes the natural place a
+destructor-driven cache invalidation would have lived, so this needs an
+explicit replacement, not an assumption:
+
+- **Chosen approach:** give `Topology`/`Configuration` a plain `size_t`
+  identity token member (assigned from a process-wide monotonic counter at
+  construction — no GPU dependency, no new header coupling). Key the cache
+  on `(pointer, token)`, or maintain a small non-GPU-aware
+  `topology::Topology::id()` / `configuration::Configuration::id()` accessor
+  and key on the token alone. A lookup whose stored token doesn't match the
+  live object's current token is treated as a miss (rebuild the mirror),
+  never as a hit against stale data.
+- If, after investigation, `Topology`/`Configuration` genuinely never get
+  destroyed-and-reallocated mid-run in current GROMOS usage, that's an
+  acceptable reason to defer the token and rely on address-only keying — but
+  that must become a written invariant with a comment at the cache
+  declaration (e.g. "safe because X"), not a silent assumption, since it's
+  exactly the kind of thing a later change (e.g. topology reload for REMD)
+  could violate without anyone noticing.
+
+**Thread-safety:** `CudaManager` and its caches (including the 1-entry fast
+path) are **not** thread-safe and are not meant to be — all access must come
+from the single CPU-driving thread, consistent with the whole-step-on-GPU /
+no-worker-thread model (§3.1). Concurrent replicas or EDS legs (the case
+that motivates the multi-entry map in the first place, per the rationale
+above) must use separate `CudaManager` instances, never shared access to
+one from multiple threads. State this as an explicit precondition/comment on
+the class, not an implicit assumption.
+
 ### 3.3 CudaMemoryManager
 
 Keep it as a real, always-on layer (not debug-only) — GPU allocations happen
@@ -209,6 +246,17 @@ staging pool) — not as a mandatory intermediary for every allocation.
   currently a byte-for-byte copy of the CPU loop with no actual GPU code (see
   §8, it's the first real algorithm to port).
 
+### 3.7 Audit before deleting old APIs
+
+Before removing `conf.copy_to_gpu()`, `conf.m_gpu`, `topo.get_gpu_view()`,
+`conf.copy_pos_vel_to_gpu()`, or any other symbol listed for removal in §3.2/
+§3.6/§7: grep the **full** source tree for each symbol name, not just the
+files already enumerated in those sections. The file lists above reflect
+what's known today; a mechanical migration should not rely on that list
+being exhaustive. Treat any unexpected hit as a stop-and-report case rather
+than silently patching around it — an unaccounted-for call site is a sign
+the removal's blast radius wasn't fully understood yet.
+
 ## 4. Precision policy
 
 Keep `precision.h`'s `FP_PRECISION` compile-time switch (1/2/3 = float/mixed/
@@ -217,6 +265,21 @@ double via `FPPolicy`), but flip the **default** in the header from
 math in `FPL_TYPE` (float), accumulation in `FPH_TYPE` (double). Float-only
 and double-only remain available as explicit build options (debugging,
 accuracy comparisons, perf comparisons) via `-DFP_PRECISION=1` or `=3`.
+
+**Scope this explicitly before flipping it:** confirm whether `FP_PRECISION`
+is consumed only by GPU-portable code (`FPL_TYPE`/`FPH_TYPE` call sites), or
+whether it also changes numerics in CPU-only paths / the default CPU-only
+build. This matters because §9.6 requires existing regression tests to pass
+"unchanged in behavior" — that claim only holds at the bit level if the
+default flip is scoped to GPU-portable code paths that don't run in a
+CPU-only build. If the flip does affect CPU-only numerics too, treat it as
+its own numerically-visible change: update the affected regression
+baselines' tolerances explicitly and call it out in that commit's message,
+rather than folding it silently into "rewrite of the accelerator layer, not
+of physics." (Roadmap step 4 already lands this separately from the
+pairlist/kernel work, which is the right sequencing — this note is about
+making the regression-test implication explicit in the text too, not about
+reordering it.)
 
 ## 5. Backend dispatch pattern (for new algorithms)
 
@@ -244,6 +307,11 @@ if (sim.param().gpu.accelerator == simulation::gpu_cuda &&
   return 1;
 }
 ```
+
+(Illustrative: `simulation::pl_cuda` names a decision not yet made — see §11's
+open question on whether the new selector is a proper `pairlist_enum` value
+or reuses the existing untyped `int`. Resolve that during roadmap step 5;
+this snippet shows the intended check, not a settled API.)
 
 No "CPU pairlist + copy to GPU" path exists as a permanent feature — that's
 precisely the shape of the discarded AI commit, and if it were always
@@ -414,7 +482,18 @@ afterthought:
 6. **Build-matrix smoke tests.** CPU-only build must compile and run
    unaffected by anything under `USE_CUDA`; both must pass existing GROMOS
    regression tests unchanged in behavior (this is a rewrite of the
-   accelerator layer, not of physics).
+   accelerator layer, not of physics; see §4's note if the precision default
+   flip turns out to affect CPU-only numerics).
+7. **Host↔device transfer-count regression test.** Tests 1-6 verify
+   correctness, but none of them verify the thing §1 states as the actual
+   performance goal (minimize transfers, not per-kernel time) — a later
+   change could reintroduce a hidden sync/copy without breaking any
+   correctness test, silently drifting away from that goal. Instrument
+   `CudaManager`/`CudaMemoryManager` with a counter incremented on every
+   host↔device copy, and add a test asserting the per-MD-step count for
+   fully-ported algorithms (once §10 step 11's milestone lands) doesn't
+   regress upward. This is the gate for the stated goal itself, not just for
+   correctness.
 
 ## 10. Implementation roadmap
 
@@ -462,3 +541,11 @@ Rough dependency order; each step should land as its own reviewable unit.
 - Where exactly the new `pairlist.grid` selector value/constant should live
   (a new `simulation::pairlist_enum` vs. reusing the existing untyped `int` —
   worth cleaning up either way, decide during step 5 of the roadmap).
+- Multiple concurrent `CudaManager` instances (e.g. replica exchange, EDS
+  legs) potentially sharing one physical GPU: §3.2's per-`Simulation`
+  `CudaManager` model assumes single-threaded access per manager (see
+  §3.2's thread-safety note), but doesn't yet say how multiple managers
+  sharing one device should coexist — separate CUDA contexts per process is
+  the likely answer if replicas are separate processes, but this hasn't
+  been confirmed against how GROMOS actually runs REMD/EDS today. Revisit
+  before any multi-replica GPU deployment.

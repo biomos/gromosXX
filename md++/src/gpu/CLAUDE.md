@@ -139,61 +139,121 @@ check — plug it into the existing GROMOS regression-test infrastructure.
 
 ## Git workflow
 
-- Always work on a branch named `claude/<short-task-description>`, never commit directly to `main`
+- Always work on a branch named `cuda_claude_<short_feature_name>`, never commit directly to `master`
+- Decide on checkpoints and make separate branch for every separately reviewable part
+- The branch at its final stage should compile properly and pass all the tests
 - Commit after each logical, working change with a clear message
 - Never force-push
-- Never merge to `main` yourself — leave that for human review
-- Run tests before every commit; do not commit code that fails tests
+- Never merge to `master` yourself — leave that for human review
+- Tests are not required to pass on every commit, but the build must always succeed. The full test suite must pass before the branch is considered complete (see Standard workflow).
 
 ## Build
 
-Build out-of-tree in a dedicated directory so source stays clean:
+This project uses **CMake with the Ninja generator**, driven through CMake
+presets — not autotools/make, despite what older notes or muscle memory
+might suggest. There is no `configure` script and no `Makefile` in the
+build directory; `make` will fail with "No targets specified and no
+makefile found." Use `ninja` or `cmake --build`, never `make`, in this repo.
 
 ​```bash
-mkdir -p build && cd build
-../Config.sh          # only needed once, or after configure.ac changes
-../configure --disable-debug --disable-shared --enable-static --enable-openmp --with-cuda
-make -j $(nproc)
-make check
+cmake --preset cuda-on
+cmake --build --preset cuda-on -j $(nproc)
+ctest --preset cuda-on --output-on-failure
+​```
+
+If a build preset isn't defined for a given configure preset, build directly
+from the build directory instead:
+​```bash
+cd build
+ninja -j $(nproc)
+ctest --output-on-failure
 ​```
 
 Rules:
-- Do not run `Config.sh` on every build — only if `configure` is missing or `configure.ac`/`Makefile.am` changed.
-- Always run from a clean `build/` directory if you changed `configure` flags; run `make clean` first if switching flags on an existing build dir.
-- A build is only "done" when `make -j $(nproc)` exits 0 AND `make check` exits 0. Do not report success otherwise.
+- Always check `cmake --list-presets` first if unsure which preset to use;
+  presets are self-documenting via their `displayName`/`description` fields
+  — read those rather than guessing which one fits the task.
+- Do not re-run `cmake --preset ...` on every build — only if `CMakeLists.txt`,
+  a `cmake/*.cmake` module, or the preset file itself changed. Plain `ninja`
+  (or `cmake --build`) is sufficient for a normal edit/rebuild cycle.
+- If you changed configure-time options (e.g. toggling `USE_CUDA`), delete
+  the build directory and reconfigure from scratch rather than reusing a
+  stale cache: `rm -rf build && cmake --preset cuda-on`. CMake does not
+  reliably overwrite a cached variable just because the preset changed.
+- A build is only "done" when `cmake --build ...` exits 0 AND
+  `ctest ... --output-on-failure` exits 0. Do not report success otherwise.
 
 ## Build/test failure procedure
 
-If `configure` fails:
-1. Read the exact error in the output (not just the summary at the end).
-2. Check `config.log` for the specific failing check.
-3. Do not disable a feature to work around a missing dependency — report what's missing instead, unless explicitly told the dependency is optional.
+If `cmake --preset ...` (configure step) fails:
+1. Read the exact error in the output (not just the final summary line).
+2. Check `build/CMakeFiles/CMakeConfigureLog.yaml` (CMake ≥3.26) for the
+   specific failing check — this is the CMake equivalent of autotools'
+   `config.log`. On older CMake, `build/CMakeCache.txt` shows what was
+   actually detected/set, though not the full narrative log.
+3. Do not disable a feature (e.g. drop `USE_CUDA`) to work around a missing
+   dependency — report what's missing instead, unless explicitly told the
+   dependency is optional.
+4. `CMAKE_CUDA_ARCHITECTURES must be non-empty if set` means the variable is
+   set-but-empty, not merely unset — check `CMakeLists.txt` for where it's
+   set relative to `enable_language(CUDA)`. It must be set *before* that
+   call, not after; CMake validates/locks it in during `enable_language`.
 
-If `make` fails:
-1. Fix the actual compile/link error shown — do not suppress warnings-as-errors by weakening flags unless the warning is a false positive you can justify in the commit message.
-2. Re-run `make -j $(nproc)` after each fix; do not batch multiple unverified fixes before re-testing.
+If the build step (`ninja` / `cmake --build`) fails:
+1. Fix the actual compile/link error shown — do not suppress warnings-as-errors
+   by weakening flags unless the warning is a false positive you can justify
+   in the commit message.
+2. Re-run the build after each fix; do not batch multiple unverified fixes
+   before re-testing.
 
-If `make check` fails:
-1. Identify which specific test(s) failed and read their output/log (usually in `build/*.log` or `test-suite.log`).
-2. Distinguish a real bug (code produces wrong result) from a broken test (test itself is outdated/incorrect) — fix the actual bug by default; only modify a test if you can justify the test itself is wrong.
-3. Re-run only the failed test first if possible, then the full suite, before considering it fixed.
-4. If a fix is non-obvious after 2-3 attempts, stop and leave a clear note in the commit/PR description rather than making increasingly speculative changes.
+If `ctest` fails:
+1. Identify which specific test(s) failed: `ctest --output-on-failure` shows
+   the failing test's output directly; `build/Testing/Temporary/LastTest.log`
+   has the full detail if you need more.
+2. Distinguish a real bug (code produces wrong result) from a broken test
+   (test itself is outdated/incorrect) — fix the actual bug by default; only
+   modify a test if you can justify the test itself is wrong.
+3. Re-run only the failed test first if possible
+   (`ctest -R <test_name> --output-on-failure`), then the full suite, before
+   considering it fixed.
+4. If a fix is non-obvious after 2-3 attempts, stop and leave a clear note in
+   the commit/PR description rather than making increasingly speculative
+   changes.
 
 ## Writing new tests
 
-- New tests go in src/check
-- Follow the existing test file naming/structure — look at 2-3 existing tests before writing a new one
-- Register new test files in the relevant `Makefile.am` (`TESTS = ...` list) so `make check` picks them up automatically
-- Every bug fix should come with a regression test that fails before the fix and passes after, where practical
-- Run `make check` after adding a test to confirm it's actually being picked up by the harness (not silently skipped)
+- New tests go in `src/check`
+- Follow the existing test file naming/structure — look at 2-3 existing tests
+  before writing a new one
+- Register new test files in the relevant `CMakeLists.txt`
+  (`add_test(...)` / the test list for that directory) so `ctest` picks them
+  up automatically
+- Every new feature should come with an appropriate test
+- Every bug fix should come with a regression test that fails before the fix
+  and passes after, where practical
+- Run `ctest --preset cuda-on --output-on-failure` (or `ctest` from `build/`)
+  after adding a test to confirm it's actually being picked up by the
+  harness (not silently skipped) — check `ctest -N` to list discovered
+  tests without running them, if you just want to confirm registration
 
 ## CUDA build notes
-- Verify `nvcc --version` succeeds before building; if CUDA isn't found, do not silently drop `--with-cuda` — report it.
-- If a specific GPU compute capability / arch flag is required and not autodetected, check `configure --help` output for a `--with-cuda-arch`-style flag rather than guessing.
+- Verify `nvcc --version` succeeds before building; if CUDA isn't found, do
+  not silently drop `USE_CUDA`/`--with-cuda` — report it.
+- `CMAKE_CUDA_ARCHITECTURES` is set explicitly in `CMakeLists.txt`
+  (currently `80 86 89 90`) — do not rely on preset-level overrides for this;
+  the in-source `set()` runs before `enable_language(CUDA)` and takes effect
+  regardless of what a preset provides. If you need to target a different/
+  additional architecture, edit it there, not in a preset.
 
 ## Standard workflow
 1. Make code change
-2. Build (`make -j $(nproc)`)
-3. Test (`make check`)
+2. Build (`cmake --build --preset cuda-on -j $(nproc)`, or `ninja` from `build/`)
+3. Test (`ctest --preset cuda-on --output-on-failure`, or `ctest` from `build/`)
 4. If failures: diagnose → fix → rebuild → retest (do not skip straight to committing)
-5. Commit only once build + full test suite pass
+5. A commit requires a successful build, but not a fully passing test suite - WIP commits on a feature branch may carry known, understood test failures.
+6. Every test failure must still go through the Build/test failure procedure
+   (diagnose before deferring) — do not commit a failure you haven't
+   investigated. Record any deliberately deferred failure in KNOWN_ISSUES.md
+   (test name + brief reason), and clear it before declaring the branch done.
+7.  A feature branch is only complete once the full test suite passes and
+    KNOWN_ISSUES.md is empty for that branch.
