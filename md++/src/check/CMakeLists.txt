@@ -97,6 +97,9 @@ add_executable(lambdas ${LAMBDAS_CC})
 if(USE_CUDA)
     list(APPEND EXEC_NAMES aladip_cuda)
     add_executable(aladip_cuda ${ALADIP_CUDA_CC})
+
+    list(APPEND EXEC_NAMES pairlist_cuda_equivalence)
+    add_executable(pairlist_cuda_equivalence pairlist_cuda_equivalence.t.cc)
 endif()
 
 foreach(LOOP_VAR ${EXEC_NAMES})

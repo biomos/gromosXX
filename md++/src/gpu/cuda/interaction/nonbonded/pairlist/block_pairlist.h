@@ -129,7 +129,7 @@ namespace gpu {
       bool self_pairs,
       Periodicity<BOUNDARY> periodicity,
       FPL_TYPE cutoff,
-      TileVecT<Interaction_Tile> candidates);
+      TileVecT<Interaction_Tile>::View candidates);
 
   /**
    * @brief Exclusion + short/long classification (TILE_PAIRLIST_DESIGN.md
@@ -153,14 +153,14 @@ namespace gpu {
    */
   template <math::boundary_enum BOUNDARY>
   __global__ void classify_tiles_kernel(
-      TileVecT<Interaction_Tile> candidates,
+      TileVecT<Interaction_Tile>::View candidates,
       const unsigned* row_order, unsigned row_count,
       const unsigned* col_other_order, unsigned col_other_count,
       math::CuVArray::View cg_cog,
       Topology::View topo,
       Periodicity<BOUNDARY> periodicity,
       FPL_TYPE cutoff_short2, FPL_TYPE cutoff_long2,
-      TileVecT<Interaction_Tile> out_short,
-      TileVecT<Interaction_Tile> out_long);
+      TileVecT<Interaction_Tile>::View out_short,
+      TileVecT<Interaction_Tile>::View out_long);
 
 }

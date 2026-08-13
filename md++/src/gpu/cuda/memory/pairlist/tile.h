@@ -26,6 +26,7 @@
 #pragma once
 
 #include <cuda_runtime.h>
+#include "gpu/cuda/cuhostdevice.h"
 
 namespace gpu
 {
@@ -94,6 +95,57 @@ namespace gpu
   template <typename TileT>
   class TileVecT {
   public:
+      /**
+       * @brief Non-owning, trivially-copyable handle to a TileVecT's
+       * device-accessible state -- pass THIS into kernels, never the
+       * owning TileVecT itself.
+       *
+       * TileVecT owns its memory (its destructor calls cudaFree). Kernel
+       * launch syntax `kernel<<<...>>>(..., some_tile_vec)` passing a
+       * TileVecT BY VALUE constructs a host-side temporary (a shallow
+       * copy: same m_data/m_size/m_overflow pointers) whose destructor
+       * runs synchronously right after the (asynchronous) launch is
+       * enqueued -- freeing the shared buffers while the kernel may still
+       * be running or about to run, and while later host code still holds
+       * the "original" TileVecT with now-dangling pointers. This was a
+       * real, silent bug (found via the pairlist-equivalence test,
+       * TILE_PAIRLIST_DESIGN.md §5/§6): reads after such a launch could
+       * appear correct for a while (freed memory not yet reused) and then
+       * turn to garbage/zero once something else reused the address.
+       * View has no destructor, so copying it (including implicitly, as
+       * a by-value kernel parameter) is always safe.
+       */
+      class View {
+      public:
+          HOSTDEVICE View() : m_data(nullptr), m_size(nullptr), m_capacity(0), m_overflow(nullptr) {}
+          HOSTDEVICE View(TileT* data, unsigned* size, unsigned capacity, bool* overflow)
+              : m_data(data), m_size(size), m_capacity(capacity), m_overflow(overflow) {}
+
+          __device__ __host__ TileT& operator[](size_t i) {
+              assert(i < m_capacity);
+              return m_data[i];
+          }
+          __device__ __host__ const TileT& operator[](size_t i) const {
+              assert(i < m_capacity);
+              return m_data[i];
+          }
+
+          /// Add from device using atomicAdd. Sets overflow flag if exceeded.
+          __device__ bool push_back(const TileT& tile);
+
+          __device__ __host__ unsigned size() const { return *m_size; }
+          __device__ __host__ unsigned capacity() const { return m_capacity; }
+          __device__ __host__ TileT* data() { return m_data; }
+          __device__ __host__ const TileT* data() const { return m_data; }
+          __host__ bool was_overflown() const { return *m_overflow; }
+
+      private:
+          TileT *m_data;
+          unsigned *m_size;
+          unsigned m_capacity;
+          bool *m_overflow;
+      };
+
       __host__ TileVecT(size_t capacity = 0)
           : m_data(nullptr), m_size(nullptr), m_capacity(0), m_overflow(nullptr)
       {
@@ -176,6 +228,13 @@ namespace gpu
           *m_size = 0;
           *m_overflow = false;
       }
+
+      /**
+       * @brief Non-owning handle for kernel parameters -- see View's own
+       * doc comment for why this exists and why kernels must take View,
+       * never TileVecT itself, by value.
+       */
+      __host__ View view() const { return View(m_data, m_size, m_capacity, m_overflow); }
 
   private:
       /**

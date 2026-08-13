@@ -23,20 +23,13 @@
   (`TILE_PAIRLIST_DESIGN.md` §3 steps 1-5: chargegroup cog/cell build,
   Thrust sort-by-key into fixed 32-wide atom blocks, block bounding-sphere
   computation, block-pair candidate search, exclusion + short/long
-  classification) before still ending in the same explicit dummy:
-  `update()` clears the CPU-facing `PairlistContainer` and warns, so
-  nonbonded forces/energies are zero, by design, not yet a crash and not
-  yet physically meaningful either -- `m_tiles.solute_short`/`solute_long`/
-  `solvent_short`/`solvent_long` are real, exclusion-checked, classified
-  atom-pair tiles now, but nothing downstream (no force kernel) consumes
-  them yet. Manually verified (not via `ctest` -- see next entry for why)
-  that this runs to completion without error across many steps. There's
-  no regression test for this path yet; worth adding one that checks for
-  the warning + zero-nonbonded-energy combination, and separately for "did
-  the pipeline actually run without a CUDA error," once `PLAN.md` §10's
-  remaining work (a force kernel) gives it something real to assert
-  against -- though the actual correctness gate is the pairlist-
-  equivalence test (`TILE_PAIRLIST_DESIGN.md` §5), not this.
+  classification), verified against `Standard_Pairlist_Algorithm` bit-
+  for-bit by the `pairlist_cuda_equivalence` test (vacuum + rectangular).
+  `update()` still ends in the explicit dummy for the CPU-facing
+  `PairlistContainer` it's actually asked to fill (clears it and warns),
+  since nothing downstream (no force kernel) consumes the real tiles
+  (`m_tiles.solute_short`/etc) yet -- so nonbonded forces/energies through
+  the normal `Nonbonded_Interaction` path are still zero, by design.
 
 ## Latent bug: CUDA context corruption after runtime `atomic_cutoff` toggle (not exercised by the current test suite)
 

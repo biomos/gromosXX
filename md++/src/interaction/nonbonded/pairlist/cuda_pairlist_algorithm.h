@@ -104,6 +104,17 @@ namespace interaction
         "CUDA_Pairlist_Algorithm", io::message::error);
     };
 
+    /**
+     * For the pairlist-equivalence test (TILE_PAIRLIST_DESIGN.md §5/§6)
+     * only -- converts the tiles built by the most recent update() call
+     * into a CPU-comparable interaction::PairlistContainer. Not part of
+     * the production pipeline; update()'s own `pairlist` output
+     * parameter stays the intentional dummy (PAIRLIST_PLAN.md §5(A)).
+     */
+    interaction::PairlistContainer to_pairlist_container(topology::Topology & topo) const {
+      return m_impl.to_pairlist_container(topo);
+    }
+
   private:
     CUDA_Pairlist_Algorithm_Impl m_impl;
     // TODO(cleanup): dummy placeholder per PAIRLIST_PLAN.md §5(A) -- update()

@@ -74,7 +74,7 @@ __global__ void gpu::find_block_candidates_kernel(
     bool self_pairs,
     gpu::Periodicity<BOUNDARY> periodicity,
     FPL_TYPE cutoff,
-    gpu::TileVecT<gpu::Interaction_Tile> candidates) {
+    gpu::TileVecT<gpu::Interaction_Tile>::View candidates) {
 
     const unsigned bi = blockIdx.x * blockDim.x + threadIdx.x;
     const unsigned bj = blockIdx.y * blockDim.y + threadIdx.y;
@@ -101,13 +101,13 @@ template __global__ void gpu::find_block_candidates_kernel<math::vacuum>(
     unsigned, unsigned,
     const FPL3_TYPE*, const FPL_TYPE*,
     const FPL3_TYPE*, const FPL_TYPE*,
-    bool, gpu::Periodicity<math::vacuum>, FPL_TYPE, gpu::TileVecT<gpu::Interaction_Tile>);
+    bool, gpu::Periodicity<math::vacuum>, FPL_TYPE, gpu::TileVecT<gpu::Interaction_Tile>::View);
 
 template __global__ void gpu::find_block_candidates_kernel<math::rectangular>(
     unsigned, unsigned,
     const FPL3_TYPE*, const FPL_TYPE*,
     const FPL3_TYPE*, const FPL_TYPE*,
-    bool, gpu::Periodicity<math::rectangular>, FPL_TYPE, gpu::TileVecT<gpu::Interaction_Tile>);
+    bool, gpu::Periodicity<math::rectangular>, FPL_TYPE, gpu::TileVecT<gpu::Interaction_Tile>::View);
 
 // SPLIT_BOUNDARY (util/template_split.h) routes both truncoct and triclinic
 // through the triclinic template instantiation -- needed to link even
@@ -118,7 +118,7 @@ template __global__ void gpu::find_block_candidates_kernel<math::triclinic>(
     unsigned, unsigned,
     const FPL3_TYPE*, const FPL_TYPE*,
     const FPL3_TYPE*, const FPL_TYPE*,
-    bool, gpu::Periodicity<math::triclinic>, FPL_TYPE, gpu::TileVecT<gpu::Interaction_Tile>);
+    bool, gpu::Periodicity<math::triclinic>, FPL_TYPE, gpu::TileVecT<gpu::Interaction_Tile>::View);
 
 __global__ void gpu::atom_sort_key_kernel(
     const int* chargegroup_offsets,
@@ -138,15 +138,15 @@ __global__ void gpu::atom_sort_key_kernel(
 
 template <math::boundary_enum BOUNDARY>
 __global__ void gpu::classify_tiles_kernel(
-    gpu::TileVecT<gpu::Interaction_Tile> candidates,
+    gpu::TileVecT<gpu::Interaction_Tile>::View candidates,
     const unsigned* row_order, unsigned row_count,
     const unsigned* col_other_order, unsigned col_other_count,
     math::CuVArray::View cg_cog,
     gpu::Topology::View topo,
     gpu::Periodicity<BOUNDARY> periodicity,
     FPL_TYPE cutoff_short2, FPL_TYPE cutoff_long2,
-    gpu::TileVecT<gpu::Interaction_Tile> out_short,
-    gpu::TileVecT<gpu::Interaction_Tile> out_long) {
+    gpu::TileVecT<gpu::Interaction_Tile>::View out_short,
+    gpu::TileVecT<gpu::Interaction_Tile>::View out_long) {
 
     const unsigned tile_idx = blockIdx.x;
     if (tile_idx >= candidates.size()) return;
@@ -231,22 +231,22 @@ __global__ void gpu::classify_tiles_kernel(
 
 // explicit instantiations to allow linking
 template __global__ void gpu::classify_tiles_kernel<math::vacuum>(
-    gpu::TileVecT<gpu::Interaction_Tile>,
+    gpu::TileVecT<gpu::Interaction_Tile>::View,
     const unsigned*, unsigned, const unsigned*, unsigned,
     math::CuVArray::View, gpu::Topology::View,
     gpu::Periodicity<math::vacuum>, FPL_TYPE, FPL_TYPE,
-    gpu::TileVecT<gpu::Interaction_Tile>, gpu::TileVecT<gpu::Interaction_Tile>);
+    gpu::TileVecT<gpu::Interaction_Tile>::View, gpu::TileVecT<gpu::Interaction_Tile>::View);
 
 template __global__ void gpu::classify_tiles_kernel<math::rectangular>(
-    gpu::TileVecT<gpu::Interaction_Tile>,
+    gpu::TileVecT<gpu::Interaction_Tile>::View,
     const unsigned*, unsigned, const unsigned*, unsigned,
     math::CuVArray::View, gpu::Topology::View,
     gpu::Periodicity<math::rectangular>, FPL_TYPE, FPL_TYPE,
-    gpu::TileVecT<gpu::Interaction_Tile>, gpu::TileVecT<gpu::Interaction_Tile>);
+    gpu::TileVecT<gpu::Interaction_Tile>::View, gpu::TileVecT<gpu::Interaction_Tile>::View);
 
 template __global__ void gpu::classify_tiles_kernel<math::triclinic>(
-    gpu::TileVecT<gpu::Interaction_Tile>,
+    gpu::TileVecT<gpu::Interaction_Tile>::View,
     const unsigned*, unsigned, const unsigned*, unsigned,
     math::CuVArray::View, gpu::Topology::View,
     gpu::Periodicity<math::triclinic>, FPL_TYPE, FPL_TYPE,
-    gpu::TileVecT<gpu::Interaction_Tile>, gpu::TileVecT<gpu::Interaction_Tile>);
+    gpu::TileVecT<gpu::Interaction_Tile>::View, gpu::TileVecT<gpu::Interaction_Tile>::View);

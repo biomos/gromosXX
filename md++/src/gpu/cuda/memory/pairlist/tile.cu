@@ -41,8 +41,22 @@ __device__ bool gpu::TileVecT<TileT>::push_back(const TileT& tile) {
     return true;
 }
 
+template <typename TileT>
+__device__ bool gpu::TileVecT<TileT>::View::push_back(const TileT& tile) {
+    assert(m_data != nullptr);
+    assert(m_capacity > 0);
+    unsigned i = atomicAdd(m_size, 1u);
+    if (i >= m_capacity) {
+        *m_overflow = true;  // Report overflow
+        return false;
+    }
+    m_data[i] = tile;
+    return true;
+}
+
 // Explicit instantiation: without a call site inside this TU, the compiler
 // has no reason to generate device code for this template method at all
 // (nothing calls push_back from tile.cu itself), so callers in other .cu
 // files (block_pairlist.cu) would otherwise link against an empty object.
 template __device__ bool gpu::TileVecT<gpu::Interaction_Tile>::push_back(const gpu::Interaction_Tile&);
+template __device__ bool gpu::TileVecT<gpu::Interaction_Tile>::View::push_back(const gpu::Interaction_Tile&);

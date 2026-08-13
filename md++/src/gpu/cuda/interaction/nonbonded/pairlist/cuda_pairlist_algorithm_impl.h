@@ -3,6 +3,7 @@
 #include "gpu/cuda/memory/precision.h"
 #include "gpu/cuda/memory/cuvector.h"
 #include "gpu/cuda/memory/pairlist/tile.h"
+#include "interaction/nonbonded/pairlist/pairlist.h"
 
 namespace interaction {
   /**
@@ -97,6 +98,17 @@ namespace interaction {
        * kernel (out of scope here).
        */
       const gpu::TileContainer & tiles() const { return m_tiles; }
+
+      /**
+       * Convert the classified tiles into a CPU-comparable
+       * interaction::PairlistContainer, unpacking each tile's mask bits
+       * back into (atom_i, atom_j) pairs via the same row/col atom-order
+       * arrays used to build them. For the pairlist-equivalence test
+       * (TILE_PAIRLIST_DESIGN.md §5/§6) only -- nothing in the production
+       * pipeline needs the CPU-shaped format, and this is not a
+       * performant way to get there (it's a host-side, per-bit unpack).
+       */
+      interaction::PairlistContainer to_pairlist_container(topology::Topology & topo) const;
 
     protected:
       /**

@@ -216,11 +216,19 @@ namespace {
     // test compared to the CPU's exact per-atom distance check.
     double per_block = 1.3 * 2.0 * block_density * sphere_vol;
     if (self_pairs) per_block *= 0.5; // only bi <= bj pairs get pushed
-    const unsigned capacity = static_cast<unsigned>(per_block * num_blocks_a) + num_blocks_a;
+    // ceil(), not a truncating cast: a truncating cast silently rounds
+    // e.g. 0.93 down to 0, systematically UNDERestimating capacity by up
+    // to 1 per block -- found via the pairlist-equivalence test
+    // (TILE_PAIRLIST_DESIGN.md §5/§6): a real, reproducible overflow (not
+    // just an off-by-one on paper) that TileVecT correctly detected and
+    // reported via was_overflown(), but the report went to io::messages
+    // and nothing had displayed it yet, so it looked like silent data
+    // corruption instead of the flagged error it actually was.
+    const unsigned capacity = static_cast<unsigned>(std::ceil(per_block * num_blocks_a)) + num_blocks_a;
     return std::min(capacity, worst_case);
   }
 
-  void check_candidate_overflow(gpu::TileVecT<gpu::Interaction_Tile> & tiles,
+  void check_candidate_overflow(gpu::TileVecT<gpu::Interaction_Tile> const & tiles,
                                  const char * which) {
     cudaDeviceSynchronize();
     if (tiles.was_overflown()) {
@@ -273,7 +281,7 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::_build_candidates(
             num_solute_blocks, num_solute_blocks,
             m_solute_block_center.data(), m_solute_block_radius.data(),
             m_solute_block_center.data(), m_solute_block_radius.data(),
-            true, periodicity, cutoff, m_tiles.solute_candidates);
+            true, periodicity, cutoff, m_tiles.solute_candidates.view());
     }
 
     if (num_solute_blocks > 0 && num_solvent_blocks > 0) {
@@ -283,7 +291,7 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::_build_candidates(
             num_solute_blocks, num_solvent_blocks,
             m_solute_block_center.data(), m_solute_block_radius.data(),
             m_solvent_block_center.data(), m_solvent_block_radius.data(),
-            false, periodicity, cutoff, m_tiles.solute_candidates);
+            false, periodicity, cutoff, m_tiles.solute_candidates.view());
     }
 
     if (num_solute_blocks > 0) {
@@ -299,7 +307,7 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::_build_candidates(
             num_solvent_blocks, num_solvent_blocks,
             m_solvent_block_center.data(), m_solvent_block_radius.data(),
             m_solvent_block_center.data(), m_solvent_block_radius.data(),
-            true, periodicity, cutoff, m_tiles.solvent_candidates);
+            true, periodicity, cutoff, m_tiles.solvent_candidates.view());
         check_candidate_overflow(m_tiles.solvent_candidates, "solvent_candidates");
     }
 };
@@ -349,22 +357,22 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::_classify_tiles(
 
     if (num_solute_candidates > 0) {
         gpu::classify_tiles_kernel<B><<<num_solute_candidates, dimBlock2D>>>(
-            m_tiles.solute_candidates,
+            m_tiles.solute_candidates.view(),
             m_solute_atom_order.data(), static_cast<unsigned>(m_solute_atom_order.size()),
             m_solvent_atom_order.data(), static_cast<unsigned>(m_solvent_atom_order.size()),
             m_cg_cog.view(), topo_view, periodicity,
             cutoff_short2, cutoff_long2,
-            m_tiles.solute_short, m_tiles.solute_long);
+            m_tiles.solute_short.view(), m_tiles.solute_long.view());
     }
 
     if (num_solvent_candidates > 0) {
         gpu::classify_tiles_kernel<B><<<num_solvent_candidates, dimBlock2D>>>(
-            m_tiles.solvent_candidates,
+            m_tiles.solvent_candidates.view(),
             m_solvent_atom_order.data(), static_cast<unsigned>(m_solvent_atom_order.size()),
             nullptr, 0u,
             m_cg_cog.view(), topo_view, periodicity,
             cutoff_short2, cutoff_long2,
-            m_tiles.solvent_short, m_tiles.solvent_long);
+            m_tiles.solvent_short.view(), m_tiles.solvent_long.view());
     }
 
     cudaDeviceSynchronize();
@@ -378,3 +386,61 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::_classify_tiles(
           "CUDA_Pairlist_Algorithm", io::message::error);
     }
 };
+
+namespace {
+  /**
+   * Unpack every tile in `tiles` into (atom_i, atom_j) pairs (i < j) and
+   * append j to out[i], using the same row/col atom-order convention as
+   * classify_tiles_kernel: col_other_order is only consulted when a
+   * tile's col_from_b flag is set (the solute-solvent case); pass
+   * nullptr for it when unpacking solvent_short/solvent_long, where that
+   * flag is never set.
+   */
+  void unpack_tiles_into(const gpu::TileVecT<gpu::Interaction_Tile> & tiles,
+                          const gpu::cuvector<unsigned> & row_order,
+                          const gpu::cuvector<unsigned> * col_other_order,
+                          interaction::Pairlist & out) {
+    const unsigned n = static_cast<unsigned>(tiles.size());
+    for (unsigned t = 0; t < n; ++t) {
+        const gpu::Interaction_Tile & tile = tiles[t];
+        unsigned row_block, col_block;
+        bool col_from_b;
+        gpu::unpack_block_index(tile.index, row_block, col_block, col_from_b);
+        const gpu::cuvector<unsigned> & col_order =
+            (col_from_b && col_other_order) ? *col_other_order : row_order;
+
+        for (unsigned r = 0; r < gpu::BLOCK_SIZE; ++r) {
+            const unsigned bits = tile.mask[r];
+            if (!bits) continue;
+            const unsigned row_idx = row_block * gpu::BLOCK_SIZE + r;
+            if (row_idx >= row_order.size()) continue;
+            const unsigned a1 = row_order[row_idx];
+            for (unsigned c = 0; c < gpu::BLOCK_SIZE; ++c) {
+                if (!(bits & (1u << c))) continue;
+                const unsigned col_idx = col_block * gpu::BLOCK_SIZE + c;
+                if (col_idx >= col_order.size()) continue;
+                const unsigned a2 = col_order[col_idx];
+                const unsigned i = a1 < a2 ? a1 : a2;
+                const unsigned j = a1 < a2 ? a2 : a1;
+                out[i].push_back(j);
+            }
+        }
+    }
+  }
+}
+
+interaction::PairlistContainer interaction::CUDA_Pairlist_Algorithm_Impl::to_pairlist_container(
+                topology::Topology & topo) const
+{
+    interaction::PairlistContainer result;
+    result.resize(static_cast<unsigned>(topo.num_atoms()));
+
+    // Tiles/order arrays live in unified memory, written by kernels that
+    // classify_tiles() already synchronized after -- safe to read here.
+    unpack_tiles_into(m_tiles.solute_short,  m_solute_atom_order, &m_solvent_atom_order, result.solute_short);
+    unpack_tiles_into(m_tiles.solute_long,   m_solute_atom_order, &m_solvent_atom_order, result.solute_long);
+    unpack_tiles_into(m_tiles.solvent_short, m_solvent_atom_order, nullptr, result.solvent_short);
+    unpack_tiles_into(m_tiles.solvent_long,  m_solvent_atom_order, nullptr, result.solvent_long);
+
+    return result;
+}

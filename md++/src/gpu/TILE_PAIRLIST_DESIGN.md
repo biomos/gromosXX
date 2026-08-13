@@ -237,23 +237,51 @@ Before any force/energy number from this pairlist is trusted:
 
 ## 6. Proposed implementation sequence (separately reviewable steps)
 
-1. Add `skin` to `plist_struct` (+ parser, + warning-if-nonzero-and-ignored
-   in the four existing CPU algorithms per D7) -- small, mechanical,
-   unblocks nothing else but is a prerequisite. Low risk.
-2. Build the GPU exclusion structure (gap §1.1) + wire it into
-   `gpu::TopologyView`/`gpu::Topology`, built once in `init()`.
-3. Fix `prepare_cog_kernel`'s launch config bug; extend it to also emit
-   the sort key it already computes but doesn't currently expose for
-   sorting.
-4. Cell/block build: sort-by-key (Thrust) + block-bounding-sphere kernel +
-   block-pair candidate kernel, chargegroup-cutoff only, vacuum/rectangular
-   only, writing into `solute_candidates`/`solvent_candidates`.
-5. Short/long classification + exclusion-mask kernel, chargegroup-cutoff
-   only, writing into `solute_short`/`solute_long` (and the solvent
-   equivalents, exploiting solvent's fixed-size regularity the same way
-   `TileContainerT` already separates solute/solvent).
-6. The pairlist-equivalence test (§5) against `Standard_Pairlist_Algorithm`
-   -- gate before anything downstream trusts this.
+1. **Done.** Add `skin` to `plist_struct` (+ parser, + warning-if-nonzero-
+   and-ignored in the four existing CPU algorithms per D7).
+2. **Done.** Build the GPU exclusion structure (gap §1.1), wired into
+   `gpu::TopologyView`/`gpu::Topology`, built once in the constructor.
+3. **Done.** Fix `prepare_cog_kernel`'s launch config bug; extend it to
+   also emit the sort key it already computes.
+4. **Done.** Cell/block build: sort-by-key (Thrust) + block-bounding-
+   sphere kernel + block-pair candidate kernel, chargegroup-cutoff only,
+   vacuum/rectangular only, writing into `solute_candidates`/
+   `solvent_candidates`. Reworked to atom-indexed blocks partway through
+   (see this document's "second correction" above).
+5. **Done.** Short/long classification + exclusion-mask kernel,
+   chargegroup-cutoff only, writing into `solute_short`/`solute_long`/
+   `solvent_short`/`solvent_long`.
+6. **Done.** The pairlist-equivalence test (§5) against
+   `Standard_Pairlist_Algorithm`: `src/check/pairlist_cuda_equivalence.t.cc`,
+   vacuum + rectangular, both passing exactly (144/144 atoms, all four
+   buckets). Found and fixed two real bugs along the way, not just design
+   gaps -- both worth remembering since they're the kind of thing that
+   silently gives plausible-looking wrong answers without a test like
+   this one:
+   - `TileVecT` owns its memory (destructor calls `cudaFree`) but was
+     being passed **by value** into every kernel. Kernel launch syntax
+     constructs a host-side temporary for a by-value argument, and that
+     temporary's destructor runs synchronously right after the
+     (asynchronous) launch is enqueued -- freeing the shared buffers
+     while the kernel may still be running, and leaving the "original"
+     object (e.g. `m_tiles.solute_candidates`) with dangling pointers.
+     Fixed by adding `TileVecT::View` (non-owning, no destructor,
+     mirrors the existing `cuvector`/`CuVArray` View pattern) and
+     changing every kernel signature to take `View` instead of the
+     owning `TileVecT`.
+   - `estimate_candidate_capacity`'s `static_cast<unsigned>(per_block *
+     num_blocks_a)` truncated instead of rounding up, silently
+     underestimating capacity by up to 1 whenever the fractional part
+     was large (e.g. 0.93 truncates to 0). The resulting overflow was
+     real and correctly detected by `TileVecT::was_overflown()`/
+     `check_candidate_overflow`'s `io::messages.add(..., error)` call --
+     but `io::messages.add` only queues a message, and the equivalence
+     test wasn't calling `io::messages.display()` after running the
+     algorithms, so the error was queued and never shown. Fixed both:
+     `std::ceil()` instead of a truncating cast, and the test now flushes
+     and checks `io::messages` after every run (`flush_messages()`),
+     treating any error-or-worse severity as a hard failure rather than
+     silently continuing.
 7. Atomic-cutoff axis as a template branch, same kernels, second
    equivalence test against `Standard_Pairlist_Algorithm_Atomic`.
 
