@@ -8,7 +8,6 @@ set(GPU_HEADERS
     cuda/manager/cuda_manager.h
     cuda/manager/cuda_device_manager.h
     cuda/utils.h
-    cuda/algorithm/constraints.h
     cuda/kernels/reduction.h
     cuda/kernels/indexing.h
     cuda/kernels/hello_world.h
@@ -24,7 +23,6 @@ set(GPU_HEADERS
     cuda/memory/cupointer.h
     cuda/memory/cuvector.h
     cuda/memory/precision.h
-    cuda/memory/array.h
     cuda/memory/cumallocator.h
     cuda/memory/pairlist/tile.h
     # cuda/memory/pairlist/pairlist.h
@@ -51,7 +49,6 @@ if(USE_CUDA)
         cuda/manager/cuda_device_worker.cu
         cuda/manager/cuda_device_manager.cu
         cuda/manager/cuda_memory_manager.cu
-        # cuda/algorithm/constraints.cu
         cuda/interaction/nonbonded/pairlist/cuda_pairlist_algorithm_impl_gpu.cu
         cuda/memory/pairlist/tile.cu
     )
@@ -74,7 +71,6 @@ else()
     set(GPU_SOURCES
         gpu.cc
         cuda/manager/cuda_manager.cc
-        # cuda/algorithm/constraints.cc
     )
 
     add_library(grocuda STATIC ${GPU_SOURCES})
