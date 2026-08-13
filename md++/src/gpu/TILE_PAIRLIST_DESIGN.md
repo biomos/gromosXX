@@ -111,53 +111,83 @@ already computes the sort key for (Morton index), and it directly reuses
 
 ## 3. Proposed pipeline (candidate build, D6 phase 1)
 
-Per rebuild (every `pairlist.skip_step` steps, unchanged cadence):
+**Correction (found while implementing step 5, confirmed against
+`nonbonded_set.cc`):** the entire pipeline below -- candidate build *and*
+short/long classification -- runs only at pairlist rebuild time (every
+`pairlist.skip_step` steps), never every step. This is not an optimization
+choice, it's what GROMOS's twin-range scheme actually does: which pairs are
+short vs. long is decided once per rebuild; only the *force values*
+recomputed from `solute_short`/`solvent_short` happen every step
+(`m_outerloop.lj_crf_outerloop(..., false, ...)`, called unconditionally),
+while `solute_long`/`solvent_long` forces are computed once per rebuild
+(inside the `if (pairlist_update)` block) and implicitly held as a frozen
+background contribution until the next rebuild. An earlier draft of this
+section said classification runs "every step" -- that would build a
+different (not equivalent) scheme from what `PLAN.md` §9.1's equivalence
+test needs to match. Both `CUDA_Pairlist_Algorithm_Impl::reorder()` and
+`build_candidates()`/`classify_tiles()` all run inside
+`CUDA_Pairlist_Algorithm::update()` (the `skip_step`-gated call), not
+`prepare()` (called every step, box-wrapping/cog only).
 
-1. **Cell assignment** (chargegroup-cutoff case; atomic case uses atom
-   position directly instead of cog -- same kernel shape, different input
-   array): reuse/extend `prepare_cog_kernel` to also emit a sort key
-   (`ushort4.w`, the Morton index already computed). *New:* launch it with
-   a correct grid size (`(num_units + threads - 1) / threads`, not a
-   hardcoded single block).
-2. **Sort by cell/Morton key** into a permutation array (`unsigned* order`)
-   -- one `thrust::sort_by_key` call (CUDA Thrust is already a CUDA
-   Toolkit dependency, no new library to introduce) on `(cell_key,
-   original_index)` pairs. This is the "reorder" step `reorder()` is
-   already stubbed out for in `CUDA_Pairlist_Algorithm_Impl<gpuBackend>`.
-3. **Block formation**: chunk the sorted order into fixed 32-wide blocks
-   (`num_blocks = ceil(num_units / 32)`, last block padded with a sentinel
-   index that every later kernel treats as "never interacts" -- simplest
-   correctness-preserving pad, avoids a separate valid-count check
-   everywhere). Compute each block's bounding sphere (center + radius from
-   the 32 positions) in a small kernel -- cheap, O(num_blocks).
-4. **Block-pair candidate search**: for each block, walk its own cell's
-   neighbor cells (the existing 3D cell grid from step 1 still tells you
-   which blocks are spatially near, since blocks are Morton-contiguous
-   chunks of a cell-sorted order) and test bounding-sphere distance against
-   `cutoff_long + skin`. Surviving block pairs get pushed into
-   `solute_candidates`/`solvent_candidates` (`TileVecT::push_back`) as an
-   `Interaction_TileT` with `index` encoding the two block ids and an
-   all-zero mask (mask gets filled in step 5, not here -- keeps this
-   kernel's job to exactly "which block-pairs are plausibly close").
-5. **Exclusion + short/long classification** (D6 phase 2, per candidate
-   tile, every step -- cheap because it's O(candidates), not O(N²)): for
-   each of the up to 1024 (32×32) pairs in a candidate tile, compute exact
-   distance, compare against `cutoff_short²`/`cutoff_long²`, look up the
-   precomputed GPU exclusion structure (§1 gap 1) for that pair, and set
-   the corresponding bit in the destination tile's mask -- writing into
-   `solute_short`/`solute_long` (or just `solute_short` when
-   `cutoff_short == cutoff_long`, the single-range degenerate case, exactly
-   as `PLAN.md` §6.2 already specifies).
+**Second correction (also found while implementing step 5):** blocks must
+be **atom-indexed**, not chargegroup-indexed. `Interaction_TileT::mask` is
+a 32×32 *atom*-pair bitmask; exclusions are defined between specific atom
+pairs, not chargegroup pairs, so a chargegroup-indexed tile has no
+granularity to mask exclusions against. Chargegroup-cutoff mode still
+decides short/long at the chargegroup-COG level (matching
+`Standard_Pairlist_Algorithm` exactly) -- but that's a per-atom-pair
+*lookup* the classification kernel does (via each atom's owning
+chargegroup), not a property of how blocks are built. So: blocks are 32
+atoms each, atom bounding "position" is just that atom's own (already
+box-wrapped) position, and the classification kernel looks up each atom's
+owning chargegroup (binary search over `TopologyView::chargegroup`, the
+existing offset array) to fetch that chargegroup's cog (`m_cg_cog`,
+already populated for every chargegroup, solute and solvent, since
+`Periodicity::prepare_chargegroup`'s guard was relaxed in step 3) for the
+actual cutoff test. This unifies chargegroup/atomic cutoff exactly as D6
+originally intended: same tiles, same kernel, only the distance-test input
+(chargegroup cog-cog vs. atom-atom) changes.
 
-Chargegroup vs. atomic cutoff (D6's third axis) changes only which array
-feeds step 1 (chargegroup cog vs. raw atom position) and, in step 5,
-whether the "pair" being distance-tested is chargegroup-cog-vs-cog
-(chargegroup mode -- and if a cog pair is within range, *all* atom pairs
-between the two chargegroups become candidates/short/long, matching how
-`Standard_Pairlist_Algorithm` does chargegroup-based cutoffs on CPU) or
-atom-vs-atom directly (atomic mode). This needs to be a compile-time
-(`constexpr`/template) switch per D6, not a runtime branch inside the hot
-kernel.
+Per rebuild:
+
+1. **Cell assignment** (`prepare_cog_kernel`, already exists): computes
+   each chargegroup's cog, box-wraps its atoms, and emits a Morton sort
+   key. Every atom in a chargegroup inherits that chargegroup's sort key
+   (not its own recomputed one) -- keeps atoms of the same chargegroup
+   spatially adjacent after sorting, which is what actually matters for
+   bounding-sphere tightness; a per-atom key would be no more correct,
+   just more code.
+2. **Sort by cell/Morton key** into a permutation array, at atom
+   granularity: `(atom_sort_key[a], a)` pairs sorted via
+   `thrust::sort_by_key`, separately for the solute atom range
+   `[0, num_solute_atoms)` and solvent atom range
+   `[num_solute_atoms, num_atoms)`.
+3. **Block formation**: chunk each sorted atom order into fixed 32-wide
+   blocks (`num_blocks = ceil(num_atoms_in_group / 32)`; the last block is
+   simply shorter, no padding sentinel needed since every kernel computes
+   the valid range directly). Compute each block's bounding sphere (center
+   + radius) directly from the 32 atoms' own positions.
+4. **Block-pair candidate search**: `O(num_blocks_a * num_blocks_b)` per
+   call, no neighbor-cell pruning yet (deliberate v1 simplification, see
+   the implementation's own comment for why this is correctness-preserving
+   even though it costs more comparisons than necessary). Test bounding-
+   sphere distance against `cutoff_long + skin`; survivors get pushed into
+   `solute_candidates`/`solvent_candidates` as an `Interaction_TileT` with
+   `index` encoding the two block ids and an all-zero mask (mask gets
+   filled in step 5, not here).
+5. **Exclusion + short/long classification**: one CUDA block per candidate
+   tile (32×32 threads, one warp per tile row). Each thread resolves its
+   atom pair, skips padding/self/duplicate-diagonal/same-chargegroup
+   pairs, looks up the exclusion CSR (skip if excluded), then the owning
+   chargegroups' cog-cog distance decides short/long (or out-of-range
+   entirely, since the bounding-sphere test in step 4 is conservative).
+   Each warp uses `__ballot_sync` to build its row's 32-bit mask word with
+   no atomics; the block then pushes a new tile (same index, computed
+   mask) into `solute_short`/`solute_long`/`solvent_short`/`solvent_long`
+   if that mask is non-zero. `cutoff_short == cutoff_long` (single-range)
+   is the degenerate case where every non-excluded, in-range pair lands in
+   `*_short` and `*_long` never gets a hit, exactly as `PLAN.md` §6.2
+   specifies -- no separate code path.
 
 ## 4. Scope decisions needed before implementation (not yet decided)
 

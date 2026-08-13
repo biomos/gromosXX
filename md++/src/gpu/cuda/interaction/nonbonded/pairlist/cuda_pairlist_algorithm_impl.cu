@@ -104,56 +104,77 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::reorder(
                 topology::Topology & topo,
                 simulation::Simulation & sim)
 {
-    const unsigned num_solute_cg  = static_cast<unsigned>(topo.num_solute_chargegroups());
-    const unsigned num_cg         = static_cast<unsigned>(topo.num_chargegroups());
-    const unsigned num_solvent_cg = num_cg - num_solute_cg;
+    const unsigned num_solute_atoms  = static_cast<unsigned>(topo.num_solute_atoms());
+    const unsigned num_atoms         = static_cast<unsigned>(topo.num_atoms());
+    const unsigned num_solvent_atoms = num_atoms - num_solute_atoms;
+    const unsigned num_cg            = static_cast<unsigned>(topo.num_chargegroups());
 
-    m_solute_order.resize(num_solute_cg);
-    m_solvent_order.resize(num_solvent_cg);
+    const gpu::Topology::View topo_view = topo.get_gpu_view();
 
-    // Identity permutation, in global chargegroup numbering (solute
-    // first, then solvent -- matching m_cg_cog/m_cg_cells/m_cg_sort_key).
-    if (num_solute_cg > 0) {
-        thrust::sequence(thrust::device, m_solute_order.data(), m_solute_order.data() + num_solute_cg, 0u);
+    // Every atom inherits its owning chargegroup's Morton cell key
+    // (TILE_PAIRLIST_DESIGN.md §3 step 1) -- keeps chargegroup members
+    // spatially adjacent after sorting, without a separate per-atom
+    // Morton computation.
+    m_atom_sort_key.resize(num_atoms);
+    {
+        dim3 dimBlock(NUM_THREADS_PER_BLOCK);
+        dim3 dimGrid((num_atoms + NUM_THREADS_PER_BLOCK - 1) / NUM_THREADS_PER_BLOCK);
+        gpu::atom_sort_key_kernel<<<dimGrid, dimBlock>>>(
+            topo_view.chargegroup, num_cg, num_atoms,
+            m_cg_sort_key.data(), m_atom_sort_key.data());
     }
-    if (num_solvent_cg > 0) {
-        thrust::sequence(thrust::device, m_solvent_order.data(), m_solvent_order.data() + num_solvent_cg, num_solute_cg);
+
+    m_solute_atom_order.resize(num_solute_atoms);
+    m_solvent_atom_order.resize(num_solvent_atoms);
+
+    // Identity permutation, in global atom numbering (solute first, then
+    // solvent -- matching m_atom_sort_key and conf's atom position array).
+    if (num_solute_atoms > 0) {
+        thrust::sequence(thrust::device, m_solute_atom_order.data(), m_solute_atom_order.data() + num_solute_atoms, 0u);
+    }
+    if (num_solvent_atoms > 0) {
+        thrust::sequence(thrust::device, m_solvent_atom_order.data(), m_solvent_atom_order.data() + num_solvent_atoms, num_solute_atoms);
     }
 
-    // Sort each group's identity permutation by its Morton cell key.
-    // m_cg_sort_key is mutated in place -- safe, prepare_cog() recomputes
-    // it fresh every rebuild cycle before reorder() is ever called again.
-    if (num_solute_cg > 0) {
+    // Sort each group's identity permutation by its (inherited) Morton
+    // cell key. m_atom_sort_key is mutated in place -- safe, it's
+    // recomputed fresh above every call.
+    if (num_solute_atoms > 0) {
         thrust::sort_by_key(thrust::device,
-            m_cg_sort_key.data(), m_cg_sort_key.data() + num_solute_cg,
-            m_solute_order.data());
+            m_atom_sort_key.data(), m_atom_sort_key.data() + num_solute_atoms,
+            m_solute_atom_order.data());
     }
-    if (num_solvent_cg > 0) {
+    if (num_solvent_atoms > 0) {
         thrust::sort_by_key(thrust::device,
-            m_cg_sort_key.data() + num_solute_cg, m_cg_sort_key.data() + num_cg,
-            m_solvent_order.data());
+            m_atom_sort_key.data() + num_solute_atoms, m_atom_sort_key.data() + num_atoms,
+            m_solvent_atom_order.data());
     }
 
-    const unsigned num_solute_blocks  = (num_solute_cg  + gpu::BLOCK_SIZE - 1) / gpu::BLOCK_SIZE;
-    const unsigned num_solvent_blocks = (num_solvent_cg + gpu::BLOCK_SIZE - 1) / gpu::BLOCK_SIZE;
+    const unsigned num_solute_blocks  = (num_solute_atoms  + gpu::BLOCK_SIZE - 1) / gpu::BLOCK_SIZE;
+    const unsigned num_solvent_blocks = (num_solvent_atoms + gpu::BLOCK_SIZE - 1) / gpu::BLOCK_SIZE;
 
     m_solute_block_center.resize(num_solute_blocks);
     m_solute_block_radius.resize(num_solute_blocks);
     m_solvent_block_center.resize(num_solvent_blocks);
     m_solvent_block_radius.resize(num_solvent_blocks);
 
+    // Bounding spheres come directly from each atom's own (box-wrapped)
+    // position now, not a chargegroup cog -- m_cg_cog is reserved for
+    // classify_tiles()'s chargegroup-cutoff distance test.
+    const math::CuVArray::View pos = conf.get_gpu_view().current().pos;
+
     dim3 dimBlock(NUM_THREADS_PER_BLOCK);
     if (num_solute_blocks > 0) {
         dim3 dimGrid((num_solute_blocks + NUM_THREADS_PER_BLOCK - 1) / NUM_THREADS_PER_BLOCK);
         gpu::compute_block_bounds_kernel<<<dimGrid, dimBlock>>>(
-            m_solute_order.data(), num_solute_cg, num_solute_blocks,
-            m_cg_cog.view(), m_solute_block_center.data(), m_solute_block_radius.data());
+            m_solute_atom_order.data(), num_solute_atoms, num_solute_blocks,
+            pos, m_solute_block_center.data(), m_solute_block_radius.data());
     }
     if (num_solvent_blocks > 0) {
         dim3 dimGrid((num_solvent_blocks + NUM_THREADS_PER_BLOCK - 1) / NUM_THREADS_PER_BLOCK);
         gpu::compute_block_bounds_kernel<<<dimGrid, dimBlock>>>(
-            m_solvent_order.data(), num_solvent_cg, num_solvent_blocks,
-            m_cg_cog.view(), m_solvent_block_center.data(), m_solvent_block_radius.data());
+            m_solvent_atom_order.data(), num_solvent_atoms, num_solvent_blocks,
+            pos, m_solvent_block_center.data(), m_solvent_block_radius.data());
     }
 };
 
@@ -280,5 +301,80 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::_build_candidates(
             m_solvent_block_center.data(), m_solvent_block_radius.data(),
             true, periodicity, cutoff, m_tiles.solvent_candidates);
         check_candidate_overflow(m_tiles.solvent_candidates, "solvent_candidates");
+    }
+};
+
+void interaction::CUDA_Pairlist_Algorithm_Impl::classify_tiles(
+                configuration::Configuration & conf,
+                topology::Topology & topo,
+                simulation::Simulation & sim)
+{
+    // Same v1 boundary-scope note as _build_candidates: init() already
+    // hard-errors for triclinic/truncoct, but SPLIT_BOUNDARY still needs
+    // a concrete case for every math::boundary_enum value.
+    SPLIT_BOUNDARY(_classify_tiles, conf, topo, sim);
+}
+
+template<math::boundary_enum B>
+void interaction::CUDA_Pairlist_Algorithm_Impl::_classify_tiles(
+                configuration::Configuration & conf,
+                topology::Topology & topo,
+                simulation::Simulation & sim)
+{
+    m_tiles.solute_short.clear();
+    m_tiles.solute_long.clear();
+    m_tiles.solvent_short.clear();
+    m_tiles.solvent_long.clear();
+
+    // At most one output tile per input candidate tile per bucket -- an
+    // exact bound, unlike the candidate search's own density estimate
+    // (which can't know the true block-pair count ahead of running it).
+    const unsigned num_solute_candidates  = static_cast<unsigned>(m_tiles.solute_candidates.size());
+    const unsigned num_solvent_candidates = static_cast<unsigned>(m_tiles.solvent_candidates.size());
+    if (num_solute_candidates > 0) {
+        m_tiles.solute_short.reserve(num_solute_candidates);
+        m_tiles.solute_long.reserve(num_solute_candidates);
+    }
+    if (num_solvent_candidates > 0) {
+        m_tiles.solvent_short.reserve(num_solvent_candidates);
+        m_tiles.solvent_long.reserve(num_solvent_candidates);
+    }
+
+    gpu::Periodicity<B> periodicity(conf.current().box);
+    const FPL_TYPE cutoff_short2 = static_cast<FPL_TYPE>(m_cutoff_short_2);
+    const FPL_TYPE cutoff_long2  = static_cast<FPL_TYPE>(m_cutoff_long_2);
+    const gpu::Topology::View topo_view = topo.get_gpu_view();
+
+    dim3 dimBlock2D(gpu::BLOCK_SIZE, gpu::BLOCK_SIZE);
+
+    if (num_solute_candidates > 0) {
+        gpu::classify_tiles_kernel<B><<<num_solute_candidates, dimBlock2D>>>(
+            m_tiles.solute_candidates,
+            m_solute_atom_order.data(), static_cast<unsigned>(m_solute_atom_order.size()),
+            m_solvent_atom_order.data(), static_cast<unsigned>(m_solvent_atom_order.size()),
+            m_cg_cog.view(), topo_view, periodicity,
+            cutoff_short2, cutoff_long2,
+            m_tiles.solute_short, m_tiles.solute_long);
+    }
+
+    if (num_solvent_candidates > 0) {
+        gpu::classify_tiles_kernel<B><<<num_solvent_candidates, dimBlock2D>>>(
+            m_tiles.solvent_candidates,
+            m_solvent_atom_order.data(), static_cast<unsigned>(m_solvent_atom_order.size()),
+            nullptr, 0u,
+            m_cg_cog.view(), topo_view, periodicity,
+            cutoff_short2, cutoff_long2,
+            m_tiles.solvent_short, m_tiles.solvent_long);
+    }
+
+    cudaDeviceSynchronize();
+    if (m_tiles.solute_short.was_overflown()  || m_tiles.solute_long.was_overflown() ||
+        m_tiles.solvent_short.was_overflown() || m_tiles.solvent_long.was_overflown()) {
+        io::messages.add(
+          "CUDA pairlist classification overflowed a short/long tile "
+          "capacity -- this should be impossible (reserved capacity was "
+          "the exact candidate count); a real bug, not a sizing-heuristic "
+          "issue.",
+          "CUDA_Pairlist_Algorithm", io::message::error);
     }
 };

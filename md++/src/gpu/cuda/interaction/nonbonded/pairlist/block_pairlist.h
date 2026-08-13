@@ -26,6 +26,8 @@
 
 #pragma once
 
+#include "gpu/cuda/memory/topology_struct.h"
+
 namespace gpu {
 
   constexpr unsigned BLOCK_SIZE = 32;
@@ -45,6 +47,36 @@ namespace gpu {
     col_block  = (index >> 15) & 0x7FFFu;
     col_from_b = (index & (1u << 30)) != 0;
   }
+
+  /**
+   * @brief Find the chargegroup that owns atom `a`, via binary search over
+   * TopologyView::chargegroup (a sorted offset array, size
+   * num_chargegroups+1: chargegroup i covers atoms
+   * [chargegroup[i], chargegroup[i+1])). Avoids needing a separate
+   * per-atom-to-chargegroup array built/uploaded up front.
+   */
+  HOSTDEVICE unsigned atom_to_chargegroup(const int* chargegroup_offsets, unsigned num_chargegroups, unsigned atom) {
+    unsigned lo = 0, hi = num_chargegroups; // hi exclusive
+    while (lo + 1 < hi) {
+        const unsigned mid = lo + (hi - lo) / 2;
+        if (static_cast<unsigned>(chargegroup_offsets[mid]) <= atom) lo = mid;
+        else hi = mid;
+    }
+    return lo;
+  }
+
+  /**
+   * @brief atom_sort_key[a] = cg_sort_key[atom_to_chargegroup(topo, a)],
+   * one thread per atom. Every atom inherits its owning chargegroup's
+   * Morton cell key so atoms of the same chargegroup stay spatially
+   * adjacent after sorting (TILE_PAIRLIST_DESIGN.md §3 step 1).
+   */
+  __global__ void atom_sort_key_kernel(
+      const int* chargegroup_offsets,
+      unsigned num_chargegroups,
+      unsigned num_atoms,
+      const unsigned* cg_sort_key,
+      unsigned* atom_sort_key);
 
   /**
    * @brief Compute a bounding sphere (center + radius) for each fixed-size
@@ -98,5 +130,37 @@ namespace gpu {
       Periodicity<BOUNDARY> periodicity,
       FPL_TYPE cutoff,
       TileVecT<Interaction_Tile> candidates);
+
+  /**
+   * @brief Exclusion + short/long classification (TILE_PAIRLIST_DESIGN.md
+   * §3 step 5). One CUDA block per candidate tile; blockDim = (32,32),
+   * one warp per tile row so __ballot_sync builds each row's mask word
+   * without atomics.
+   *
+   * `row_order`/`row_count` are always the tile's row-side atom order
+   * (and, when a tile's col_from_b flag is false, also its column side --
+   * see find_block_candidates_kernel's self_pairs convention).
+   * `col_other_order`/`col_other_count` are only used when col_from_b is
+   * true (the solute-solvent case): pass the solvent atom order/count
+   * when processing solute_candidates, and {nullptr, 0} when processing
+   * solvent_candidates (col_from_b is never set on those tiles).
+   *
+   * Chargegroup-cutoff mode only (TILE_PAIRLIST_DESIGN.md §4.2: atomic-
+   * cutoff is a follow-up axis, same kernel, different distance-test
+   * input) -- cutoff decisions use each pair's owning chargegroups' cog
+   * (`cg_cog`, via `topo.chargegroup` for the atom->chargegroup lookup),
+   * not the atoms' own positions.
+   */
+  template <math::boundary_enum BOUNDARY>
+  __global__ void classify_tiles_kernel(
+      TileVecT<Interaction_Tile> candidates,
+      const unsigned* row_order, unsigned row_count,
+      const unsigned* col_other_order, unsigned col_other_count,
+      math::CuVArray::View cg_cog,
+      Topology::View topo,
+      Periodicity<BOUNDARY> periodicity,
+      FPL_TYPE cutoff_short2, FPL_TYPE cutoff_long2,
+      TileVecT<Interaction_Tile> out_short,
+      TileVecT<Interaction_Tile> out_long);
 
 }

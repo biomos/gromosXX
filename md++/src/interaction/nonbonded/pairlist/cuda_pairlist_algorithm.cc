@@ -122,12 +122,14 @@ int interaction::CUDA_Pairlist_Algorithm::prepare(
 
 /**
  * Runs on the pairlist.skip_step cadence (see Nonbonded_Set::calculate_
- * interactions' pairlist_update check) -- the real candidate-build work,
- * per TILE_PAIRLIST_DESIGN.md §3 steps 2-4. Still ends by leaving the
- * CPU-facing `pairlist` (interaction::PairlistContainer) an explicit,
- * warned-about dummy: nothing downstream (no force kernel, no
- * classification pass) consumes m_impl.tiles() yet, so there is nothing
- * real to report through this container -- see PAIRLIST_PLAN.md §5(A).
+ * interactions' pairlist_update check) -- the real candidate-build +
+ * classification work, per TILE_PAIRLIST_DESIGN.md §3 steps 1-5.
+ * m_impl.tiles() now holds real, exclusion-checked, short/long-classified
+ * atom-pair tiles after this call. Still ends by leaving the CPU-facing
+ * `pairlist` (interaction::PairlistContainer) an explicit, warned-about
+ * dummy: nothing downstream (no force kernel) consumes m_impl.tiles()
+ * yet, so there is nothing real to report through this container -- see
+ * PAIRLIST_PLAN.md §5(A).
  */
 void interaction::CUDA_Pairlist_Algorithm::update(topology::Topology & topo,
                                       configuration::Configuration & conf,
@@ -151,6 +153,7 @@ void interaction::CUDA_Pairlist_Algorithm::update(topology::Topology & topo,
   if (!sim.param().pairlist.atomic_cutoff) {
     m_impl.reorder(conf, topo, sim);
     m_impl.build_candidates(conf, topo, sim);
+    m_impl.classify_tiles(conf, topo, sim);
   } else if (!m_warned_atomic_cutoff) {
     io::messages.add(
       "CUDA_Pairlist_Algorithm does not support atomic_cutoff yet "

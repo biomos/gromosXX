@@ -43,10 +43,15 @@ namespace interaction {
                         topology::Topology & topo);
 
       /**
-       * Sort solute and solvent chargegroups (separately) by their
-       * Morton cell key, chunk each sorted sequence into fixed 32-wide
-       * blocks, and compute each block's bounding sphere.
-       * TILE_PAIRLIST_DESIGN.md §3 steps 2-3.
+       * Sort solute and solvent ATOMS (separately) by their owning
+       * chargegroup's Morton cell key, chunk each sorted sequence into
+       * fixed 32-wide blocks, and compute each block's bounding sphere
+       * from the 32 atoms' own positions. TILE_PAIRLIST_DESIGN.md §3
+       * steps 1-3. Atom-indexed, not chargegroup-indexed -- see that
+       * section's "second correction" for why (exclusions are atom-pair
+       * granularity, chargegroup-cutoff's cog-cog test is a per-pair
+       * lookup done later in classify_tiles(), not a property of the
+       * blocks themselves).
        */
       void reorder(configuration::Configuration & conf,
                   topology::Topology & topo,
@@ -69,10 +74,27 @@ namespace interaction {
                               simulation::Simulation & sim);
 
       /**
-       * Candidate tiles from the most recent build_candidates() call.
-       * Not yet consumed by anything -- exposed for the classification
-       * pass (TILE_PAIRLIST_DESIGN.md §3 step 5) and the pairlist-
-       * equivalence test (§5), neither of which exist yet.
+       * Exclusion + short/long classification (TILE_PAIRLIST_DESIGN.md §3
+       * step 5): resolves every candidate tile's atom pairs, applies
+       * exclusions, and buckets survivors into m_tiles.solute_short/
+       * solute_long/solvent_short/solvent_long by chargegroup-cog-cog
+       * distance (chargegroup-cutoff mode; atomic-cutoff is a follow-up).
+       * Must be called after build_candidates().
+       */
+      void classify_tiles(configuration::Configuration & conf,
+                  topology::Topology & topo,
+                  simulation::Simulation & sim);
+
+      template<math::boundary_enum b>
+      void _classify_tiles(configuration::Configuration & conf,
+                           topology::Topology & topo,
+                           simulation::Simulation & sim);
+
+      /**
+       * Tiles from the most recent build_candidates()/classify_tiles()
+       * call. Exposed for the pairlist-equivalence test (TILE_PAIRLIST_
+       * DESIGN.md §5), which doesn't exist yet, and eventually a force
+       * kernel (out of scope here).
        */
       const gpu::TileContainer & tiles() const { return m_tiles; }
 
@@ -96,7 +118,12 @@ namespace interaction {
 
     private:
       /**
-       * chargegroup center of geometry array.
+       * Per-chargegroup representative (box-wrapped) position: true cog
+       * for solute chargegroups, first-atom position for solvent (see
+       * Periodicity::prepare_chargegroup) -- sized to *all* chargegroups.
+       * Used by classify_tiles() for the chargegroup-cutoff cog-cog
+       * distance test; no longer used for block bounding spheres (those
+       * are atom-indexed now, see m_solute_atom_order below).
        */
       math::CuVArray m_cg_cog;
       /**
@@ -105,25 +132,34 @@ namespace interaction {
       gpu::cuvector<ushort4> m_cg_cells;
       /**
        * flat copy of m_cg_cells[i].w (Morton cell index), one entry per
-       * chargegroup -- feeds a Thrust sort-by-key in the block-build step
-       * (TILE_PAIRLIST_DESIGN.md §3 step 2), which needs a plain array,
-       * not one field of a ushort4.
+       * chargegroup -- feeds atom_sort_key_kernel (every atom inherits
+       * its owning chargegroup's key) and is itself sorted in place by
+       * reorder() to indirectly not need a separate atom-level Morton
+       * computation.
        */
       gpu::cuvector<unsigned> m_cg_sort_key;
+      /**
+       * flat copy of m_cg_sort_key indexed by ATOM (atom_sort_key[a] =
+       * cg_sort_key[owning_chargegroup(a)]), one entry per atom. This is
+       * what actually gets thrust::sort_by_key'd in reorder() -- blocks
+       * are atom-indexed (TILE_PAIRLIST_DESIGN.md §3's "second
+       * correction"), so the sort key needs atom granularity too.
+       */
+      gpu::cuvector<unsigned> m_atom_sort_key;
 
       /**
        * Block-sorted permutations: solute/solvent block-sorted position ->
-       * global chargegroup index (solvent values are offset by
-       * num_solute_chargegroups, since m_cg_cog/m_cg_cells/m_cg_sort_key
-       * are indexed globally). Built by reorder().
+       * global atom index (solvent values are offset by
+       * num_solute_atoms). Built by reorder().
        */
-      gpu::cuvector<unsigned> m_solute_order;
-      gpu::cuvector<unsigned> m_solvent_order;
+      gpu::cuvector<unsigned> m_solute_atom_order;
+      gpu::cuvector<unsigned> m_solvent_atom_order;
 
       /**
        * Per-block bounding sphere (center + radius), one entry per
-       * ceil(count / gpu::BLOCK_SIZE) block. Built by reorder(), consumed
-       * by build_candidates().
+       * ceil(count / gpu::BLOCK_SIZE) block, computed directly from the
+       * 32 atoms' own positions. Built by reorder(), consumed by
+       * build_candidates().
        */
       gpu::cuvector<FPL3_TYPE> m_solute_block_center;
       gpu::cuvector<FPL_TYPE>  m_solute_block_radius;
@@ -131,8 +167,7 @@ namespace interaction {
       gpu::cuvector<FPL_TYPE>  m_solvent_block_radius;
 
       /**
-       * Candidate (and eventually short/long-classified) tiles. See
-       * tiles() accessor.
+       * Candidate and short/long-classified tiles. See tiles() accessor.
        */
       gpu::TileContainer m_tiles;
   };

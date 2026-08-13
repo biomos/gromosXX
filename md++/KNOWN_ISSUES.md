@@ -19,20 +19,24 @@
   exactly the "quiet fake result" failure mode `PAIRLIST_PLAN.md` §5(A)
   was written to avoid.
 - Non-perturbed CUDA runs (`accelerator = cuda` without a `PERTURBATION`
-  block) exercise the real candidate-build pipeline now
-  (`TILE_PAIRLIST_DESIGN.md` §3 steps 1-4: chargegroup cog/cell build,
-  Thrust sort-by-key into fixed 32-wide blocks, block bounding-sphere
-  computation, block-pair candidate search) before still ending in the
-  same explicit dummy: `update()` clears the CPU-facing `PairlistContainer`
-  and warns, so nonbonded forces/energies are zero, by design, not yet a
-  crash and not yet physically meaningful either. Manually verified (not
-  via `ctest` -- see next entry for why) that this runs to completion
-  without error across many steps. There's no regression test for this
-  path yet; worth adding one that checks for the warning +
-  zero-nonbonded-energy combination, and separately for "did the
-  candidate build actually run without a CUDA error," once `PLAN.md` §10
-  step 5's remaining work (classification, force kernel) gives it
-  something real to assert against.
+  block) exercise the real candidate-build + classification pipeline now
+  (`TILE_PAIRLIST_DESIGN.md` §3 steps 1-5: chargegroup cog/cell build,
+  Thrust sort-by-key into fixed 32-wide atom blocks, block bounding-sphere
+  computation, block-pair candidate search, exclusion + short/long
+  classification) before still ending in the same explicit dummy:
+  `update()` clears the CPU-facing `PairlistContainer` and warns, so
+  nonbonded forces/energies are zero, by design, not yet a crash and not
+  yet physically meaningful either -- `m_tiles.solute_short`/`solute_long`/
+  `solvent_short`/`solvent_long` are real, exclusion-checked, classified
+  atom-pair tiles now, but nothing downstream (no force kernel) consumes
+  them yet. Manually verified (not via `ctest` -- see next entry for why)
+  that this runs to completion without error across many steps. There's
+  no regression test for this path yet; worth adding one that checks for
+  the warning + zero-nonbonded-energy combination, and separately for "did
+  the pipeline actually run without a CUDA error," once `PLAN.md` §10's
+  remaining work (a force kernel) gives it something real to assert
+  against -- though the actual correctness gate is the pairlist-
+  equivalence test (`TILE_PAIRLIST_DESIGN.md` §5), not this.
 
 ## Latent bug: CUDA context corruption after runtime `atomic_cutoff` toggle (not exercised by the current test suite)
 
