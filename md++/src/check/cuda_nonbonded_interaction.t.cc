@@ -26,20 +26,19 @@
  * lj_crf_tile_kernel.t.cc (kernel only, hand-built tile), this drives
  * the real CUDA_Pairlist_Algorithm + CUDA_Nonbonded_Interaction pair
  * exactly as create_nonbonded.cc wires them for accelerator = cuda, and
- * compares the resulting per-atom forces and total LJ/CRF energies
- * against a direct CPU reference built from Standard_Pairlist_Algorithm's
- * real pairlist (all four buckets: solute/solvent x short/long) summed
- * through interaction::Nonbonded_Term::lj_crf_interaction -- the same
- * primitive the CPU innerloop uses.
+ * compares the resulting per-atom forces and per-energy-group-pair
+ * LJ/CRF energy matrix against a direct CPU reference built from
+ * Standard_Pairlist_Algorithm's real pairlist (all four buckets:
+ * solute/solvent x short/long) summed through
+ * interaction::Nonbonded_Term::lj_crf_interaction -- the same primitive
+ * the CPU innerloop uses.
  *
- * aladip's own test input defines 2 energy groups (NEGR = 2), but
- * CUDA_Nonbonded_Interaction's v1 scope only supports 1 (see
- * cuda_nonbonded_interaction.h) -- both sides read topo.atom_energy_group()
- * for their energy-group-pair bucketing, so forcing every atom into
- * group 0 (overriding the loaded topology, same idea as overriding
- * boundary_type in pairlist_cuda_equivalence.t.cc) keeps CPU and GPU
- * sides consistent with each other and lets CUDA_Nonbonded_Interaction's
- * init() gate pass. Only USE_CUDA builds run this.
+ * aladip's own test input defines 2 energy groups (NEGR = 2), used as-is
+ * here (no override) -- both sides read topo.atom_energy_group() for
+ * their energy-group-pair bucketing (CUDA_Nonbonded_Interaction's tile
+ * kernel now buckets by [eg_i][eg_j] instead of a single flat total), so
+ * this is a real multi-energy-group correctness test, not a
+ * single-group-forced one. Only USE_CUDA builds run this.
  */
 
 #include "../stdheader.h"
@@ -84,13 +83,17 @@ namespace {
 
   struct Reference {
     std::vector<math::Vec> force;
-    double e_lj  = 0.0;
-    double e_crf = 0.0;
+    // Per-energy-group-pair matrices, matching
+    // configuration::Energy::lj_energy/crf_energy's [gi][gj] shape.
+    std::vector<std::vector<double> > lj_energy;
+    std::vector<std::vector<double> > crf_energy;
   };
 
   /**
    * Real CPU pairlist (Standard_Pairlist_Algorithm, all four buckets) +
-   * direct Nonbonded_Term::lj_crf_interaction summation -- the CPU-side
+   * direct Nonbonded_Term::lj_crf_interaction summation, bucketed by
+   * energy-group pair exactly like nonbonded_innerloop.cc's CPU inner
+   * loop (storage.energies.lj_energy[eg_i][eg_j] += e_lj) -- the CPU-side
    * ground truth this test compares CUDA_Nonbonded_Interaction against.
    */
   template <math::boundary_enum B>
@@ -109,8 +112,12 @@ namespace {
     term.init(sim);
     math::Periodicity<B> periodicity(conf.current().box);
 
+    const unsigned num_groups = static_cast<unsigned>(topo.energy_groups().size());
+
     Reference ref;
     ref.force.resize(topo.num_atoms(), math::Vec(0.0, 0.0, 0.0));
+    ref.lj_energy.assign(num_groups, std::vector<double>(num_groups, 0.0));
+    ref.crf_energy.assign(num_groups, std::vector<double>(num_groups, 0.0));
 
     auto accumulate = [&](interaction::Pairlist & bucket) {
       for (unsigned i = 0; i < bucket.size(); ++i) {
@@ -124,8 +131,10 @@ namespace {
           term.lj_crf_interaction(r, lj.c6, lj.c12, q, f, e_lj, e_crf);
           ref.force[i] += f * r;
           ref.force[j] -= f * r;
-          ref.e_lj  += e_lj;
-          ref.e_crf += e_crf;
+          const unsigned eg_i = topo.atom_energy_group(i);
+          const unsigned eg_j = topo.atom_energy_group(j);
+          ref.lj_energy[eg_i][eg_j]  += e_lj;
+          ref.crf_energy[eg_i][eg_j] += e_crf;
         }
       }
     };
@@ -163,10 +172,7 @@ namespace {
                                         math::Vec(0.0, 0.0, 4.0));
     }
 
-    // Force a single energy group -- see this file's header comment.
     const unsigned num_atoms = static_cast<unsigned>(s.topo.num_atoms());
-    s.topo.energy_groups().assign(1, num_atoms - 1);
-    s.topo.atom_energy_group().assign(num_atoms, 0u);
 
     // v1 scope: no virial (CUDA_Nonbonded_Interaction::init() gate).
     s.sim.param().pcouple.virial = math::no_virial;
@@ -220,22 +226,29 @@ namespace {
       return 1;
     }
 
-    const double gpu_e_lj  = s.conf.current().energies.lj_energy[0][0];
-    const double gpu_e_crf = s.conf.current().energies.crf_energy[0][0];
+    const unsigned num_groups = static_cast<unsigned>(s.topo.energy_groups().size());
 
     int errors = 0;
     // FPL_TYPE is float in the default (mixed-precision) build.
     const double tol = 1e-4;
 
-    if (std::abs(gpu_e_lj - ref.e_lj) > tol * std::max(1.0, std::abs(ref.e_lj))) {
-      std::cerr << label << ": e_lj mismatch: gpu=" << gpu_e_lj
-                << " cpu=" << ref.e_lj << std::endl;
-      ++errors;
-    }
-    if (std::abs(gpu_e_crf - ref.e_crf) > tol * std::max(1.0, std::abs(ref.e_crf))) {
-      std::cerr << label << ": e_crf mismatch: gpu=" << gpu_e_crf
-                << " cpu=" << ref.e_crf << std::endl;
-      ++errors;
+    for (unsigned gi = 0; gi < num_groups; ++gi) {
+      for (unsigned gj = 0; gj < num_groups; ++gj) {
+        const double gpu_e_lj  = s.conf.current().energies.lj_energy[gi][gj];
+        const double gpu_e_crf = s.conf.current().energies.crf_energy[gi][gj];
+        const double ref_e_lj  = ref.lj_energy[gi][gj];
+        const double ref_e_crf = ref.crf_energy[gi][gj];
+        if (std::abs(gpu_e_lj - ref_e_lj) > tol * std::max(1.0, std::abs(ref_e_lj))) {
+          std::cerr << label << ": e_lj mismatch at group (" << gi << "," << gj
+                    << "): gpu=" << gpu_e_lj << " cpu=" << ref_e_lj << std::endl;
+          ++errors;
+        }
+        if (std::abs(gpu_e_crf - ref_e_crf) > tol * std::max(1.0, std::abs(ref_e_crf))) {
+          std::cerr << label << ": e_crf mismatch at group (" << gi << "," << gj
+                    << "): gpu=" << gpu_e_crf << " cpu=" << ref_e_crf << std::endl;
+          ++errors;
+        }
+      }
     }
     for (unsigned i = 0; i < num_atoms; ++i) {
       const math::Vec diff = s.conf.current().force(i) - ref.force[i];
@@ -251,8 +264,8 @@ namespace {
     if (errors) {
       std::cerr << label << ": FAILED (" << errors << " mismatch(es))" << std::endl;
     } else {
-      std::cout << label << ": OK (" << num_atoms << " atoms, e_lj=" << gpu_e_lj
-                << " e_crf=" << gpu_e_crf << ")" << std::endl;
+      std::cout << label << ": OK (" << num_atoms << " atoms, " << num_groups
+                << " energy group(s))" << std::endl;
     }
 
     delete ni; // cascades: ~Nonbonded_Interaction deletes m_pairlist_algorithm (pa)

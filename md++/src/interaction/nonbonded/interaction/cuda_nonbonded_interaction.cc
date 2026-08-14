@@ -69,19 +69,6 @@ int interaction::CUDA_Nonbonded_Interaction::init(
     return 1;
   }
 
-  // v1 scope (see this class's header comment): exactly one energy
-  // group -- the tile kernel's energy reduction produces two flat
-  // totals (e_lj, e_crf), not per-energy-group-pair buckets.
-  if (topo.energy_groups().size() != 1) {
-    io::messages.add(
-      "CUDA_Nonbonded_Interaction only supports a single energy group so "
-      "far (TILE_PAIRLIST_DESIGN.md §8/§9); the tile kernel's energy "
-      "reduction produces one LJ and one CRF total, not a per-energy-"
-      "group-pair breakdown.",
-      "CUDA_Nonbonded_Interaction", io::message::error);
-    return 1;
-  }
-
   // v1 scope: no virial -- the tile kernel doesn't accumulate r (x) f.
   if (sim.param().pcouple.virial != math::no_virial) {
     io::messages.add(
@@ -134,6 +121,7 @@ int interaction::CUDA_Nonbonded_Interaction::init(
                                                 sim.param().pairlist.cutoff_short);
   m_nb.cutoff_long_sq  = static_cast<FPL_TYPE>(sim.param().pairlist.cutoff_long *
                                                 sim.param().pairlist.cutoff_long);
+  m_nb.num_energy_groups = static_cast<unsigned>(topo.energy_groups().size());
 
   m_initialized = true;
 
@@ -174,14 +162,10 @@ int interaction::CUDA_Nonbonded_Interaction::calculate_interactions(
     pa->update(topo, conf, sim, dummy, 0, static_cast<unsigned>(topo.num_atoms()), 1);
   }
 
-  double e_lj = 0.0, e_crf = 0.0;
-  pa->compute_forces_energies(topo, conf, sim, m_gpu_lj.view(), m_nb,
-                               pairlist_update, e_lj, e_crf);
-
-  // Single energy group only (init()'s gate) -- everything lands in the
-  // one (0, 0) bucket.
-  conf.current().energies.lj_energy[0][0]  += e_lj;
-  conf.current().energies.crf_energy[0][0] += e_crf;
+  // Writes directly into conf.current().energies.lj_energy/crf_energy's
+  // per-[gi][gj] matrix (same accumulation style as
+  // nonbonded_innerloop.cc's CPU inner loop) -- no scalar out-params.
+  pa->compute_forces_energies(topo, conf, sim, m_gpu_lj.view(), m_nb, pairlist_update);
 
   return 0;
 }

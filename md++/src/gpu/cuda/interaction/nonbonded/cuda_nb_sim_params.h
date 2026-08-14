@@ -28,6 +28,11 @@ struct NbSimParams {
     FPL_TYPE cutoff_short_sq;
     /** Long-range cutoff squared [nm^2] */
     FPL_TYPE cutoff_long_sq;
+    /** Number of energy groups (topo.energy_groups().size()) -- the tile
+     * kernel's energy reduction buckets by [eg_i * num_energy_groups +
+     * eg_j], matching configuration::Energy::lj_energy/crf_energy's
+     * [num_groups][num_groups] shape. */
+    unsigned num_energy_groups;
 };
 
 } // namespace gpu

@@ -125,7 +125,9 @@ namespace interaction
      * PLAN.md §10 step 9/twin-range cadence): runs the LJ + reaction-
      * field tile kernel over the tiles built by the most recent
      * update() call and accumulates the result into conf.current().
-     * force (+=) and returns the total LJ/CRF energies. Called by
+     * force (+=) and conf.current().energies.lj_energy/crf_energy's
+     * per-energy-group-pair matrix (+=), same accumulation style as
+     * nonbonded_innerloop.cc's CPU inner loop. Called by
      * CUDA_Nonbonded_Interaction, never directly by anything
      * CPU-pairlist-shaped -- unlike update()'s own `pairlist`
      * parameter, this is where the real numbers come from.
@@ -142,10 +144,8 @@ namespace interaction
                                   simulation::Simulation & sim,
                                   gpu::LJParamView lj,
                                   gpu::NbSimParams nb,
-                                  bool recompute_long,
-                                  double & e_lj,
-                                  double & e_crf) {
-      m_impl.compute_forces_energies(conf, topo, sim, lj, nb, recompute_long, e_lj, e_crf);
+                                  bool recompute_long) {
+      m_impl.compute_forces_energies(conf, topo, sim, lj, nb, recompute_long);
     }
 
     /**

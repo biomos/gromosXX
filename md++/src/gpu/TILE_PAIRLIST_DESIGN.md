@@ -387,7 +387,8 @@ Before any force/energy number from this pairlist is trusted:
    passing within float precision (`tol = 1e-4`, appropriate for
    `FPL_TYPE = float` in the default mixed-precision build).
 
-9. **Done (v1 scope: single energy group, no virial, no perturbation/EDS).**
+9. **Done (v1 scope: no virial, no perturbation/EDS -- multi-energy-group
+   landed later, see below).**
    `PLAN.md` §10 step 9: `interaction::CUDA_Nonbonded_Interaction`
    (`src/interaction/nonbonded/interaction/cuda_nonbonded_interaction.
    {h,cc}`), a real `Nonbonded_Interaction` subclass wired into
@@ -411,10 +412,9 @@ Before any force/energy number from this pairlist is trusted:
 
    v1 scope, hard-errored in `init()` rather than silently producing wrong
    numbers (matching this document's established pattern for boundary/
-   atomic-cutoff scope): exactly one energy group
-   (`Configuration::Energy::lj_energy`/`crf_energy` are per-energy-group-
-   pair matrices; the tile kernel's reduction only ever produces two flat
-   totals) and no virial (the tile kernel doesn't accumulate `r ⊗ f`).
+   atomic-cutoff scope): no virial (the tile kernel doesn't accumulate
+   `r ⊗ f`). (Originally also gated on exactly one energy group -- lifted
+   later, see the multi-energy-group entry after step 10 below.)
    Also does not implement the CPU twin-range performance optimization of
    freezing long-range forces between pairlist rebuilds --
    `calculate_interactions()` fully reruns `prepare()`+`update()` (full
@@ -458,11 +458,10 @@ Before any force/energy number from this pairlist is trusted:
    `CUDA_Nonbonded_Interaction` pairing `create_nonbonded.cc` uses, and
    compares against `Standard_Pairlist_Algorithm`'s real pairlist summed
    through `Nonbonded_Term::lj_crf_interaction` directly (all four
-   buckets). aladip's topology has 2 energy groups, which the gate above
-   rejects, so the test forces every atom into a single energy group
-   after loading (consistently on both the CPU-reference and GPU sides,
-   same idea as overriding `boundary_type` in `pairlist_cuda_equivalence.
-   t.cc`) -- vacuum + rectangular, both passing within float precision.
+   buckets), vacuum + rectangular, both passing within float precision.
+   (Originally forced every atom into a single energy group to work around
+   the v1 gate; now runs against aladip's real, unmodified 2-energy-group
+   topology -- see the multi-energy-group entry after step 10 below.)
 
 10. **Done (part 1 of 2): real twin-range cadence, matching CPU exactly.**
     `PLAN.md` §10 step 10 / §9.4's prerequisite: step 9 landed a
@@ -576,7 +575,71 @@ Before any force/energy number from this pairlist is trusted:
     is ever extended.).
 
 Step 11 (re-porting `Leap_Frog_*<gpuBackend>`) is done -- see below.
-Multi-energy-group and virial support, and perturbation, are not started.
+Multi-energy-group support is also done -- see below. Virial support and
+perturbation are not started.
+
+### Multi-energy-group support for `CUDA_Nonbonded_Interaction`
+
+Lifts step 9's single-energy-group restriction, the blocker that used to
+mask `aladip_cuda`'s virial gate entirely (aladip's real topology defines
+2 energy groups, tripping the energy-group check before virial's own gate
+was ever reached -- see `KNOWN_ISSUES.md`).
+
+The tile kernel's energy reduction previously produced two flat scalars
+(`e_lj_total[0]`, `e_crf_total[0]`) regardless of which atoms were
+involved; the CPU reference (`nonbonded_innerloop.cc`) always buckets by
+`[topo.atom_energy_group(i)][topo.atom_energy_group(j)]` into
+`configuration::Energy::lj_energy`/`crf_energy`'s `[num_groups][num_groups]`
+matrix. Closing that gap:
+
+- `CUDA_Pairlist_Algorithm_Impl` gained `m_atom_energy_group` (per-atom
+  energy-group index) and `m_num_energy_groups`, built once in `init()`
+  next to the already-cached `m_iac`/`m_charge` (topology is static for a
+  normal run) -- no changes needed to `gpu::Topology`/`TopologyView` at
+  all, since `iac`/`charge` already bypass that mirror the same way.
+- `m_e_lj`/`m_e_crf`/`m_e_lj_long`/`m_e_crf_long` became
+  `num_groups^2`-sized (flattened `[gi * num_groups + gj]`), not scalars.
+  `gpu::NbSimParams` gained `num_energy_groups`, passed by value into the
+  kernel like every other constant.
+- `lj_crf_tile_kernel` (`lj_crf_tiles.cu`) now buckets its reduction by
+  energy-group pair instead of reducing straight to one scalar. Atoms
+  within a tile are sorted by spatial cell, not original index -- energy
+  groups are contiguous atom-index ranges, but that locality doesn't
+  survive the sort, so there's no shortcut around a genuine per-thread
+  group lookup (`atom_energy_group[a1]`/`[a2]`, indexed by original atom
+  index exactly like `iac`/`charge` already are). Implemented via dynamic
+  shared memory sized `2 * num_groups^2` `FPL_TYPE`s (LJ + CRF bucket
+  matrices): zeroed at kernel entry, each active thread does one
+  shared-memory `atomicAdd` into its `[eg_i][eg_j]` bucket, then one
+  `atomicAdd` per bucket (not per pair) flushes to the global
+  `e_lj_total`/`e_crf_total` arrays. Degenerates to exactly the old
+  single-`atomicAdd`-per-tile cost when `num_groups == 1`; for larger
+  group counts it trades the previous warp-shuffle reduction tree for
+  shared-memory-atomic contention on however many buckets a tile
+  actually touches -- a deliberate, small efficiency give-up for
+  correctness at arbitrary group counts, consistent with this codebase's
+  already-established per-pair-atomicAdd-for-forces precedent (see
+  `CLAUDE.md`'s transfer-count-not-kernel-time philosophy). Not worth a
+  fancier bucketed-shuffle scheme for the group counts GROMOS systems
+  actually use (single digits).
+- `CUDA_Pairlist_Algorithm_Impl::compute_forces_energies()` now writes
+  directly into `conf.current().energies.lj_energy`/`crf_energy`'s real
+  `[gi][gj]` matrix (same accumulation style as the CPU inner loop) instead
+  of returning flat `double&` out-params threaded through three layers
+  (`CUDA_Pairlist_Algorithm`'s wrapper, `CUDA_Nonbonded_Interaction::
+  calculate_interactions()`) -- all three signatures simplified
+  accordingly.
+- The `init()` hard-error gate (`topo.energy_groups().size() != 1`) is
+  gone; the virial and perturbation/EDS gates immediately after it are
+  untouched.
+
+Correctness test: `cuda_nonbonded_interaction.t.cc` no longer forces a
+single energy group -- it now runs against aladip's real, unmodified
+2-energy-group topology and compares every `[gi][gj]` entry of the
+resulting matrix against the direct CPU (`Standard_Pairlist_Algorithm` +
+`Nonbonded_Term::lj_crf_interaction`) reference, bucketed the same way.
+Passes exactly, vacuum + rectangular. `lj_crf_tile_kernel.t.cc` (kernel-
+only) updated for the new signature, kept at 1 group (unchanged intent).
 
 ### Step 11: re-porting `Leap_Frog_*<gpuBackend>` (PLAN.md §10 step 11)
 

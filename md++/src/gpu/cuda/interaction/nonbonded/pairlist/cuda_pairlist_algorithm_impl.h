@@ -191,9 +191,10 @@ namespace interaction {
        * The real production entry point (TILE_PAIRLIST_DESIGN.md §8/§9,
        * §10 twin-range cadence): runs gpu::lj_crf_tile_kernel over
        * solute_short/solvent_short every call, accumulating forces into a
-       * device buffer and energies into two double accumulators. The
-       * long-range contribution (solute_long/solvent_long) is only
-       * recomputed when `recompute_long` is true (a classification/
+       * device buffer and energies into a [num_energy_groups]
+       * [num_energy_groups] accumulator (flattened, gi * num_groups +
+       * gj). The long-range contribution (solute_long/solvent_long) is
+       * only recomputed when `recompute_long` is true (a classification/
        * rebuild step, per real GROMOS twin-range semantics -- see
        * nonbonded_set.cc's pairlist_update-gated longrange_storage) --
        * m_longrange_force/m_e_lj_long/m_e_crf_long hold whatever was last
@@ -201,21 +202,21 @@ namespace interaction {
        * frozen in between. Adds (+=, not overwrites --
        * Forcefield::calculate_interactions zeroes conf.current().force/
        * energies once before every Interaction in the sequence runs) the
-       * combined short+long result into conf.current().force and returns
-       * the total LJ/CRF energies via e_lj/e_crf. Must be called after
-       * classify_tiles(); m_iac/m_charge (built once in init(), topology
-       * is static for a normal run) and m_force/m_e_lj/m_e_crf/
-       * m_longrange_force/m_e_lj_long/m_e_crf_long (sized once in
-       * init()) back this.
+       * combined short+long result into conf.current().force and directly
+       * into conf.current().energies.lj_energy/crf_energy's per-[gi][gj]
+       * matrix -- same accumulation style as nonbonded_innerloop.cc's CPU
+       * inner loop, no scalar out-params. Must be called after
+       * classify_tiles(); m_iac/m_charge/m_atom_energy_group (built once
+       * in init(), topology is static for a normal run) and
+       * m_force/m_e_lj/m_e_crf/m_longrange_force/m_e_lj_long/
+       * m_e_crf_long (sized once in init()) back this.
        */
       void compute_forces_energies(configuration::Configuration & conf,
                                     topology::Topology & topo,
                                     simulation::Simulation & sim,
                                     gpu::LJParamView lj,
                                     gpu::NbSimParams nb,
-                                    bool recompute_long,
-                                    double & e_lj,
-                                    double & e_crf);
+                                    bool recompute_long);
 
     protected:
       /**
@@ -291,15 +292,24 @@ namespace interaction {
       gpu::TileContainer m_tiles;
 
       /**
-       * Per-atom integer atom code / charge, built once in init() (static
-       * for a normal run, like the exclusion CSR in gpu::Topology) --
-       * compute_forces_energies() reads these directly instead of going
-       * through TopologyView every call.
+       * Per-atom integer atom code / charge / energy-group index, built
+       * once in init() (static for a normal run, like the exclusion CSR
+       * in gpu::Topology) -- compute_forces_energies() reads these
+       * directly instead of going through TopologyView every call.
        */
       gpu::cuvector<int> m_iac;
       gpu::cuvector<FPL_TYPE> m_charge;
+      gpu::cuvector<unsigned> m_atom_energy_group;
       /**
-       * Per-atom force accumulator and total LJ/CRF energy accumulators,
+       * topo.energy_groups().size(), set once in init(). The energy
+       * accumulators below are sized num_energy_groups^2 (flattened
+       * [gi][gj] matrix, matching configuration::Energy::lj_energy/
+       * crf_energy's shape), not a single scalar.
+       */
+      unsigned m_num_energy_groups = 1;
+      /**
+       * Per-atom force accumulator and per-energy-group-pair LJ/CRF
+       * energy accumulators (flattened [gi * m_num_energy_groups + gj]),
        * sized once in init(), re-zeroed at the top of every
        * compute_forces_energies() call.
        */
@@ -308,15 +318,16 @@ namespace interaction {
       gpu::cuvector<double> m_e_crf;
 
       /**
-       * Long-range (solute_long + solvent_long) per-atom force and total
-       * energy, frozen between classification/rebuild steps -- mirrors
-       * nonbonded_set.cc's m_longrange_storage exactly (real GROMOS
-       * twin-range: the long-range force *value*, not just the pair
-       * list, is held static between rebuilds, only recomputed on a
-       * classification step). Sized once in init(); only ever written
-       * inside compute_forces_energies() when its recompute_long
-       * parameter is true -- never zeroed/touched otherwise, so a
-       * non-rebuild step's call reuses whatever was last computed here.
+       * Long-range (solute_long + solvent_long) per-atom force and
+       * per-energy-group-pair energy, frozen between classification/
+       * rebuild steps -- mirrors nonbonded_set.cc's m_longrange_storage
+       * exactly (real GROMOS twin-range: the long-range force *value*,
+       * not just the pair list, is held static between rebuilds, only
+       * recomputed on a classification step). Sized once in init(); only
+       * ever written inside compute_forces_energies() when its
+       * recompute_long parameter is true -- never zeroed/touched
+       * otherwise, so a non-rebuild step's call reuses whatever was last
+       * computed here.
        */
       gpu::cuvector<FPL3_TYPE> m_longrange_force;
       gpu::cuvector<double> m_e_lj_long;

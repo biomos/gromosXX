@@ -82,13 +82,20 @@ namespace gpu {
    * `crf_2cut3i`, not a separate field.)
    *
    * Forces are accumulated into `force` via `atomicAdd` (one thread per
-   * pair, no reduction needed). Energies are reduced once per tile
-   * (warp-shuffle across each row, then a 32-element shared-memory
-   * reduction across rows) and added to `*e_lj_total`/`*e_crf_total` with
-   * a single `atomicAdd` per tile -- accumulated as `double` regardless
-   * of `FPL_TYPE` so summing many small per-tile contributions doesn't
-   * lose precision the way thousands of individual float atomicAdds
-   * would.
+   * pair, no reduction needed). Energies are bucketed per energy-group
+   * pair (`atom_energy_group[a1] * nb.num_energy_groups +
+   * atom_energy_group[a2]`) via dynamic-shared-memory atomics (zeroed at
+   * the start of the tile, one `atomicAdd` per active pair into the
+   * tile's shared bucket, then one `atomicAdd` per bucket -- not per pair
+   * -- into `e_lj_total`/`e_crf_total` at the end), accumulated as
+   * `double` regardless of `FPL_TYPE` so summing many small
+   * contributions doesn't lose precision the way thousands of individual
+   * float atomicAdds would. `e_lj_total`/`e_crf_total` must each be sized
+   * `nb.num_energy_groups * nb.num_energy_groups`, flattened row-major
+   * (matching `configuration::Energy::lj_energy`/`crf_energy`'s
+   * `[gi][gj]` shape) -- for the common single-energy-group case this
+   * degenerates to exactly one bucket, i.e. one `atomicAdd` per tile,
+   * same cost as before.
    *
    * Does not synchronize -- call `cudaDeviceSynchronize()` (or check a
    * stream/event) before reading `force`/`e_lj_total`/`e_crf_total`, same
@@ -102,6 +109,7 @@ namespace gpu {
       math::CuVArray::View pos,
       const int* iac,
       const FPL_TYPE* charge,
+      const unsigned* atom_energy_group,
       LJParamView lj,
       NbSimParams nb,
       math::boundary_enum boundary,

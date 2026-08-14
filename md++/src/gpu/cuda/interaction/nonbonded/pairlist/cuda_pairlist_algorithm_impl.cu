@@ -50,31 +50,36 @@ int interaction::CUDA_Pairlist_Algorithm_Impl::init(topology::Topology &topo,
     bool quiet) {
     DEBUG(0, "CUDA_Pairlist_Algorithm_Impl::init");
 
-    // Per-atom iac/charge are static for a normal run (same assumption as
-    // gpu::Topology's exclusion CSR, built once in its constructor) --
-    // build them here rather than in compute_forces_energies(), which
-    // runs every step.
+    // Per-atom iac/charge/energy-group are static for a normal run (same
+    // assumption as gpu::Topology's exclusion CSR, built once in its
+    // constructor) -- build them here rather than in
+    // compute_forces_energies(), which runs every step.
     const unsigned num_atoms = static_cast<unsigned>(topo.num_atoms());
     m_iac.resize(num_atoms);
     m_charge.resize(num_atoms);
+    m_atom_energy_group.resize(num_atoms);
     for (unsigned i = 0; i < num_atoms; ++i) {
-        m_iac[i]    = topo.iac(i);
-        m_charge[i] = static_cast<FPL_TYPE>(topo.charge(i));
+        m_iac[i]              = topo.iac(i);
+        m_charge[i]           = static_cast<FPL_TYPE>(topo.charge(i));
+        m_atom_energy_group[i] = topo.atom_energy_group(i);
     }
+    m_num_energy_groups = static_cast<unsigned>(topo.energy_groups().size());
+    const unsigned num_buckets = m_num_energy_groups * m_num_energy_groups;
+
     m_force.resize(num_atoms);
-    m_e_lj.resize(1);
-    m_e_crf.resize(1);
+    m_e_lj.resize(num_buckets);
+    m_e_crf.resize(num_buckets);
 
     m_longrange_force.resize(num_atoms);
-    m_e_lj_long.resize(1);
-    m_e_crf_long.resize(1);
+    m_e_lj_long.resize(num_buckets);
+    m_e_crf_long.resize(num_buckets);
     // Zeroed explicitly (not left as whatever cudaMallocManaged handed
     // back) since these are read every single call, but only written on
     // a recompute_long call -- the very first call, before any
     // classification has run, must see zero long-range contribution.
     cudaMemset(m_longrange_force.data(), 0, sizeof(FPL3_TYPE) * num_atoms);
-    m_e_lj_long[0]  = 0.0;
-    m_e_crf_long[0] = 0.0;
+    cudaMemset(m_e_lj_long.data(),  0, sizeof(double) * num_buckets);
+    cudaMemset(m_e_crf_long.data(), 0, sizeof(double) * num_buckets);
 
     m_candidate_ref_pos.resize(num_atoms);
     m_candidates_built = false;
@@ -598,18 +603,17 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::compute_forces_energies(
                 simulation::Simulation & sim,
                 gpu::LJParamView lj,
                 gpu::NbSimParams nb,
-                bool recompute_long,
-                double & e_lj,
-                double & e_crf)
+                bool recompute_long)
 {
-    const unsigned num_atoms = static_cast<unsigned>(m_force.size());
+    const unsigned num_atoms   = static_cast<unsigned>(m_force.size());
+    const unsigned num_buckets = m_num_energy_groups * m_num_energy_groups;
 
     // IEEE-754 zero is the all-zero bit pattern -- cudaMemset is safe and
     // matches the existing convention (TileVecT::clear() zeroes its tile
     // array the same way).
     cudaMemset(m_force.data(), 0, sizeof(FPL3_TYPE) * num_atoms);
-    m_e_lj[0]  = 0.0;
-    m_e_crf[0] = 0.0;
+    cudaMemset(m_e_lj.data(),  0, sizeof(double) * num_buckets);
+    cudaMemset(m_e_crf.data(), 0, sizeof(double) * num_buckets);
 
     // sync_pos_vel = false: prepare() already did this step's one real
     // resync; called from calculate_interactions(), always after
@@ -631,13 +635,13 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::compute_forces_energies(
     gpu::launch_lj_crf_tiles(
         m_tiles.solute_short.view(), m_solute_atom_order.data(), num_solute_atoms,
         m_solvent_atom_order.data(), num_solvent_atoms,
-        pos, m_iac.data(), m_charge.data(), lj, nb, boundary, box,
+        pos, m_iac.data(), m_charge.data(), m_atom_energy_group.data(), lj, nb, boundary, box,
         m_force.data(), m_e_lj.data(), m_e_crf.data());
 
     gpu::launch_lj_crf_tiles(
         m_tiles.solvent_short.view(), m_solvent_atom_order.data(), num_solvent_atoms,
         nullptr, 0u,
-        pos, m_iac.data(), m_charge.data(), lj, nb, boundary, box,
+        pos, m_iac.data(), m_charge.data(), m_atom_energy_group.data(), lj, nb, boundary, box,
         m_force.data(), m_e_lj.data(), m_e_crf.data());
 
     // Long-range: only recomputed on a classification/rebuild step
@@ -649,28 +653,28 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::compute_forces_energies(
     // non-rebuild step is supposed to reuse.
     if (recompute_long) {
         cudaMemset(m_longrange_force.data(), 0, sizeof(FPL3_TYPE) * num_atoms);
-        m_e_lj_long[0]  = 0.0;
-        m_e_crf_long[0] = 0.0;
+        cudaMemset(m_e_lj_long.data(),  0, sizeof(double) * num_buckets);
+        cudaMemset(m_e_crf_long.data(), 0, sizeof(double) * num_buckets);
 
         gpu::launch_lj_crf_tiles(
             m_tiles.solute_long.view(), m_solute_atom_order.data(), num_solute_atoms,
             m_solvent_atom_order.data(), num_solvent_atoms,
-            pos, m_iac.data(), m_charge.data(), lj, nb, boundary, box,
+            pos, m_iac.data(), m_charge.data(), m_atom_energy_group.data(), lj, nb, boundary, box,
             m_longrange_force.data(), m_e_lj_long.data(), m_e_crf_long.data());
 
         gpu::launch_lj_crf_tiles(
             m_tiles.solvent_long.view(), m_solvent_atom_order.data(), num_solvent_atoms,
             nullptr, 0u,
-            pos, m_iac.data(), m_charge.data(), lj, nb, boundary, box,
+            pos, m_iac.data(), m_charge.data(), m_atom_energy_group.data(), lj, nb, boundary, box,
             m_longrange_force.data(), m_e_lj_long.data(), m_e_crf_long.data());
     }
 
     cudaDeviceSynchronize();
 
-    // Forcefield::calculate_interactions() zeroes conf.current().force
-    // once before every Interaction in the sequence runs -- accumulate
-    // (+=), don't overwrite. Add the (possibly frozen-from-an-earlier-
-    // call) long-range contribution in unconditionally, same as
+    // Forcefield::calculate_interactions() zeroes conf.current().force/
+    // energies once before every Interaction in the sequence runs --
+    // accumulate (+=), don't overwrite. Add the (possibly frozen-from-an-
+    // earlier-call) long-range contribution in unconditionally, same as
     // nonbonded_set.cc's m_storage.force += m_longrange_storage.force.
     for (unsigned i = 0; i < num_atoms; ++i) {
         conf.current().force(i) += math::Vec(m_force[i].x, m_force[i].y, m_force[i].z);
@@ -678,6 +682,14 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::compute_forces_energies(
                                               m_longrange_force[i].y,
                                               m_longrange_force[i].z);
     }
-    e_lj  = m_e_lj[0]  + m_e_lj_long[0];
-    e_crf = m_e_crf[0] + m_e_crf_long[0];
+
+    // Direct per-[gi][gj] accumulation, same style as
+    // nonbonded_innerloop.cc's CPU inner loop -- no scalar out-params.
+    for (unsigned gi = 0; gi < m_num_energy_groups; ++gi) {
+        for (unsigned gj = 0; gj < m_num_energy_groups; ++gj) {
+            const unsigned k = gi * m_num_energy_groups + gj;
+            conf.current().energies.lj_energy[gi][gj]  += m_e_lj[k]  + m_e_lj_long[k];
+            conf.current().energies.crf_energy[gi][gj] += m_e_crf[k] + m_e_crf_long[k];
+        }
+    }
 }

@@ -50,12 +50,31 @@ __global__ void lj_crf_tile_kernel(
     math::CuVArray::View pos,
     const int* __restrict__ iac,
     const FPL_TYPE* __restrict__ charge,
+    const unsigned* __restrict__ atom_energy_group,
     gpu::LJParamView lj,
     gpu::NbSimParams nb,
     gpu::Periodicity<BOUNDARY> periodicity,
     FPL3_TYPE* force,
     double* e_lj_total,
     double* e_crf_total) {
+
+    // Dynamic shared memory, sized (by the launch below) to
+    // 2 * num_energy_groups^2 FPL_TYPEs: [0, G*G) is the LJ bucket
+    // matrix, [G*G, 2*G*G) is CRF's. G*G == 1 for the common
+    // single-energy-group case, degenerating to exactly the old
+    // single-scalar behavior.
+    extern __shared__ FPL_TYPE s_energy[];
+    const unsigned num_groups  = nb.num_energy_groups;
+    const unsigned num_buckets = num_groups * num_groups;
+    FPL_TYPE* s_lj  = s_energy;
+    FPL_TYPE* s_crf = s_energy + num_buckets;
+
+    const unsigned tid = threadIdx.y * blockDim.x + threadIdx.x;
+    for (unsigned k = tid; k < num_buckets; k += blockDim.x * blockDim.y) {
+        s_lj[k]  = 0;
+        s_crf[k] = 0;
+    }
+    __syncthreads();
 
     const unsigned tile_idx = blockIdx.x;
     if (tile_idx >= tiles.size()) return;
@@ -112,38 +131,25 @@ __global__ void lj_crf_tile_kernel(
         atomicAdd(&force[a2].x, -fr.x);
         atomicAdd(&force[a2].y, -fr.y);
         atomicAdd(&force[a2].z, -fr.z);
-    }
 
-    // Reduce every thread's energy contribution once per tile, in two
-    // steps, rather than one atomicAdd per pair:
-    //  1. each warp (blockDim.x == 32 == warp size, one warp per tile row,
-    //     same layout classify_tiles_kernel's __ballot_sync relies on)
-    //     reduces its 32 lanes via __shfl_down_sync -- the result lands in
-    //     lane c == 0, no shared memory needed for this level.
-    //  2. the 32 per-row sums go into shared memory (one write each, no
-    //     race), and thread (0, 0) does the final 32-element reduction
-    //     and the single atomicAdd for the whole tile.
-    for (unsigned offset = 16; offset > 0; offset >>= 1) {
-        e_lj_local  += __shfl_down_sync(0xFFFFFFFFu, e_lj_local,  offset);
-        e_crf_local += __shfl_down_sync(0xFFFFFFFFu, e_crf_local, offset);
-    }
-
-    __shared__ FPL_TYPE s_lj[gpu::BLOCK_SIZE];
-    __shared__ FPL_TYPE s_crf[gpu::BLOCK_SIZE];
-    if (c == 0) {
-        s_lj[r]  = e_lj_local;
-        s_crf[r] = e_crf_local;
+        // Bucket by energy-group pair, not just tile -- atoms in a tile
+        // are sorted by spatial cell, not original index, so there's no
+        // shortcut around a per-thread lookup here even though energy
+        // groups are contiguous atom-index ranges.
+        const unsigned eg_i = atom_energy_group[a1];
+        const unsigned eg_j = atom_energy_group[a2];
+        const unsigned bucket = eg_i * num_groups + eg_j;
+        atomicAdd(&s_lj[bucket],  e_lj_local);
+        atomicAdd(&s_crf[bucket], e_crf_local);
     }
     __syncthreads();
 
-    if (r == 0 && c == 0) {
-        FPL_TYPE lj_sum = 0, crf_sum = 0;
-        for (unsigned k = 0; k < gpu::BLOCK_SIZE; ++k) {
-            lj_sum  += s_lj[k];
-            crf_sum += s_crf[k];
-        }
-        atomicAdd(e_lj_total,  static_cast<double>(lj_sum));
-        atomicAdd(e_crf_total, static_cast<double>(crf_sum));
+    // One atomicAdd per bucket (not per pair) into the global totals --
+    // degenerates to exactly one atomicAdd per tile, same as before, when
+    // num_buckets == 1 (the common single-energy-group case).
+    for (unsigned k = tid; k < num_buckets; k += blockDim.x * blockDim.y) {
+        atomicAdd(&e_lj_total[k],  static_cast<double>(s_lj[k]));
+        atomicAdd(&e_crf_total[k], static_cast<double>(s_crf[k]));
     }
 }
 
@@ -156,6 +162,7 @@ void gpu::launch_lj_crf_tiles(
     math::CuVArray::View pos,
     const int* iac,
     const FPL_TYPE* charge,
+    const unsigned* atom_energy_group,
     gpu::LJParamView lj,
     gpu::NbSimParams nb,
     math::boundary_enum boundary,
@@ -169,24 +176,26 @@ void gpu::launch_lj_crf_tiles(
     if (num_tiles == 0) return;
 
     const dim3 dimBlock(gpu::BLOCK_SIZE, gpu::BLOCK_SIZE);
+    const size_t shmem_bytes =
+        2ull * nb.num_energy_groups * nb.num_energy_groups * sizeof(FPL_TYPE);
 
     switch (boundary) {
         case math::vacuum:
-            gpu::lj_crf_tile_kernel<math::vacuum><<<num_tiles, dimBlock, 0, stream>>>(
+            gpu::lj_crf_tile_kernel<math::vacuum><<<num_tiles, dimBlock, shmem_bytes, stream>>>(
                 tiles, row_order, row_count, col_other_order, col_other_count,
-                pos, iac, charge, lj, nb, gpu::Periodicity<math::vacuum>(box),
+                pos, iac, charge, atom_energy_group, lj, nb, gpu::Periodicity<math::vacuum>(box),
                 force, e_lj_total, e_crf_total);
             break;
         case math::rectangular:
-            gpu::lj_crf_tile_kernel<math::rectangular><<<num_tiles, dimBlock, 0, stream>>>(
+            gpu::lj_crf_tile_kernel<math::rectangular><<<num_tiles, dimBlock, shmem_bytes, stream>>>(
                 tiles, row_order, row_count, col_other_order, col_other_count,
-                pos, iac, charge, lj, nb, gpu::Periodicity<math::rectangular>(box),
+                pos, iac, charge, atom_energy_group, lj, nb, gpu::Periodicity<math::rectangular>(box),
                 force, e_lj_total, e_crf_total);
             break;
         case math::triclinic:
-            gpu::lj_crf_tile_kernel<math::triclinic><<<num_tiles, dimBlock, 0, stream>>>(
+            gpu::lj_crf_tile_kernel<math::triclinic><<<num_tiles, dimBlock, shmem_bytes, stream>>>(
                 tiles, row_order, row_count, col_other_order, col_other_count,
-                pos, iac, charge, lj, nb, gpu::Periodicity<math::triclinic>(box),
+                pos, iac, charge, atom_energy_group, lj, nb, gpu::Periodicity<math::triclinic>(box),
                 force, e_lj_total, e_crf_total);
             break;
         default:

@@ -213,6 +213,7 @@ namespace {
                                                  s.sim.param().pairlist.cutoff_short);
     nb.cutoff_long_sq   = static_cast<FPL_TYPE>(s.sim.param().pairlist.cutoff_long *
                                                  s.sim.param().pairlist.cutoff_long);
+    nb.num_energy_groups = 1; // kernel-only test, single bucket
 
     math::CuVArray pos;
     pos.resize(num_atoms);
@@ -220,10 +221,13 @@ namespace {
     iac.resize(num_atoms);
     gpu::cuvector<FPL_TYPE> charge;
     charge.resize(num_atoms);
+    gpu::cuvector<unsigned> atom_energy_group;
+    atom_energy_group.resize(num_atoms);
     for (unsigned i = 0; i < num_atoms; ++i) {
       pos[i]    = static_cast<FPL3_TYPE>(s.conf.current().pos(i));
       iac[i]    = s.topo.iac(i);
       charge[i] = static_cast<FPL_TYPE>(s.topo.charge(i));
+      atom_energy_group[i] = 0u;
     }
 
     gpu::cuvector<unsigned> order;
@@ -247,7 +251,7 @@ namespace {
 
     gpu::launch_lj_crf_tiles(
         tiles.view(), order.data(), n, nullptr, 0u,
-        pos.view(), iac.data(), charge.data(),
+        pos.view(), iac.data(), charge.data(), atom_energy_group.data(),
         gpu_lj.view(), nb, force_boundary, s.conf.current().box,
         gpu_force.data(), e_lj_total.data(), e_crf_total.data());
     cudaDeviceSynchronize();
