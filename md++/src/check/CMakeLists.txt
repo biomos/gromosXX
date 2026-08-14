@@ -115,6 +115,9 @@ if(USE_CUDA)
 
     list(APPEND EXEC_NAMES cuda_atomic_cutoff_toggle)
     add_executable(cuda_atomic_cutoff_toggle cuda_atomic_cutoff_toggle.t.cc)
+
+    list(APPEND EXEC_NAMES remove_com_motion_gpu)
+    add_executable(remove_com_motion_gpu remove_com_motion_gpu.t.cc)
 endif()
 
 foreach(LOOP_VAR ${EXEC_NAMES})

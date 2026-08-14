@@ -546,7 +546,18 @@ Rough dependency order; each step should land as its own reviewable unit.
     `Remove_COM_Motion`).
 13. Broaden algorithm coverage incrementally, each addition removing one more
     host↔device round trip per step, each with a fallback warning (§8) until
-    ported.
+    ported. **In progress:** `Remove_COM_Motion<gpuBackend>` -- done. It
+    already had the `Backend` template slot and was already selected by
+    `make_algorithm` under `accelerator = cuda`, but its `apply()` was the
+    plain CPU loop wearing a `gpuBackend` label (no kernel at all) --
+    replaced with real reductions (translation: sum(m·v); rotation:
+    angular momentum + inertia tensor, same two-pass shape) in
+    `gpu/cuda/algorithm/constraints/remove_com_motion_kernels.{h,cu}`,
+    matching `remove_com_motion_cpu.cc`'s formulas exactly. Verified against
+    the CPU reference (`remove_com_motion_gpu.t.cc`) and with zero
+    `compute-sanitizer --tool memcheck` errors. Still CPU-only: all bonded
+    terms, constraints (SHAKE/SETTLE/LINCS -- step 12 above), thermostats,
+    barostat, `Temperature_Calculation`, `Pressure_Calculation`.
 
 ## 11. Open questions (revisit later, not blocking the plan above)
 

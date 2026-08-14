@@ -1,26 +1,39 @@
 /*
  * This file is part of GROMOS.
- * 
+ *
  * Copyright (c) 2011, 2012, 2016, 2018, 2021, 2023 Biomos b.v.
  * See <https://www.gromos.net> for details.
- * 
+ *
  * GROMOS is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
 /**
  * @file remove_com_motion_gpu.cc
- * remove com motion - gpu variant.
+ * remove com motion - gpu variant. Plain C++, no kernel syntax
+ * (groalgorithm has no CUDA language enabled -- same constraint
+ * leap_frog_gpu.cc already works within); the real __global__ kernels
+ * live in gpu/cuda/algorithm/constraints/remove_com_motion_kernels.cu,
+ * compiled into grocuda, reached only through the host-safe launch
+ * wrappers declared in remove_com_motion_kernels.h.
+ *
+ * Mirrors remove_com_motion_cpu.cc's math exactly (same formulas, same
+ * order of operations) -- see that file for the derivation. This one
+ * does the reductions (sum(m*v), sum(m*pos - 0.5*m*v*dt), angular
+ * momentum, inertia tensor) on the GPU instead of a CPU loop; the tiny
+ * follow-up scalar work (dividing by total mass, inverting the 3x3
+ * inertia tensor) stays on the host -- not worth a kernel for 9
+ * numbers.
  */
 #include "../../stdheader.h"
 
@@ -30,9 +43,9 @@
 #include "../../configuration/configuration.h"
 
 #include "../../gpu/cuda/manager/cuda_manager.h"
+#include "../../gpu/cuda/algorithm/constraints/remove_com_motion_kernels.h"
 
 #include "remove_com_motion.h"
-
 
 #include "../../io/print_block.h"
 
@@ -44,7 +57,7 @@
 template<>
 int algorithm::Remove_COM_Motion<util::gpuBackend>::init
 (
- topology::Topology &topo, 
+ topology::Topology &topo,
  configuration::Configuration &conf,
  simulation::Simulation &sim,
  std::ostream &os,
@@ -52,12 +65,12 @@ int algorithm::Remove_COM_Motion<util::gpuBackend>::init
 )
 {
   if (quiet) return 0;
-  
+
   os << "CENTRE OF MASS MOTION (GPU)\n";
 
   if (sim.param().centreofmass.skip_step){
     if (sim.param().centreofmass.skip_step > 1)
-      os << "\tremoving centre of mass motion every " 
+      os << "\tremoving centre of mass motion every "
 	 << sim.param().centreofmass.skip_step
 	 << " steps\n";
     else
@@ -84,11 +97,11 @@ int algorithm::Remove_COM_Motion<util::gpuBackend>::init
     os << "\n\tremoving initial centre of mass translation\n";
   if (sim.param().start.remove_com_rotation)
     os << "\n\tremoving initial centre of mass rotation\n";
-  
+
   os << "END\n";
-  
+
   return 0;
-};
+}
 
 template<>
 double algorithm::Remove_COM_Motion<util::gpuBackend>
@@ -100,29 +113,36 @@ double algorithm::Remove_COM_Motion<util::gpuBackend>
  bool remove_trans
  )
 {
-  // masses, current velocities
-  // update velocities
+  const unsigned num_atoms = static_cast<unsigned>(topo.num_atoms());
 
+  gpu::Configuration::View conf_view =
+      sim.cuda().configuration_view(conf, gpu::MIRROR_VEL);
+  const gpu::Topology::View topo_view = sim.cuda().topology_view(topo);
 
-  math::Vec com_v (0.0);
-  double com_mass = 0.0;
-  
-  for(unsigned int i = 0; i < topo.num_atoms(); ++i){
-    com_mass += topo.mass()(i);
-    com_v += topo.mass()(i) * conf.current().vel(i);
+  // Persistent, GPU-only scratch for the reduction -- fixed size (4
+  // doubles), allocated once on first call and reused thereafter.
+  // Kept function-local (not a class member) since Remove_COM_Motion's
+  // header compiles unconditionally in CPU-only builds too and can't
+  // hold a gpu::cuvector directly.
+  static gpu::cuvector<double> sums;
+  if (sums.size() < 4) sums.resize(4);
+
+  gpu::launch_com_translation_reduce(conf_view.current().vel, topo_view.mass, num_atoms, sums.data());
+  cudaDeviceSynchronize();
+
+  const double com_mass = sums[3];
+  const double com_v_x = sums[0] / com_mass;
+  const double com_v_y = sums[1] / com_mass;
+  const double com_v_z = sums[2] / com_mass;
+
+  const double ekin_trans = 0.5 * com_mass *
+      (com_v_x * com_v_x + com_v_y * com_v_y + com_v_z * com_v_z);
+
+  if (remove_trans) {
+    gpu::launch_com_translation_apply(conf_view.current().vel, com_v_x, com_v_y, com_v_z, num_atoms);
+    sim.cuda().sync_configuration_from_device(conf);
   }
 
-  com_v /= com_mass;
-  double ekin_trans = 0.5*com_mass*abs2(com_v);
-
-  // remove if necessary
-  if(remove_trans){
-
-    // os << "removing center of mass translational momentum\n";
-    for(unsigned int i=0; i<topo.num_atoms(); ++i){
-      conf.current().vel(i) -= com_v;
-    }
-  }
   return ekin_trans;
 }
 
@@ -136,62 +156,51 @@ double algorithm::Remove_COM_Motion<util::gpuBackend>
  bool remove_rot
  )
 {
-  // masses, current velocities, positions
-  // update velocities
+  const unsigned num_atoms = static_cast<unsigned>(topo.num_atoms());
+  const double dt = sim.time_step_size();
 
+  gpu::Configuration::View conf_view =
+      sim.cuda().configuration_view(conf, gpu::MIRROR_POS | gpu::MIRROR_VEL);
+  const gpu::Topology::View topo_view = sim.cuda().topology_view(topo);
 
-  math::Vec com_v (0.0);
-  math::Vec com_r(0.0);
-  double com_mass = 0.0;
-  
-  for(unsigned int i = 0; i < topo.num_atoms(); ++i){
+  static gpu::cuvector<double> sums1;
+  static gpu::cuvector<double> sums2;
+  if (sums1.size() < 7)  sums1.resize(7);
+  if (sums2.size() < 12) sums2.resize(12);
 
-    com_mass += topo.mass()(i);
-    com_v += topo.mass()(i) * conf.current().vel(i);
-    // positions should be at same time than velocities
-    com_r += topo.mass()(i) * conf.current().pos(i) - 
-      0.5 * topo.mass()(i) * conf.current().vel(i) * sim.time_step_size();
-  }
-  com_v /= com_mass;
-  com_r /= com_mass;
+  gpu::launch_com_rotation_reduce_pass1(
+      conf_view.current().pos, conf_view.current().vel, topo_view.mass, dt, num_atoms, sums1.data());
+  cudaDeviceSynchronize();
 
-  DEBUG(7, "com_r " << math::v2s(com_r));
-  DEBUG(7, "com_v " << math::v2s(com_v));
-  
-  math::Vec com_L(0.0);
+  const double com_mass = sums1[6];
+  const double com_v_x = sums1[0] / com_mass, com_v_y = sums1[1] / com_mass, com_v_z = sums1[2] / com_mass;
+  const double com_r_x = sums1[3] / com_mass, com_r_y = sums1[4] / com_mass, com_r_z = sums1[5] / com_mass;
+
+  DEBUG(7, "com_r " << com_r_x << " " << com_r_y << " " << com_r_z);
+  DEBUG(7, "com_v " << com_v_x << " " << com_v_y << " " << com_v_z);
+
+  gpu::launch_com_rotation_reduce_pass2(
+      conf_view.current().pos, conf_view.current().vel, topo_view.mass, dt,
+      com_v_x, com_v_y, com_v_z, com_r_x, com_r_y, com_r_z, num_atoms, sums2.data());
+  cudaDeviceSynchronize();
+
+  const double Lx = sums2[0], Ly = sums2[1], Lz = sums2[2];
   math::Matrix com_I;
-  com_I = 0.0;
-  
-  for(unsigned int i = 0; i < topo.num_atoms(); ++i){
-    math::Vec r = conf.current().pos(i) - 
-      0.5 * sim.time_step_size() * conf.current().vel(i) - com_r;
+  com_I(0,0) = sums2[3];  com_I(0,1) = sums2[4];  com_I(0,2) = sums2[5];
+  com_I(1,0) = sums2[6];  com_I(1,1) = sums2[7];  com_I(1,2) = sums2[8];
+  com_I(2,0) = sums2[9];  com_I(2,1) = sums2[10]; com_I(2,2) = sums2[11];
 
-    com_L += topo.mass()(i) * 
-      math::cross(r, (conf.current().vel(i) - com_v));
+  DEBUG(7, "Angular momentum " << Lx << " " << Ly << " " << Lz);
 
-    // inertia tensor
-    // double r2 = abs2(r);
-    com_I(0,0) += topo.mass()(i) * (r(1)*r(1)+r(2)*r(2));
-    com_I(1,1) += topo.mass()(i) * (r(0)*r(0)+r(2)*r(2));
-    com_I(2,2) += topo.mass()(i) * (r(0)*r(0)+r(1)*r(1));
-    com_I(1,0) += topo.mass()(i) * (-r(0)*r(1));
-    com_I(0,1) += topo.mass()(i) * (-r(0)*r(1));
-    com_I(2,0) += topo.mass()(i) * (-r(0)*r(2));
-    com_I(0,2) += topo.mass()(i) * (-r(0)*r(2));
-    com_I(2,1) += topo.mass()(i) * (-r(1)*r(2));
-    com_I(1,2) += topo.mass()(i) * (-r(1)*r(2));
-  }
-
-  DEBUG(7, "Angular momentum " << math::v2s(com_L));
-  
-  // invert the inertia tensor
+  // Exact CPU formula (remove_com_motion_cpu.cc) -- invert the inertia
+  // tensor, trivial 3x3 work, not worth a kernel for 9 numbers.
   math::Matrix com_II;
   const double denom = -com_I(2,0)*com_I(2,0)*com_I(1,1)
     + 2 * com_I(0,1) * com_I(0,2) * com_I(1,2)
     - com_I(0, 0) * com_I(1,2) * com_I(1,2)
     - com_I(0,1) * com_I(0,1) * com_I(2,2)
     + com_I(0,0) * com_I(1,1) * com_I(2,2);
-  
+
   com_II(0,0) = (-com_I(1,2)*com_I(1,2) + com_I(1,1) * com_I(2,2));
   com_II(1,0) = com_II(0,1) = (com_I(0,2) * com_I(1,2)
     - com_I(0,1) * com_I(2,2));
@@ -203,37 +212,30 @@ double algorithm::Remove_COM_Motion<util::gpuBackend>
     - com_I(0,0) * com_I(1,2));
 
   com_II(2,2) = (-com_I(0,1)*com_I(0,1) + com_I(0,0)*com_I(1,1));
-  
+
   DEBUG(7, "inertia tensor:\n"<< math::m2s(com_I));
   DEBUG(7, "determinant : " << denom);
   DEBUG(7, "inverted tens :\n" << math::m2s(com_II));
-  
-  // get the angular velocity around the COM
-  math::Vec com_O;
-  if (denom < math::epsilon)
-    com_O = math::Vec(0.0, 0.0, 0.0);
-  else
+
+  math::Vec com_L(Lx, Ly, Lz);
+  math::Vec com_O(0.0);
+  if (denom >= math::epsilon)
     com_O = math::product(com_II, com_L) / denom;
-  
+
   DEBUG(7, " angular velocity " << math::v2s(com_O));
 
-  double ekin_rot =  0.5 * dot(com_O, com_L);
+  const double ekin_rot = 0.5 * dot(com_O, com_L);
   DEBUG(7, " com_Ekin_rot " << ekin_rot);
-   
-  // remove if necessary
-  if(remove_rot){
-    // os << "removing center of mass angular momentum\n";
-    
-    for(unsigned int i=0; i<topo.num_atoms(); ++i){
-      math::Vec r = conf.current().pos(i) - 
-	0.5 * sim.time_step_size() * conf.current().vel(i) - com_r;
-      conf.current().vel(i) -= math::cross(com_O, r); 
-    }
+
+  if (remove_rot) {
+    gpu::launch_com_rotation_apply(
+        conf_view.current().pos, conf_view.current().vel, dt,
+        com_r_x, com_r_y, com_r_z, com_O(0), com_O(1), com_O(2), num_atoms);
+    sim.cuda().sync_configuration_from_device(conf);
   }
 
   return ekin_rot;
 }
-
 
 /**
  * apply the COM removal.
@@ -247,7 +249,7 @@ int algorithm::Remove_COM_Motion<util::gpuBackend>
   bool remove_rot = false;
   bool remove_trans = false;
   bool print_it = false;
-  
+
   m_timer.start(sim);
 
   // check if nothing to do
@@ -270,15 +272,15 @@ int algorithm::Remove_COM_Motion<util::gpuBackend>
   if (!print_it && !remove_trans && !remove_rot){
     m_timer.stop();
     return 0;
-  } 
-  
+  }
+
   if (sim.steps() != 0){
     remove_rot = remove_rot && sim.param().centreofmass.remove_rot;
     remove_trans = remove_trans && sim.param().centreofmass.remove_trans;
   }
-  
+
   DEBUG(9, "centre of mass: trans " << remove_trans << " rot " << remove_rot);
-  
+
   double ekin_trans = 0.0, ekin_rot = 0.0;
 
   if (print_it || remove_trans){
@@ -294,7 +296,7 @@ int algorithm::Remove_COM_Motion<util::gpuBackend>
 
   m_timer.stop();
 
-  return 0;		   
+  return 0;
 }
 
 template<>
@@ -307,88 +309,15 @@ double algorithm::Remove_COM_Motion<util::gpuBackend>
  math::Vec com_L
  )
 {
-  // assumption is that com_L of the velocities is zero right now
-
-  math::Vec com_v (0.0);
-  math::Vec com_r(0.0);
-  double com_mass = 0.0;
-  
-  for(unsigned int i = 0; i < topo.num_atoms(); ++i){
-
-    com_mass += topo.mass()(i);
-    com_v += topo.mass()(i) * conf.current().vel(i);
-    // positions should be at same time than velocities
-    com_r += topo.mass()(i) * conf.current().pos(i) - 
-      0.5 * topo.mass()(i) * conf.current().vel(i) * sim.time_step_size();
-  }
-  com_v /= com_mass;
-  com_r /= com_mass;
-
-  math::Matrix com_I;
-  com_I = 0.0;
-  
-  for(unsigned int i = 0; i < topo.num_atoms(); ++i){
-    math::Vec r = conf.current().pos(i) - 
-      0.5 * sim.time_step_size() * conf.current().vel(i) - com_r;
-
-    // inertia tensor
-    com_I(0,0) += topo.mass()(i) * (r(1)*r(1)+r(2)*r(2));
-    com_I(1,1) += topo.mass()(i) * (r(0)*r(0)+r(2)*r(2));
-    com_I(2,2) += topo.mass()(i) * (r(0)*r(0)+r(1)*r(1));
-    com_I(1,0) += topo.mass()(i) * (-r(0)*r(1));
-    com_I(0,1) += topo.mass()(i) * (-r(0)*r(1));
-    com_I(2,0) += topo.mass()(i) * (-r(0)*r(2));
-    com_I(0,2) += topo.mass()(i) * (-r(0)*r(2));
-    com_I(2,1) += topo.mass()(i) * (-r(1)*r(2));
-    com_I(1,2) += topo.mass()(i) * (-r(1)*r(2));
-  }
-
-  // com_L -= com_mass * math::cross(com_r, com_v);
-  DEBUG(7, "Angular momentum " << math::v2s(com_L));
-  
-  // invert the inertia tensor
-  math::Matrix com_II;
-  const double denom = -com_I(2,0)*com_I(2,0)*com_I(1,1)
-    + 2 * com_I(0,1) * com_I(0,2) * com_I(1,2)
-    - com_I(0, 0) * com_I(1,2) * com_I(1,2)
-    - com_I(0,1) * com_I(0,1) * com_I(2,2)
-    + com_I(0,0) * com_I(1,1) * com_I(2,2);
-  
-  com_II(0,0) = (-com_I(1,2)*com_I(1,2) + com_I(1,1) * com_I(2,2));
-  com_II(1,0) = com_II(0,1) = (com_I(0,2) * com_I(1,2)
-    - com_I(0,1) * com_I(2,2));
-  com_II(0,2) = com_II(2,0) = (-com_I(0,2)*com_I(1,1)
-    + com_I(0,1)*com_I(1,2));
-
-  com_II(1,1) = (-com_I(0,2)*com_I(0,2) + com_I(0,0) * com_I(2,2));
-  com_II(1,2) = com_II(2,1) = (com_I(0,1)*com_I(0,2)
-    - com_I(0,0) * com_I(1,2));
-
-  com_II(2,2) = (-com_I(0,1)*com_I(0,1) + com_I(0,0)*com_I(1,1));
-  
-  DEBUG(7, "inertia tensor:\n"<< math::m2s(com_I));
-  DEBUG(7, "determinant : " << denom);
-  DEBUG(7, "inverted tens :\n" << math::m2s(com_II));
-  
-  // get the angular velocity around the COM
-  math::Vec com_O;
-  if (denom < math::epsilon)
-    com_O = math::Vec(0.0, 0.0, 0.0);
-  else
-    com_O = math::product(com_II, com_L) / denom;
-  
-  DEBUG(7, " angular velocity " << math::v2s(com_O));
-
-  double ekin_rot =  0.5 * dot(com_O, com_L);
-  DEBUG(7, " com_Ekin_rot " << ekin_rot);
-   
-  // and add it
-    
-  for(unsigned int i=0; i<topo.num_atoms(); ++i){
-    math::Vec r = conf.current().pos(i) - 
-      0.5 * sim.time_step_size() * conf.current().vel(i) - com_r;
-    conf.current().vel(i) += math::cross(com_O, r); 
-  }
-
-  return ekin_rot;
+  // Never called anywhere in this codebase (confirmed by grep) --
+  // no GPU implementation, hard-error rather than silently doing
+  // nothing if that ever changes.
+  io::messages.add(
+      "Remove_COM_Motion<gpuBackend>::add_com_rotation is not implemented "
+      "(unused in this codebase today -- see remove_com_motion_gpu.cc).",
+      "Remove_COM_Motion", io::message::error);
+  return 0.0;
 }
+
+// explicit instantiations for linker
+template class algorithm::Remove_COM_Motion<util::gpuBackend>;
