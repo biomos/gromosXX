@@ -45,6 +45,7 @@
 #include "../../interaction/bonded/improper_dihedral_interaction.h"
 #ifdef USE_CUDA
 #include "../../interaction/bonded/cuda_quartic_bond_interaction.h"
+#include "../../interaction/bonded/cuda_angle_interaction.h"
 #endif
 
 // perturbed interactions
@@ -186,17 +187,30 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
   if (param.force.angle == 1){
     if (!quiet)
       os <<"\tbond angle (cosine) interaction\n";
-    interaction::Angle_Interaction *a =
-      new interaction::Angle_Interaction();
 
-    ff.push_back(a);
+#ifdef USE_CUDA
+    // Same accelerator/perturbation dispatch as the quartic bond term
+    // above -- see that block's comment.
+    if (sim.param().gpu.accelerator == simulation::gpu_cuda &&
+        !param.perturbation.perturbation) {
+      interaction::CUDA_Angle_Interaction * ga =
+        new interaction::CUDA_Angle_Interaction();
+      ff.push_back(ga);
+    } else
+#endif
+    {
+      interaction::Angle_Interaction *a =
+        new interaction::Angle_Interaction();
 
-    if (param.perturbation.perturbation){
-      if (!quiet)
-	os <<"\tperturbed bond angle interaction\n";
-      interaction::Perturbed_Angle_Interaction * pa =
-	new interaction::Perturbed_Angle_Interaction(*a);
-      ff.push_back(pa);
+      ff.push_back(a);
+
+      if (param.perturbation.perturbation){
+        if (!quiet)
+          os <<"\tperturbed bond angle interaction\n";
+        interaction::Perturbed_Angle_Interaction * pa =
+          new interaction::Perturbed_Angle_Interaction(*a);
+        ff.push_back(pa);
+      }
     }
   }
 

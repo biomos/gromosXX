@@ -619,8 +619,23 @@ Rough dependency order; each step should land as its own reviewable unit.
     tighter tolerance verbatim. Verified against the CPU reference
     (`quartic_bond_gpu.t.cc`) and zero `compute-sanitizer` errors.
 
-    Still CPU-only: Angle/Improper Dihedral/Torsional Dihedral bonded
-    terms, constraints (SHAKE/SETTLE/LINCS -- step 12 above),
+    **Also done:** `CUDA_Angle_Interaction` (bonded forces, second of
+    four planned terms), same shape as the quartic bond port --
+    `create_bonded.cc` dispatches on `accelerator == gpu_cuda` inside
+    `param.force.angle == 1` (cosine-harmonic; `== 2`'s
+    `Harm_Angle_Interaction` is untouched, still CPU-only), static term
+    list (`topo.solute().angles()`/`topo.angle_types_cosharm()`)
+    uploaded once, one-thread-per-term kernel
+    (`gpu/cuda/interaction/bonded/angle_kernels.{h,cu}`). Applied the
+    same near-cancellation lesson from the quartic bond port up front
+    this time: `cost - cos0` is computed in `double` throughout the
+    kernel (not just at the final energy step), same reasoning as
+    `dist2 - r0^2`. Verified against the CPU reference
+    (`angle_gpu.t.cc`, `5e-3` relative tolerance) and zero
+    `compute-sanitizer` errors.
+
+    Still CPU-only: Improper Dihedral/Torsional Dihedral bonded terms,
+    constraints (SHAKE/SETTLE/LINCS -- step 12 above),
     `NoseHoover_Thermostat`, `Berendsen_Barostat`, `Pressure_Calculation`.
 
 ## 11. Open questions (revisit later, not blocking the plan above)

@@ -91,6 +91,7 @@ if(USE_CUDA)
     list (APPEND INTERACTION_CC "nonbonded/pairlist/cuda_pairlist_algorithm.cc")
     list (APPEND INTERACTION_CC "nonbonded/interaction/cuda_nonbonded_interaction.cc")
     list (APPEND INTERACTION_CC "bonded/cuda_quartic_bond_interaction.cc")
+    list (APPEND INTERACTION_CC "bonded/cuda_angle_interaction.cc")
 endif()
 
 
