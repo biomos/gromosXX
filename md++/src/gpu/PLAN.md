@@ -676,8 +676,31 @@ Rough dependency order; each step should land as its own reviewable unit.
     small term counts will catch the bug as a crash, but nothing
     guarantees a larger one will.
 
-    Still CPU-only: Torsional Dihedral bonded terms,
-    constraints (SHAKE/SETTLE/LINCS -- step 12 above),
+    **Also done:** `CUDA_Dihedral_Interaction` (bonded forces, fourth
+    and last of the planned terms -- **all four "vanilla" bonded terms
+    are now GPU-ported**), matching `Dihedral_new_Interaction`
+    (`param.force.dihedral == 1`; aladip's `TORSDIHEDRALTYPE` topology
+    block resolves to this variant, not `Dihedral_Interaction`'s
+    `== 2`). Same static-term-list/one-thread-per-term shape as the
+    other three, all geometry in `double`
+    (`gpu/cuda/interaction/bonded/dihedral_kernels.{h,cu}`).
+    `create_bonded.cc`'s dispatch also falls back to the CPU class when
+    `sim.param().print.monitor_dihedrals` is set (a CPU-only diagnostic,
+    `conf.special().dihangle_trans`, that `CUDA_Dihedral_Interaction`
+    hard-errors on rather than silently ignoring) -- unlike
+    perturbation/GAMD, this is a normal, valid CPU configuration, so
+    graceful fallback is more appropriate than a hard error; the test
+    (`dihedral_gpu.t.cc`) disables monitoring on both sides instead of
+    switching input files, since it doesn't affect the force/energy
+    formula being compared. Verified against the CPU reference and zero
+    `compute-sanitizer` errors.
+
+    All four bonded terms now compared clean under `compute-sanitizer`
+    together, not just individually, and the full `ctest` suite (both
+    presets) still shows only the pre-existing, documented `aladip_cuda`
+    perturbation failure.
+
+    Still CPU-only: constraints (SHAKE/SETTLE/LINCS -- step 12 above),
     `NoseHoover_Thermostat`, `Berendsen_Barostat`, `Pressure_Calculation`.
 
 ## 11. Open questions (revisit later, not blocking the plan above)

@@ -47,6 +47,7 @@
 #include "../../interaction/bonded/cuda_quartic_bond_interaction.h"
 #include "../../interaction/bonded/cuda_angle_interaction.h"
 #include "../../interaction/bonded/cuda_improper_dihedral_interaction.h"
+#include "../../interaction/bonded/cuda_dihedral_interaction.h"
 #endif
 
 // perturbed interactions
@@ -270,16 +271,33 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
     if (!quiet)
       os <<"\tdihedral interaction\n";
 
-    interaction::Dihedral_new_Interaction * d =
-      new interaction::Dihedral_new_Interaction();
-    ff.push_back(d);
+#ifdef USE_CUDA
+    // Same accelerator/perturbation dispatch as the other bonded terms
+    // above -- see the quartic bond block's comment. Also falls back to
+    // the CPU class for dihedral-angle-minimum monitoring
+    // (print.monitor_dihedrals), a valid CPU-only configuration that
+    // CUDA_Dihedral_Interaction hard-errors on rather than silently
+    // dropping (see dihedral_kernels.h's doc comment).
+    if (sim.param().gpu.accelerator == simulation::gpu_cuda &&
+        !param.perturbation.perturbation &&
+        !param.print.monitor_dihedrals) {
+      interaction::CUDA_Dihedral_Interaction * gd =
+        new interaction::CUDA_Dihedral_Interaction();
+      ff.push_back(gd);
+    } else
+#endif
+    {
+      interaction::Dihedral_new_Interaction * d =
+        new interaction::Dihedral_new_Interaction();
+      ff.push_back(d);
 
-    if (param.perturbation.perturbation){
-      if(!quiet)
-	os <<"\tperurbed dihedral interaction\n";
-      interaction::Perturbed_Dihedral_new_Interaction * pd =
-	new interaction::Perturbed_Dihedral_new_Interaction(*d);
-      ff.push_back(pd);
+      if (param.perturbation.perturbation){
+        if(!quiet)
+          os <<"\tperurbed dihedral interaction\n";
+        interaction::Perturbed_Dihedral_new_Interaction * pd =
+          new interaction::Perturbed_Dihedral_new_Interaction(*d);
+        ff.push_back(pd);
+      }
     }
   }
    if (param.force.dihedral == 2){
