@@ -106,7 +106,7 @@ __global__ void angle_kernel(
 
   const double delta = cost - cos0d;
   const double e = 0.5 * Kd * delta * delta;
-  atomicAdd(&angle_energy[atom_energy_group[i]], e);
+  atomicAdd(&angle_energy[atom_energy_group[idx]], e);
 
   // Unconditional atomic virial, exact CPU formula (angle_interaction.cc):
   // virial(a, b) += rij(a)*fi(b) + rkj(a)*fk(b).

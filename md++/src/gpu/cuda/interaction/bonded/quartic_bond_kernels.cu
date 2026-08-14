@@ -84,7 +84,7 @@ __global__ void quartic_bond_kernel(
   atomicAdd(&force[j].z, -f.z);
 
   const double e = 0.25 * static_cast<double>(K[type]) * delta * delta;
-  atomicAdd(&bond_energy[atom_energy_group[i]], e);
+  atomicAdd(&bond_energy[atom_energy_group[idx]], e);
 
   // Unconditional atomic virial, exact CPU formula (quartic_bond_interaction.cc):
   // virial(a, c) += v(a) * f(c).

@@ -41,6 +41,7 @@ set(GPU_HEADERS
     cuda/algorithm/temperature/temperature_kernels.h
     cuda/interaction/bonded/quartic_bond_kernels.h
     cuda/interaction/bonded/angle_kernels.h
+    cuda/interaction/bonded/improper_dihedral_kernels.h
 )
 
 if(USE_CUDA)
@@ -70,6 +71,7 @@ if(USE_CUDA)
         cuda/algorithm/temperature/temperature_kernels.cu
         cuda/interaction/bonded/quartic_bond_kernels.cu
         cuda/interaction/bonded/angle_kernels.cu
+        cuda/interaction/bonded/improper_dihedral_kernels.cu
     )
 
     add_library(grocuda STATIC ${GPU_SOURCES})

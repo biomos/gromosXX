@@ -127,6 +127,9 @@ if(USE_CUDA)
 
     list(APPEND EXEC_NAMES angle_gpu)
     add_executable(angle_gpu angle_gpu.t.cc)
+
+    list(APPEND EXEC_NAMES improper_dihedral_gpu)
+    add_executable(improper_dihedral_gpu improper_dihedral_gpu.t.cc)
 endif()
 
 foreach(LOOP_VAR ${EXEC_NAMES})

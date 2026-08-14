@@ -634,7 +634,49 @@ Rough dependency order; each step should land as its own reviewable unit.
     (`angle_gpu.t.cc`, `5e-3` relative tolerance) and zero
     `compute-sanitizer` errors.
 
-    Still CPU-only: Improper Dihedral/Torsional Dihedral bonded terms,
+    **Also done:** `CUDA_Improper_Dihedral_Interaction` (bonded forces,
+    third of four planned terms), same shape again --
+    `create_bonded.cc` dispatches on `accelerator == gpu_cuda` inside
+    `param.force.improper == 1`, static term list
+    (`topo.solute().improper_dihedrals()`/`topo.impdihedral_types()`)
+    uploaded once, one-thread-per-term kernel
+    (`gpu/cuda/interaction/bonded/improper_dihedral_kernels.{h,cu}`),
+    all geometry (`rmj`/`rnk` cross products, `acos`, `q - q0`) computed
+    in `double`. Two behavioural simplifications versus the CPU path,
+    both because a `__global__` kernel can't call `io::messages.add()`:
+    the improper-angle cosine is clamped to `[-1,1]` with no
+    `io::message::critical` if it strays past `1 + math::epsilon`, and
+    the "bond angle near 180 degrees" `ki`/`kl` zeroing is silent
+    (no `io::message::warning`) -- documented in the kernel header,
+    neither triggers for any topology this port is tested against.
+    Verified against the CPU reference (`improper_dihedral_gpu.t.cc`,
+    `5e-3` relative tolerance).
+
+    **Bug found and fixed across all three bonded kernels above** (via
+    `improper_dihedral_gpu.t.cc`, see next entry): every kernel indexed
+    its per-term energy-group lookup array with the wrong index --
+    `atom_energy_group[i]` (`i` being the term's *atom* index, e.g.
+    `bond_i[idx]`) instead of `atom_energy_group[idx]` (the *term*
+    index -- the array is built with one entry per term, not one per
+    atom, unlike the CPU code's real `topo.atom_energy_group()`, which
+    genuinely is atom-indexed). For quartic bond and angle this silently
+    read a plausible-looking but wrong value rather than crashing --
+    aladip's bond/angle counts (~80/~100+) happen to exceed the range of
+    atom indices actually touched, so the OOB math accidentally landed
+    on defined memory (still the wrong element, but coincidentally often
+    the right *value* for a 2-energy-group topology, which is why both
+    tests passed despite the bug). Improper dihedral's much smaller term
+    count (aladip: 5) made the same bug a real out-of-bounds read,
+    caught immediately by `compute-sanitizer --tool memcheck`. Fixed in
+    all three `.cu` files (`atom_energy_group[idx]`); re-verified all
+    three tests still pass and are now sanitizer-clean. **Lesson for any
+    future term-indexed lookup array in this bonded-forces family:**
+    always index it by the kernel's own loop variable (`idx`), never by
+    a value read out of another per-term array (like an atom index) --
+    small term counts will catch the bug as a crash, but nothing
+    guarantees a larger one will.
+
+    Still CPU-only: Torsional Dihedral bonded terms,
     constraints (SHAKE/SETTLE/LINCS -- step 12 above),
     `NoseHoover_Thermostat`, `Berendsen_Barostat`, `Pressure_Calculation`.
 

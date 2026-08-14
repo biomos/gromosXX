@@ -46,6 +46,7 @@
 #ifdef USE_CUDA
 #include "../../interaction/bonded/cuda_quartic_bond_interaction.h"
 #include "../../interaction/bonded/cuda_angle_interaction.h"
+#include "../../interaction/bonded/cuda_improper_dihedral_interaction.h"
 #endif
 
 // perturbed interactions
@@ -239,16 +240,28 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
     if (!quiet)
       os << "\timproper dihedral interaction\n";
 
-    interaction::Improper_Dihedral_Interaction * i =
-      new interaction::Improper_Dihedral_Interaction();
-    ff.push_back(i);
+#ifdef USE_CUDA
+    // Same accelerator/perturbation dispatch as the quartic bond/angle
+    // terms above -- see that block's comment.
+    if (sim.param().gpu.accelerator == simulation::gpu_cuda &&
+        !param.perturbation.perturbation) {
+      interaction::CUDA_Improper_Dihedral_Interaction * gi =
+        new interaction::CUDA_Improper_Dihedral_Interaction();
+      ff.push_back(gi);
+    } else
+#endif
+    {
+      interaction::Improper_Dihedral_Interaction * i =
+        new interaction::Improper_Dihedral_Interaction();
+      ff.push_back(i);
 
-    if (param.perturbation.perturbation){
-      if(!quiet)
-	os << "\tperturbed improper dihedral interaction\n";
-      interaction::Perturbed_Improper_Dihedral_Interaction * pi =
-	new interaction::Perturbed_Improper_Dihedral_Interaction(*i);
-      ff.push_back(pi);
+      if (param.perturbation.perturbation){
+        if(!quiet)
+          os << "\tperturbed improper dihedral interaction\n";
+        interaction::Perturbed_Improper_Dihedral_Interaction * pi =
+          new interaction::Perturbed_Improper_Dihedral_Interaction(*i);
+        ff.push_back(pi);
+      }
     }
 
   }
