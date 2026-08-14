@@ -3,11 +3,15 @@
  * Builds the flat GPU LJ parameter matrix from the CPU nonbonded parameter table.
  */
 
+#include "gpu/cuda/cuheader.h"
+
 #include "stdheader.h"
 #include "interaction/nonbonded/interaction/nonbonded_parameter.h"
 #include "cuda_lj_params.h"
 
-void gpu::LJParams::init(const interaction::Nonbonded_Parameter& params) {
+void gpu::LJParams::init(interaction::Nonbonded_Parameter& params) {
+    // Nonbonded_Parameter::lj_parameter() (no-arg, full-matrix accessor)
+    // isn't const, hence the non-const reference here.
     const auto& matrix = params.lj_parameter();
     num_types = static_cast<unsigned>(matrix.size());
 

@@ -331,6 +331,62 @@ Before any force/energy number from this pairlist is trusted:
    rectangular, `atomic_cutoff = true`), 4 cases total, all passing
    exactly.
 
-Step 8 onward (force kernel consuming `TileContainer`, wiring into a real
-`CUDA_Nonbonded_Interaction`) is `PLAN.md` §10 steps 6-9, unchanged, out of
-scope for "build the pairlist" specifically.
+8. **Done (kernel only; wiring is step 9, not started).** `PLAN.md` §10
+   step 8: the LJ + reaction-field force/energy kernel, rewritten against
+   tiles instead of the discarded flat-pair-array kernel
+   (`gpu/cuda/interaction/nonbonded/kernels/nb_kernels.{h,cu}`, deleted --
+   never actually wired into anything, per `CLAUDE.md`'s "salvageable math,
+   not the surrounding data flow"). New home:
+   `gpu/cuda/interaction/nonbonded/kernels/lj_crf_tiles.{h,cu}`, plus the
+   two small reused-as-is pieces that were already sitting unregistered in
+   the tree (`cuda_lj_params.{h,cu}`: GPU LJ parameter matrix, built once
+   from `interaction::Nonbonded_Parameter`; `cuda_nb_sim_params.h`: the
+   `four_pi_eps_i`/`crf_2cut3i`/`crf_cut`/cutoff constants struct) -- both
+   now actually registered in `gpu/CMakeLists.txt` and used.
+
+   `lj_crf_tile_kernel<BOUNDARY>` mirrors `classify_tiles_kernel`'s layout
+   exactly (one CUDA block per tile, 32x32 threads, one warp per row,
+   `row_order`/`col_other_order` convention reused verbatim) and computes
+   `interaction::Nonbonded_Term::lj_crf_interaction`'s default case
+   (`eps=0`, `coulomb_scaling=1`) per active mask bit: forces via
+   `atomicAdd` (one thread per pair), energies via a warp-shuffle-then-
+   shared-memory reduction to one `atomicAdd` per tile (into a `double`
+   accumulator regardless of `FPL_TYPE`, so many small per-tile
+   contributions don't lose precision the way thousands of individual
+   float atomicAdds would).
+
+   `lj_crf_tiles.h` deliberately does **not** declare the `__global__`
+   kernel template or include `gpu/cuda/math/periodicity.h`: that header
+   isn't host-compilable (`Periodicity::set_cell_size`/`get_cell` use bare
+   `min`/`max`, which only resolve under `nvcc`), so a header a plain
+   `.cc` test needs to include can't pull it in. Only a host-callable
+   `launch_lj_crf_tiles(..., math::boundary_enum boundary, math::Box box,
+   ...)` is public; it dispatches to the right `Periodicity<BOUNDARY>`
+   instantiation internally, entirely inside the `.cu` file. Found the
+   same problem transitively through `block_pairlist.h` (declares
+   `__global__` kernels taking `Periodicity<BOUNDARY>` too) while writing
+   the test below -- neither header is meant to be included from a `.cc`
+   translation unit, only from other `.cu` files.
+
+   Also added `TileVecT::resize(unsigned)` (`tile.h`): both `push_back`
+   overloads are `__device__`-only (atomic-append from a kernel), so
+   there was no way to populate a `TileVecT`'s `size()` from host code at
+   all -- needed for the test below to hand-build one tile. Calling the
+   `__device__`-only `push_back` from host code doesn't fail to compile
+   under a plain (non-`nvcc`) `.cc` compiler (attributes just vanish), it
+   silently links to nothing usable and crashes at runtime with no
+   diagnostic -- found and fixed while building the test, not a
+   pre-existing bug (nothing had ever called it from a `.cc` before).
+
+   Standalone correctness test: `src/check/lj_crf_tile_kernel.t.cc`, one
+   hand-built 32x32 self-tile from aladip's real atoms/positions/charges/
+   LJ params (mask bit set for pairs in `[0.2nm, cutoff_long]`, excluding
+   pathologically close would-be-excluded pairs whose huge r^-12
+   repulsion amplifies float-vs-double rounding far beyond what's
+   meaningful for testing kernel arithmetic), vacuum + rectangular, both
+   passing within float precision (`tol = 1e-4`, appropriate for
+   `FPL_TYPE = float` in the default mixed-precision build).
+
+Step 9 onward (wiring a real `CUDA_Nonbonded_Interaction` end-to-end: real
+`PairlistContainer` output instead of the dummy, hard-error gate, virial,
+twin-range short/long semantics) is `PLAN.md` §10 step 9, not started.

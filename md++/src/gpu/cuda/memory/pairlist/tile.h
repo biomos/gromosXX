@@ -186,6 +186,21 @@ namespace gpu
           }
       }
 
+      /**
+       * @brief Host-only way to populate a TileVecT directly (e.g. a
+       * hand-built test tile): both `push_back` overloads are
+       * `__device__`-only (atomic-append from a kernel), so there is
+       * otherwise no way to set `size()` from host code -- `operator[]`
+       * can write tile contents, but `size()` would stay 0 without this.
+       * Unlike `push_back`, does not check for overflow: the caller is
+       * responsible for `new_size <= capacity()` (use `reserve()` first
+       * if needed).
+       */
+      __host__ void resize(unsigned new_size) {
+          reserve(new_size);
+          *m_size = new_size;
+      }
+
       __device__ __host__ TileT& operator[](size_t i) {
           assert(i < m_capacity);
           return m_data[i];

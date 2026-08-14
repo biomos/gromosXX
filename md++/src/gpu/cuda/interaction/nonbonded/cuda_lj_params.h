@@ -48,8 +48,12 @@ struct LJParams {
     gpu::cuvector<FPL_TYPE> c12;
     unsigned num_types = 0;
 
-    /** Initialise / update from the CPU nonbonded parameter table. */
-    void init(const interaction::Nonbonded_Parameter& params);
+    /**
+     * Initialise / update from the CPU nonbonded parameter table.
+     * Non-const: Nonbonded_Parameter::lj_parameter() (the no-arg,
+     * full-matrix accessor this reads) isn't const either.
+     */
+    void init(interaction::Nonbonded_Parameter& params);
 
     View view() const {
         return View{ c6.data(), c12.data(), num_types };

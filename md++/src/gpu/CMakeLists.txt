@@ -32,6 +32,9 @@ set(GPU_HEADERS
     cuda/memory/container.h
     cuda/interaction/nonbonded/pairlist/cuda_pairlist_algorithm_impl.h
     cuda/interaction/nonbonded/pairlist/block_pairlist.h
+    cuda/interaction/nonbonded/cuda_lj_params.h
+    cuda/interaction/nonbonded/cuda_nb_sim_params.h
+    cuda/interaction/nonbonded/kernels/lj_crf_tiles.h
 )
 
 if(USE_CUDA)
@@ -53,6 +56,8 @@ if(USE_CUDA)
         cuda/interaction/nonbonded/pairlist/cuda_pairlist_algorithm_impl.cu
         cuda/interaction/nonbonded/pairlist/block_pairlist.cu
         cuda/memory/pairlist/tile.cu
+        cuda/interaction/nonbonded/cuda_lj_params.cu
+        cuda/interaction/nonbonded/kernels/lj_crf_tiles.cu
     )
 
     add_library(grocuda STATIC ${GPU_SOURCES})

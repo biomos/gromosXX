@@ -100,6 +100,9 @@ if(USE_CUDA)
 
     list(APPEND EXEC_NAMES pairlist_cuda_equivalence)
     add_executable(pairlist_cuda_equivalence pairlist_cuda_equivalence.t.cc)
+
+    list(APPEND EXEC_NAMES lj_crf_tile_kernel)
+    add_executable(lj_crf_tile_kernel lj_crf_tile_kernel.t.cc)
 endif()
 
 foreach(LOOP_VAR ${EXEC_NAMES})
