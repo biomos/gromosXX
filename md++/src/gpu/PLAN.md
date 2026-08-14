@@ -585,9 +585,43 @@ Rough dependency order; each step should land as its own reviewable unit.
     `Thermostat::scale()`'s cases (`com_bath == ir_bath` and `!=`,
     `temperature_gpu.t.cc`) and with zero `compute-sanitizer` errors.
 
-    Still CPU-only: all bonded terms, constraints (SHAKE/SETTLE/LINCS --
-    step 12 above), `NoseHoover_Thermostat`, `Berendsen_Barostat`,
-    `Pressure_Calculation`.
+    **Also done:** `CUDA_Quartic_Bond_Interaction` (bonded forces, first
+    of four planned terms). Unlike the `Algorithm`/`Backend` template
+    pattern used above, bonded terms use the `interaction::Interaction`
+    dispatch mechanism (same family as `CUDA_Nonbonded_Interaction`):
+    `create_bonded.cc` now instantiates `CUDA_Quartic_Bond_Interaction`
+    instead of `Quartic_Bond_Interaction` when `accelerator == gpu_cuda`
+    and perturbation is off (perturbation is hard-errored in the new
+    class's own `init()`, same convention as every other CUDA gate).
+    Structurally much simpler than nonbonded: no pairlist at all -- the
+    term list (atom-index pairs + type index, from
+    `topo.solute().bonds()`/`topo.bond_types_quart()`) is static and
+    small (aladip: ~80 bonds), uploaded once in `init()`, consumed by a
+    plain one-thread-per-term kernel
+    (`gpu/cuda/interaction/bonded/quartic_bond_kernels.{h,cu}`) with
+    direct global `atomicAdd`s (no shared-memory bucketing -- term counts
+    are too small to bother). Virial is unconditional, matching the CPU
+    source's dead `if (V == math::atomic_virial)` gate. **Precision
+    finding, worth remembering for every future bonded term:** the
+    default `FP_PRECISION=1` (float-only) build stores the position
+    mirror in `FPL_TYPE` (float), and `dist2 - r0^2` is a near-
+    cancellation for a bond near its equilibrium length -- aladip's
+    largest bond force constant (~1.57e7) turns the position mirror's
+    ordinary float-truncation error into a force discrepancy an order of
+    magnitude above the `1e-4` relative tolerance used for nonbonded.
+    Confirmed by direct calculation (matches observed magnitude) and by
+    testing that computing the subtraction itself in `double` inside the
+    kernel made no difference (the error is baked into the input
+    position's float representation, not the arithmetic) -- this is an
+    inherent property of the float position mirror, not a kernel bug, so
+    every future bonded term's test should budget for it (`5e-3` relative
+    used in `quartic_bond_gpu.t.cc`) rather than reusing nonbonded's
+    tighter tolerance verbatim. Verified against the CPU reference
+    (`quartic_bond_gpu.t.cc`) and zero `compute-sanitizer` errors.
+
+    Still CPU-only: Angle/Improper Dihedral/Torsional Dihedral bonded
+    terms, constraints (SHAKE/SETTLE/LINCS -- step 12 above),
+    `NoseHoover_Thermostat`, `Berendsen_Barostat`, `Pressure_Calculation`.
 
 ## 11. Open questions (revisit later, not blocking the plan above)
 

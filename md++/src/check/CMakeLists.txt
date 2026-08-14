@@ -121,6 +121,9 @@ if(USE_CUDA)
 
     list(APPEND EXEC_NAMES temperature_gpu)
     add_executable(temperature_gpu temperature_gpu.t.cc)
+
+    list(APPEND EXEC_NAMES quartic_bond_gpu)
+    add_executable(quartic_bond_gpu quartic_bond_gpu.t.cc)
 endif()
 
 foreach(LOOP_VAR ${EXEC_NAMES})

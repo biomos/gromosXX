@@ -43,6 +43,9 @@
 #include "../../interaction/bonded/dihedral_new_interaction.h"
 #include "../../interaction/bonded/crossdihedral_interaction.h"
 #include "../../interaction/bonded/improper_dihedral_interaction.h"
+#ifdef USE_CUDA
+#include "../../interaction/bonded/cuda_quartic_bond_interaction.h"
+#endif
 
 // perturbed interactions
 #include "../../interaction/bonded/perturbed_quartic_bond_interaction.h"
@@ -79,18 +82,38 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
     if (!quiet)
       os << "\tquartic bond interaction\n";
 
-    interaction::Quartic_Bond_Interaction *b =
-              new interaction::Quartic_Bond_Interaction();
+#ifdef USE_CUDA
+    // accelerator==gpu_cuda gets the real GPU-native bonded term
+    // (PLAN.md §10 step 14) instead of the CPU one -- mirrors
+    // create_nonbonded.cc's dispatch on the same flag. CUDA_Quartic_
+    // Bond_Interaction is not a Quartic_Bond_Interaction subclass (no
+    // pairlist-free bonded term needs the CPU base's machinery), so it
+    // can only be used when there's no perturbed wrapper to build
+    // against it -- perturbation is out of scope for the CUDA class
+    // anyway (hard-errored in its own init()), so fall through to the
+    // CPU class whenever perturbation is requested, regardless of
+    // accelerator.
+    if (sim.param().gpu.accelerator == simulation::gpu_cuda &&
+        !param.perturbation.perturbation) {
+      interaction::CUDA_Quartic_Bond_Interaction * gb =
+        new interaction::CUDA_Quartic_Bond_Interaction();
+      ff.push_back(gb);
+    } else
+#endif
+    {
+      interaction::Quartic_Bond_Interaction *b =
+                new interaction::Quartic_Bond_Interaction();
 
-    ff.push_back(b);
+      ff.push_back(b);
 
-    if (param.perturbation.perturbation) {
-      if (!quiet)
-        os << "\tperturbed quartic bond interaction\n";
+      if (param.perturbation.perturbation) {
+        if (!quiet)
+          os << "\tperturbed quartic bond interaction\n";
 
-      interaction::Perturbed_Quartic_Bond_Interaction * pb =
-        new interaction::Perturbed_Quartic_Bond_Interaction(*b);
-      ff.push_back(pb);
+        interaction::Perturbed_Quartic_Bond_Interaction * pb =
+          new interaction::Perturbed_Quartic_Bond_Interaction(*b);
+        ff.push_back(pb);
+      }
     }
   } else if (param.force.bond == 2) {
     if (!quiet)
