@@ -758,7 +758,33 @@ Rough dependency order; each step should land as its own reviewable unit.
     `compute-sanitizer` errors.
 
     Still CPU-only: solute SHAKE (see above), SETTLE/LINCS,
-    `NoseHoover_Thermostat`, `Berendsen_Barostat`, `Pressure_Calculation`.
+    `NoseHoover_Thermostat`.
+
+15. **`Pressure_Calculation`/`Berendsen_Barostat`: reviewed, no kernel
+    needed.** `Pressure_Calculation::apply()` is nine multiply-adds on
+    `conf.old().kinetic_energy_tensor`/`virial_tensor` (already
+    computed elsewhere, host-resident); `Berendsen_Barostat::apply()`
+    is an elementwise `pos(i) = mu * pos(i)` scaling loop plus a box
+    scale. Neither has a GPU-shaped bottleneck worth a kernel, and both
+    already run correctly under `accelerator = cuda` with **zero code
+    changes** -- neither overrides `Algorithm::gpu_mirror_touches()`
+    (default `gpu::MIRROR_ALL`), so `Algorithm_Sequence::run()`'s
+    existing flush-before/invalidate-after hooks around every
+    algorithm's `apply()` already (a) publish any GPU-resident
+    position/virial data to the host before either one runs, and (b)
+    invalidate the GPU mirror's freshness afterwards, so a later GPU
+    force calculation re-uploads the barostat's host-scaled positions
+    instead of silently reusing a stale pre-barostat GPU copy. This is
+    exactly the mechanism the earlier `Leap_Frog_Position`/temperature-
+    coupling interleaving bug (step 11 above) was fixed to handle
+    generically, now paying off for two algorithms that never needed
+    to know CUDA exists. Verified, not just assumed: `pressure_
+    barostat_gpu.t.cc` drives the real hazard end-to-end through
+    `Algorithm_Sequence::run()` (`CUDA_Quartic_Bond_Interaction` ->
+    `Pressure_Calculation` -> `Berendsen_Barostat` ->
+    `CUDA_Quartic_Bond_Interaction` again, comparing against the
+    identical CPU-only sequence) and passes with zero
+    `compute-sanitizer` errors.
 
 ## 11. Open questions (revisit later, not blocking the plan above)
 
