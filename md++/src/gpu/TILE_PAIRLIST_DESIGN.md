@@ -501,8 +501,79 @@ Before any force/energy number from this pairlist is trusted:
     this step, not yet done as of this paragraph; see the next entry
     once it lands.
 
-Step 10's second part (decoupling the candidate rebuild from
-classification via `skin` + displacement tracking, `PLAN.md` §9.4's skin
-buffer drift test) and step 11 onward (multi-energy-group and virial
-support, perturbation, re-porting `Leap_Frog_*<gpuBackend>`) are not
-started.
+    **Done (part 2 of 2): skin-based candidate-rebuild decoupling.**
+    `PLAN.md` §9.4's skin buffer drift test, closing the gap this
+    section's part 1 flagged: the (expensive) candidate rebuild
+    (`reorder()`+`build_candidates()`) is now decoupled from
+    classification via a real displacement-tracked Verlet-buffer
+    criterion, not just plumbed through as an inert field.
+
+    `CUDA_Pairlist_Algorithm_Impl` gained `needs_candidate_rebuild()`
+    (decides, given `sim.param().pairlist.skin`, whether a rebuild is
+    also due this classification cycle) and `rebuild_candidates()`
+    (wraps `reorder()`+`build_candidates()`, then snapshots the current
+    GPU position mirror into a new `m_candidate_ref_pos` member so the
+    next `needs_candidate_rebuild()` call has something to diff
+    against). `CUDA_Pairlist_Algorithm::update()` calls
+    `needs_candidate_rebuild()` first and only rebuilds if it says so,
+    then always calls `classify_tiles()` regardless -- classification
+    always re-evaluates exact current-position distances against
+    whatever candidates currently exist, so a stale-but-still-safe
+    candidate set produces identical classification output to a freshly
+    rebuilt one.
+
+    The Verlet criterion itself: `needs_candidate_rebuild()` returns
+    true unconditionally if no rebuild has ever happened yet, or if
+    `skin == 0.0` (an explicit early-return, not left as an emergent
+    property of `2*0 >= 0`, so degenerate-skin behavior is obviously
+    correct on inspection). Otherwise it launches a new kernel
+    (`gpu::launch_max_displacement`, `gpu/cuda/interaction/nonbonded/
+    kernels/displacement.{h,cu}`, same host/device split as
+    `lj_crf_tiles.h` for the same reason -- `gpu::Periodicity` isn't
+    host-compilable) that computes, per atom, the periodicity-wrapped
+    (nearest-image, not raw-subtraction -- chargegroups get rewrapped
+    into the box every step, so a raw subtraction would see a spurious
+    ~one-box-dimension jump whenever an atom's chargegroup crosses a
+    periodic boundary between the last rebuild and now) displacement
+    since `m_candidate_ref_pos`, reduces to a single max via a small
+    self-contained per-block-partial-max kernel + host-side linear scan
+    (not `reduction.h`'s existing sum-only `calc_sum` -- that's a
+    multi-launch-with-host-sync pattern, a needless cost paid at every
+    classification-cadence check rather than just rebuild steps), and
+    returns true iff `2 * max_displacement >= skin` -- the standard
+    Verlet safety argument: two atoms could in the worst case have
+    closed the gap between them by that much since the candidates were
+    last built at `cutoff_long + skin`.
+
+    Also added `candidate_rebuild_count()` (test-support only, on both
+    `CUDA_Pairlist_Algorithm` and `_Impl`) so the drift test below can
+    confirm skin is actually reducing rebuild frequency, not just
+    numerically coinciding with always-correct behavior -- a
+    `needs_candidate_rebuild()` bug that always returned true would
+    still pass a pure force/energy comparison.
+
+    Test: `src/check/cuda_skin_drift.t.cc` -- the first CUDA test in this
+    tree to drive a real multi-step trajectory (every other test is a
+    single evaluation). Two independently-constructed runs at the *same*
+    `skip_step` (isolating skin's effect from part 1's already-covered
+    skip_step cadence change), driven through an identical deterministic
+    per-atom position-perturbation sequence: a `skin = 0.0` baseline
+    (rebuilds every classification cycle) vs. `skin > 0` (decoupled).
+    Since `classify_tiles()` always computes exact current-position
+    distances regardless of candidate age, these must match EXACTLY at
+    every step if skin's buffer is never exhausted -- confirmed for
+    vacuum + rectangular, 30 steps, with the decoupled run skipping 4 of
+    6 candidate rebuilds. Also confirms the `skin = 0.0` case rebuilds
+    exactly every classification cycle (explicit degenerate check).
+
+    A `skip_step = 1` run is deliberately *not* used as this test's
+    reference (an earlier draft of this test did, and it failed --
+    correctly: `skip_step` itself changes the physics via part 1's
+    frozen long-range forces, so a `skip_step = 1` run and a
+    `skip_step = 5` run are never expected to match at all, regardless
+    of skin. That divergence was a real finding about this test's design,
+    not a bug in the decoupling code -- worth remembering if this test
+    is ever extended.).
+
+Step 11 onward (multi-energy-group and virial support, perturbation,
+re-porting `Leap_Frog_*<gpuBackend>`) is not started.

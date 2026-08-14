@@ -107,17 +107,25 @@ int interaction::CUDA_Pairlist_Algorithm::prepare(
 
 /**
  * Runs on the pairlist.skip_step cadence (see Nonbonded_Set::calculate_
- * interactions' pairlist_update check) -- the real candidate-build +
- * classification work, per TILE_PAIRLIST_DESIGN.md §3 steps 1-5.
- * m_impl.tiles() now holds real, exclusion-checked, short/long-classified
- * atom-pair tiles after this call, consumed for real by
- * compute_forces_energies() (TILE_PAIRLIST_DESIGN.md §8/§9), called
- * separately by CUDA_Nonbonded_Interaction -- not through this method's
- * own `pairlist` parameter, which stays an unused, empty
- * interaction::PairlistContainer: the base Pairlist_Algorithm::update()
- * interface is CPU-Pairlist-shaped and nothing reads this parameter for
- * the CUDA path (kept only because update() is virtual and must be
- * implemented with this signature).
+ * interactions' pairlist_update check) -- the classification work, per
+ * TILE_PAIRLIST_DESIGN.md §3 steps 1-5. m_impl.tiles() now holds real,
+ * exclusion-checked, short/long-classified atom-pair tiles after this
+ * call, consumed for real by compute_forces_energies() (TILE_PAIRLIST_
+ * DESIGN.md §8/§9), called separately by CUDA_Nonbonded_Interaction --
+ * not through this method's own `pairlist` parameter, which stays an
+ * unused, empty interaction::PairlistContainer: the base
+ * Pairlist_Algorithm::update() interface is CPU-Pairlist-shaped and
+ * nothing reads this parameter for the CUDA path (kept only because
+ * update() is virtual and must be implemented with this signature).
+ *
+ * The (expensive) candidate rebuild (reorder()+build_candidates()) is
+ * decoupled from classification as of TILE_PAIRLIST_DESIGN.md §10 part
+ * 2: m_impl.needs_candidate_rebuild() decides, via the skin-buffer
+ * Verlet criterion, whether a rebuild is *also* due this
+ * classification cycle, or whether the existing (possibly
+ * several-classification-cycles-old, but still within the skin buffer)
+ * candidate set is still safe to classify against. At skin == 0.0 this
+ * always rebuilds, exactly as before this decoupling existed.
  */
 void interaction::CUDA_Pairlist_Algorithm::update(topology::Topology & topo,
                                       configuration::Configuration & conf,
@@ -131,8 +139,9 @@ void interaction::CUDA_Pairlist_Algorithm::update(topology::Topology & topo,
   // sim.param().pairlist.atomic_cutoff themselves (TILE_PAIRLIST_DESIGN.md
   // §4.2/step 7) -- chargegroup-cutoff and atomic-cutoff are both fully
   // supported now, so there's nothing to guard here.
-  m_impl.reorder(conf, topo, sim);
-  m_impl.build_candidates(conf, topo, sim);
+  if (m_impl.needs_candidate_rebuild(conf, sim)) {
+    m_impl.rebuild_candidates(conf, topo, sim);
+  }
   m_impl.classify_tiles(conf, topo, sim);
 
   pairlist.clear();

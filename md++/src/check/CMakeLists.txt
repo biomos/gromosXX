@@ -106,6 +106,9 @@ if(USE_CUDA)
 
     list(APPEND EXEC_NAMES cuda_nonbonded_interaction)
     add_executable(cuda_nonbonded_interaction cuda_nonbonded_interaction.t.cc)
+
+    list(APPEND EXEC_NAMES cuda_skin_drift)
+    add_executable(cuda_skin_drift cuda_skin_drift.t.cc)
 endif()
 
 foreach(LOOP_VAR ${EXEC_NAMES})

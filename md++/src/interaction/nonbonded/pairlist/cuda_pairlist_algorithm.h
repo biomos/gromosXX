@@ -148,6 +148,12 @@ namespace interaction
       m_impl.compute_forces_energies(conf, topo, sim, lj, nb, recompute_long, e_lj, e_crf);
     }
 
+    /**
+     * Test-support only (TILE_PAIRLIST_DESIGN.md §10 part 2's drift
+     * test) -- see CUDA_Pairlist_Algorithm_Impl::candidate_rebuild_count().
+     */
+    unsigned candidate_rebuild_count() const { return m_impl.candidate_rebuild_count(); }
+
   private:
     CUDA_Pairlist_Algorithm_Impl m_impl;
   };

@@ -26,6 +26,7 @@
 #include "gpu/cuda/memory/configuration_struct.h"
 #include "gpu/cuda/kernels/periodicity.h"
 #include "gpu/cuda/interaction/nonbonded/kernels/lj_crf_tiles.h"
+#include "gpu/cuda/interaction/nonbonded/kernels/displacement.h"
 #include "block_pairlist.h"
 
 #include "cuda_pairlist_algorithm_impl.h"
@@ -74,6 +75,9 @@ int interaction::CUDA_Pairlist_Algorithm_Impl::init(topology::Topology &topo,
     cudaMemset(m_longrange_force.data(), 0, sizeof(FPL3_TYPE) * num_atoms);
     m_e_lj_long[0]  = 0.0;
     m_e_crf_long[0] = 0.0;
+
+    m_candidate_ref_pos.resize(num_atoms);
+    m_candidates_built = false;
 
     return 0;
 };
@@ -368,6 +372,46 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::_build_candidates(
             true, periodicity, cutoff, m_tiles.solvent_candidates.view());
         check_candidate_overflow(m_tiles.solvent_candidates, "solvent_candidates");
     }
+};
+
+bool interaction::CUDA_Pairlist_Algorithm_Impl::needs_candidate_rebuild(
+                configuration::Configuration & conf,
+                simulation::Simulation & sim)
+{
+    if (!m_candidates_built) return true;
+
+    // Explicit early-return, not left as an emergent property of the
+    // comparison below -- see this method's doc comment (header).
+    const double skin = sim.param().pairlist.skin;
+    if (skin == 0.0) return true;
+
+    const unsigned num_atoms = static_cast<unsigned>(m_candidate_ref_pos.size());
+    const math::CuVArray::View current_pos = conf.get_gpu_view().current().pos;
+    const FPL_TYPE max_disp = gpu::launch_max_displacement(
+        current_pos, m_candidate_ref_pos.view(), num_atoms,
+        conf.boundary_type, conf.current().box, m_displacement_partial);
+
+    return static_cast<double>(2.0 * max_disp) >= skin;
+};
+
+void interaction::CUDA_Pairlist_Algorithm_Impl::rebuild_candidates(
+                configuration::Configuration & conf,
+                topology::Topology & topo,
+                simulation::Simulation & sim)
+{
+    reorder(conf, topo, sim);
+    build_candidates(conf, topo, sim);
+
+    // Snapshot positions *after* reorder()/build_candidates() ran (they
+    // don't mutate positions themselves, but this keeps the "as of last
+    // rebuild" semantics unambiguous regardless).
+    const unsigned num_atoms = static_cast<unsigned>(m_candidate_ref_pos.size());
+    const math::CuVArray::View current_pos = conf.get_gpu_view().current().pos;
+    for (unsigned i = 0; i < num_atoms; ++i) {
+        m_candidate_ref_pos[i] = current_pos(i);
+    }
+    m_candidates_built = true;
+    ++m_candidate_rebuild_count;
 };
 
 void interaction::CUDA_Pairlist_Algorithm_Impl::classify_tiles(

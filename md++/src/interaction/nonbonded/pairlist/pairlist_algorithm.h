@@ -198,6 +198,13 @@ namespace interaction
      * Per src/gpu/PLAN.md D7: skin defaults to 0.0 for backward
      * compatibility; any algorithm that ignores a non-zero skin must warn,
      * since it silently means the requested Verlet buffer has no effect.
+     *
+     * Exception: CUDA_Pairlist_Algorithm does NOT call this
+     * (TILE_PAIRLIST_DESIGN.md §10 part 2) -- it's the first algorithm
+     * that actually honors skin (decoupling the candidate rebuild from
+     * classification via displacement tracking), so warning that skin
+     * "has no effect" there would be wrong. Don't add a call to it in
+     * the CUDA path by copy-pasting from an existing CPU algorithm.
      */
     static inline void warn_if_skin_ignored(const simulation::Simulation & sim,
                                              const std::string & algorithm_name) {

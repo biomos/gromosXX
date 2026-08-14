@@ -88,6 +88,57 @@ namespace interaction {
                               simulation::Simulation & sim);
 
       /**
+       * TILE_PAIRLIST_DESIGN.md §10, part 2: decides whether the
+       * (expensive) candidate rebuild is due this classification cycle,
+       * decoupled from classify_tiles()'s own skip_step cadence via the
+       * Verlet-buffer criterion: rebuild once
+       * `2 * max_displacement_since_last_rebuild >= skin`, since two
+       * atoms could in the worst case have closed the gap between them
+       * by that much since the candidates were last built at
+       * `cutoff_long + skin`.
+       *
+       * Always returns true if no candidate rebuild has ever happened
+       * (m_candidates_built == false) or if skin == 0.0 -- the latter is
+       * an explicit early-return, not left as an emergent property of
+       * `2*0 >= 0`, so skin's degenerate case (rebuild every
+       * classification cycle, today's exact pre-this-feature behavior)
+       * is obviously correct on inspection rather than relying on a
+       * floating-point comparison that could misbehave for a
+       * near-zero-but-nonzero skin from a config round-trip.
+       *
+       * This check itself only runs at classification cadence (every
+       * skip_step steps, not every step) since it's only ever called
+       * from update() -- meaning true displacement is only ever known
+       * "as of" the last classification check, up to skip_step steps
+       * late. Accepted trade-off, not a silent gap: checking continuously
+       * would defeat skip_step's whole performance purpose.
+       */
+      bool needs_candidate_rebuild(configuration::Configuration & conf,
+                                    simulation::Simulation & sim);
+
+      /**
+       * Rebuilds the candidate tile lists (reorder() + build_candidates(),
+       * unchanged), then snapshots the current GPU position mirror into
+       * m_candidate_ref_pos so the next needs_candidate_rebuild() call
+       * has something to diff against, and marks m_candidates_built.
+       * This is what update() calls instead of reorder()+build_candidates()
+       * directly, conditioned on needs_candidate_rebuild().
+       */
+      void rebuild_candidates(configuration::Configuration & conf,
+                               topology::Topology & topo,
+                               simulation::Simulation & sim);
+
+      /**
+       * Number of times rebuild_candidates() has actually run. Exposed
+       * for the skin-buffer drift test (TILE_PAIRLIST_DESIGN.md §10 part
+       * 2, PLAN.md §9.4) to confirm skin is actually reducing rebuild
+       * frequency, not just numerically matching by coincidence (a bug
+       * that made needs_candidate_rebuild() always return true would
+       * still pass a pure force/energy comparison).
+       */
+      unsigned candidate_rebuild_count() const { return m_candidate_rebuild_count; }
+
+      /**
        * Exclusion + short/long classification (TILE_PAIRLIST_DESIGN.md §3
        * step 5, §4.2/step 7): resolves every candidate tile's atom pairs,
        * applies exclusions, and buckets survivors into m_tiles.solute_short/
@@ -258,5 +309,26 @@ namespace interaction {
       gpu::cuvector<FPL3_TYPE> m_longrange_force;
       gpu::cuvector<double> m_e_lj_long;
       gpu::cuvector<double> m_e_crf_long;
+
+      /**
+       * Position snapshot at the time of the most recent CANDIDATE
+       * rebuild (not the most recent classification) -- feeds
+       * needs_candidate_rebuild()'s displacement check. Sized once in
+       * init(); refreshed only inside rebuild_candidates().
+       */
+      math::CuVArray m_candidate_ref_pos;
+      /**
+       * Scratch for launch_max_displacement()'s per-block partial
+       * maxima -- owned here so needs_candidate_rebuild() doesn't
+       * allocate/free it on every classification-cadence call.
+       */
+      gpu::cuvector<FPL_TYPE> m_displacement_partial;
+      /**
+       * False until the first candidate rebuild ever happens -- there is
+       * nothing to diff m_candidate_ref_pos against yet, so
+       * needs_candidate_rebuild() must unconditionally return true.
+       */
+      bool m_candidates_built = false;
+      unsigned m_candidate_rebuild_count = 0;
   };
 }
