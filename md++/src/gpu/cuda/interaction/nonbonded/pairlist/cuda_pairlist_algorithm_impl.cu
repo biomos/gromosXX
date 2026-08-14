@@ -101,10 +101,12 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::prepare_cog(
 
     // Position freshness is needed every step regardless of cutoff mode --
     // reorder()/build_candidates()/classify_tiles() (chargegroup- or
-    // atomic-cutoff) all read conf.get_gpu_view()'s mirror on the next
+    // atomic-cutoff) all read the GPU position mirror on the next
     // rebuild, and atomic_cutoff mode has no other call site that
     // refreshes it (chargegroup-cutoff mode's box-wrap below needs it too).
-    conf.copy_to_gpu();
+    // PLAN.md §3.2: fetched from CudaManager's identity-keyed cache, not
+    // conf's own (now-removed) m_gpu member.
+    const gpu::Configuration::View conf_view = sim.cuda().configuration_view(conf);
 
     if (!sim.param().pairlist.atomic_cutoff){
         const size_t num_solute_cg = topo.num_solute_chargegroups();
@@ -112,25 +114,29 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::prepare_cog(
         m_cg_cog.resize(num_solute_cg);
         m_cg_cells.resize(num_cg);
         m_cg_sort_key.resize(num_cg);
-        SPLIT_BOUNDARY(_prepare_cog, conf, topo);
+        const gpu::Topology::View topo_view = sim.cuda().topology_view(topo);
+        SPLIT_BOUNDARY(_prepare_cog, conf, topo, topo_view, conf_view);
     }
 }
 
 template<math::boundary_enum B>
 void interaction::CUDA_Pairlist_Algorithm_Impl::_prepare_cog<B>(
                                     configuration::Configuration & conf,
-                                    topology::Topology & topo) {
+                                    topology::Topology & topo,
+                                    gpu::Topology::View topo_view,
+                                    gpu::Configuration::View conf_view) {
     DEBUG(10, "putting chargegroups into box");
 
     const unsigned num_cg = static_cast<unsigned>(topo.num_chargegroups());
     dim3 dimBlock(NUM_THREADS_PER_BLOCK);
     dim3 dimGrid((num_cg + NUM_THREADS_PER_BLOCK - 1) / NUM_THREADS_PER_BLOCK);
 
-    // conf.copy_to_gpu() already ran in prepare_cog(), the only caller.
+    // conf_view/topo_view were fetched (with the one real per-step
+    // resync) by prepare_cog(), the only caller.
     gpu::Periodicity<B> periodicity(conf.current().box);
     periodicity.set_cell_size(m_cutoff_long);
-    gpu::prepare_cog_kernel<<<dimGrid, dimBlock>>>(topo.get_gpu_view(),
-                                                    conf.get_gpu_view(),
+    gpu::prepare_cog_kernel<<<dimGrid, dimBlock>>>(topo_view,
+                                                    conf_view,
                                                     periodicity,
                                                     m_cg_cog.view(),
                                                     m_cg_cells.view(),
@@ -147,7 +153,16 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::reorder(
     const unsigned num_solvent_atoms = num_atoms - num_solute_atoms;
     const unsigned num_cg            = static_cast<unsigned>(topo.num_chargegroups());
 
-    const gpu::Topology::View topo_view = topo.get_gpu_view();
+    const gpu::Topology::View topo_view = sim.cuda().topology_view(topo);
+
+    // sync_pos_vel = false everywhere in this method: prepare_cog()
+    // already did the one real per-step resync (and, in chargegroup-
+    // cutoff mode, box-wrapped the GPU-mirrored positions in place) --
+    // re-syncing here would silently overwrite that wrap with the
+    // (unwrapped) CPU positions before reorder() ever reads them.
+    // Not const: ConfigurationView::current()/old() aren't const-qualified.
+    gpu::Configuration::View conf_view =
+        sim.cuda().configuration_view(conf, /*sync_pos_vel=*/false);
 
     m_atom_sort_key.resize(num_atoms);
     if (!sim.param().pairlist.atomic_cutoff) {
@@ -165,7 +180,7 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::reorder(
         // inherit from (prepare_cog() skips it entirely) -- compute each
         // atom's own Morton key directly (TILE_PAIRLIST_DESIGN.md §4.2/
         // step 7).
-        SPLIT_BOUNDARY(_atom_sort_key_atomic, conf, num_atoms);
+        SPLIT_BOUNDARY(_atom_sort_key_atomic, conf, num_atoms, conf_view);
     }
 
     m_solute_atom_order.resize(num_solute_atoms);
@@ -207,7 +222,7 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::reorder(
     // atomic-cutoff mode -- see _atom_sort_key_atomic's doc comment), not
     // a chargegroup cog -- m_cg_cog is reserved for classify_tiles()'s
     // chargegroup-cutoff distance test.
-    const math::CuVArray::View pos = conf.get_gpu_view().current().pos;
+    const math::CuVArray::View pos = conf_view.current().pos;
 
     dim3 dimBlock(NUM_THREADS_PER_BLOCK);
     if (num_solute_blocks > 0) {
@@ -227,7 +242,8 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::reorder(
 template<math::boundary_enum B>
 void interaction::CUDA_Pairlist_Algorithm_Impl::_atom_sort_key_atomic(
                 configuration::Configuration & conf,
-                unsigned num_atoms)
+                unsigned num_atoms,
+                gpu::Configuration::View conf_view)
 {
     gpu::Periodicity<B> periodicity(conf.current().box);
     // get_cell() requires set_cell_size() first (needs a real cutoff-sized
@@ -237,7 +253,7 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::_atom_sort_key_atomic(
     dim3 dimBlock(NUM_THREADS_PER_BLOCK);
     dim3 dimGrid((num_atoms + NUM_THREADS_PER_BLOCK - 1) / NUM_THREADS_PER_BLOCK);
     gpu::atom_cell_kernel<B><<<dimGrid, dimBlock>>>(
-        conf.get_gpu_view(), num_atoms, periodicity, m_atom_sort_key.view());
+        conf_view, num_atoms, periodicity, m_atom_sort_key.view());
 };
 
 void interaction::CUDA_Pairlist_Algorithm_Impl::build_candidates(
@@ -386,7 +402,10 @@ bool interaction::CUDA_Pairlist_Algorithm_Impl::needs_candidate_rebuild(
     if (skin == 0.0) return true;
 
     const unsigned num_atoms = static_cast<unsigned>(m_candidate_ref_pos.size());
-    const math::CuVArray::View current_pos = conf.get_gpu_view().current().pos;
+    // sync_pos_vel = false: prepare() already did this step's one real
+    // resync; called from update(), always after prepare().
+    const math::CuVArray::View current_pos =
+        sim.cuda().configuration_view(conf, /*sync_pos_vel=*/false).current().pos;
     const FPL_TYPE max_disp = gpu::launch_max_displacement(
         current_pos, m_candidate_ref_pos.view(), num_atoms,
         conf.boundary_type, conf.current().box, m_displacement_partial);
@@ -406,7 +425,8 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::rebuild_candidates(
     // don't mutate positions themselves, but this keeps the "as of last
     // rebuild" semantics unambiguous regardless).
     const unsigned num_atoms = static_cast<unsigned>(m_candidate_ref_pos.size());
-    const math::CuVArray::View current_pos = conf.get_gpu_view().current().pos;
+    const math::CuVArray::View current_pos =
+        sim.cuda().configuration_view(conf, /*sync_pos_vel=*/false).current().pos;
     for (unsigned i = 0; i < num_atoms; ++i) {
         m_candidate_ref_pos[i] = current_pos(i);
     }
@@ -453,8 +473,11 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::_classify_tiles(
     gpu::Periodicity<B> periodicity(conf.current().box);
     const FPL_TYPE cutoff_short2 = static_cast<FPL_TYPE>(m_cutoff_short_2);
     const FPL_TYPE cutoff_long2  = static_cast<FPL_TYPE>(m_cutoff_long_2);
-    const gpu::Topology::View topo_view = topo.get_gpu_view();
-    const math::CuVArray::View pos = conf.get_gpu_view().current().pos;
+    const gpu::Topology::View topo_view = sim.cuda().topology_view(topo);
+    // sync_pos_vel = false: prepare() already did this step's one real
+    // resync; called from update(), always after prepare().
+    const math::CuVArray::View pos =
+        sim.cuda().configuration_view(conf, /*sync_pos_vel=*/false).current().pos;
     const bool atomic_cutoff = sim.param().pairlist.atomic_cutoff;
 
     dim3 dimBlock2D(gpu::BLOCK_SIZE, gpu::BLOCK_SIZE);
@@ -588,7 +611,11 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::compute_forces_energies(
     m_e_lj[0]  = 0.0;
     m_e_crf[0] = 0.0;
 
-    const math::CuVArray::View pos = conf.get_gpu_view().current().pos;
+    // sync_pos_vel = false: prepare() already did this step's one real
+    // resync; called from calculate_interactions(), always after
+    // prepare().
+    const math::CuVArray::View pos =
+        sim.cuda().configuration_view(conf, /*sync_pos_vel=*/false).current().pos;
     const math::boundary_enum boundary = conf.boundary_type;
     const math::Box box = conf.current().box;
 

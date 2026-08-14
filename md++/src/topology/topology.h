@@ -35,10 +35,7 @@
 #include "exclusions.h"
 #include "../interaction/interaction_types.h"
 #include "../util/virtual_atom.h"
-
-#ifdef USE_CUDA
-#include "gpu/cuda/memory/topology_struct.h"
-#endif
+#include "../util/identity_token.h"
 
 namespace simulation
 {
@@ -76,6 +73,16 @@ namespace topology
      * Destructor
      */
     ~Topology();
+
+    /**
+     * Process-wide unique id, assigned fresh at construction (never
+     * copied from another Topology, even by the "copy constructor" --
+     * every Topology object is a distinct identity). Used by
+     * CudaManager's GPU-mirror cache (PLAN.md §3.2) to detect address
+     * reuse by an unrelated object as a cache miss rather than silently
+     * returning a stale mirror.
+     */
+    std::size_t id() const { return m_id; }
 
     /**
      * integer atom code accessor.
@@ -1635,20 +1642,17 @@ namespace topology
      * const accessor to QM LJ exceptions
      */
     const std::vector<lj_exception_struct> & qm_lj_exceptions() const { return m_qm_lj_exceptions;}
-    /**
-     * initialize the gpu-stored topology
-     */
-    // void init_gpu();
-
-#ifdef USE_CUDA
-    /**
-     * const accessor to GPU-stored topology
-     *  @param sync to GPU (default false)
-     */
-    const gpu::Topology::View get_gpu_view(bool sync = false) const;
-#endif
-
   private:
+    /**
+     * Process-wide unique id (see id() accessor above). Default member
+     * initializer, deliberately not touched by any constructor's
+     * initializer list -- every Topology, including the "copy
+     * constructor" (which multiplies/varies content, not identity),
+     * gets its own fresh token this way, never a copy of another
+     * Topology's.
+     */
+    std::size_t m_id = util::next_identity_token();
+
     /**
      * the number of atom types
      */
@@ -2178,13 +2182,6 @@ namespace topology
      * QMMM LJ exceptions
      */
     std::vector<lj_exception_struct> m_qm_lj_exceptions;
-
-#ifdef USE_CUDA
-    /**
-     * access to the GPU stored copy of the topology.
-     */
-    mutable std::unique_ptr<gpu::Topology> m_gpu;
-#endif
 
   }; // topology
 

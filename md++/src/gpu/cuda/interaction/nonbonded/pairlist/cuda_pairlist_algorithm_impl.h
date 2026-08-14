@@ -3,6 +3,8 @@
 #include "gpu/cuda/memory/precision.h"
 #include "gpu/cuda/memory/cuvector.h"
 #include "gpu/cuda/memory/pairlist/tile.h"
+#include "gpu/cuda/memory/topology_struct.h"
+#include "gpu/cuda/memory/configuration_struct.h"
 #include "gpu/cuda/interaction/nonbonded/cuda_lj_params.h"
 #include "gpu/cuda/interaction/nonbonded/cuda_nb_sim_params.h"
 #include "interaction/nonbonded/pairlist/pairlist.h"
@@ -39,11 +41,17 @@ namespace interaction {
                   simulation::Simulation & sim);
 
       /**
-       * put the chargegroups into the box
+       * put the chargegroups into the box. `topo_view`/`conf_view` are
+       * fetched by prepare_cog() via sim.cuda().topology_view()/
+       * configuration_view() (PLAN.md §3.2) -- passed in rather than
+       * fetched here since this template has no simulation::Simulation&
+       * of its own to call .cuda() on.
        */
       template<math::boundary_enum b>
       void _prepare_cog(configuration::Configuration & conf,
-                        topology::Topology & topo);
+                        topology::Topology & topo,
+                        gpu::Topology::View topo_view,
+                        gpu::Configuration::View conf_view);
 
       /**
        * Sort solute and solvent ATOMS (separately) by their owning
@@ -66,10 +74,14 @@ namespace interaction {
        * lookup only, TILE_PAIRLIST_DESIGN.md §4.2/step 7), not inherited
        * from a chargegroup. Called from reorder() instead of
        * atom_sort_key_kernel when sim.param().pairlist.atomic_cutoff.
+       * `conf_view` is fetched by reorder() via sim.cuda().
+       * configuration_view() (PLAN.md §3.2) and passed in, same reason
+       * as _prepare_cog() above.
        */
       template<math::boundary_enum b>
       void _atom_sort_key_atomic(configuration::Configuration & conf,
-                                  unsigned num_atoms);
+                                  unsigned num_atoms,
+                                  gpu::Configuration::View conf_view);
 
       /**
        * Block-pair candidate search (TILE_PAIRLIST_DESIGN.md §3 step 4):

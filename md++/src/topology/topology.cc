@@ -52,10 +52,6 @@ namespace simulation {
 #include "../simulation/parameter.h"
 #include <limits>
 
-#ifdef USE_CUDA
-#include "gpu/cuda/memory/topology_struct.h"
-#endif
-
 #undef MODULE
 #undef SUBMODULE
 #define MODULE topology
@@ -1586,23 +1582,6 @@ double topology::Topology::sum_squared_charges() const {
     sum += charge(i) * charge(i);
   return sum;
 }
-
-// void topology::Topology::init_gpu() {
-//   m_gpu = std::make_unique<gpu::Topology>(*this);
-// }
-
-
-#ifdef USE_CUDA
-const gpu::Topology::View topology::Topology::get_gpu_view(bool sync) const {
-  // we cache the gpu::Topology and only update on demand
-  if (!m_gpu) {
-    m_gpu = std::make_unique<gpu::Topology>(*this);
-  } else if (sync) {
-    m_gpu->update(*this);
-  }
-  return m_gpu->view();
-}
-#endif
 
 namespace topology {
 

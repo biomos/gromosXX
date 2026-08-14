@@ -34,10 +34,7 @@
 #include "kspace.h"
 #include "../util/umbrella.h"
 #include "../util/bs_umbrella.h"
-
-#ifdef USE_CUDA
-#include "gpu/cuda/memory/configuration_struct.h"
-#endif
+#include "../util/identity_token.h"
 
 // Additional Clipper Headers
 #ifdef HAVE_CLIPPER
@@ -78,6 +75,17 @@ namespace configuration {
      * assignment
      */
     Configuration & operator=(Configuration const & conf);
+
+    /**
+     * Process-wide unique id, assigned fresh at construction (the copy
+     * constructor gets its own token too -- a copy is a distinct
+     * object). Assignment (operator=) does NOT touch this: the target
+     * keeps its own identity, only its content changes. Used by
+     * CudaManager's GPU-mirror cache (PLAN.md §3.2) to detect address
+     * reuse by an unrelated object as a cache miss rather than silently
+     * returning a stale mirror.
+     */
+    std::size_t id() const { return m_id; }
 
     /**
      * @struct state_struct
@@ -926,37 +934,6 @@ namespace configuration {
      */
     bool check(topology::Topology const & topo, simulation::Simulation & sim);
 
-#ifdef USE_CUDA
-    /**
-     * get GPU configuration struct of pointers to device memory
-     */
-    void copy_to_gpu() {
-      m_gpu->copy_to_device(*this);
-    }
-
-    /** Copy positions and velocities to GPU (cheaper per-step update). */
-    void copy_pos_vel_to_gpu() {
-      m_gpu->copy_pos_vel_to_device(*this);
-    }
-
-    /** Copy GPU forces back to CPU (synchronises device first). */
-    void copy_forces_from_gpu() {
-      m_gpu->copy_forces_from_device(*this);
-    }
-
-    /** Raw device pointers of the current GPU state (for kernel launches). */
-    gpu::Configuration::RawPtrs get_gpu_raw_ptrs() {
-      return m_gpu->current_raw();
-    }
-
-    /**
-     * get GPU configuration struct of pointers to device memory
-     */
-    gpu::Configuration::View get_gpu_view() {
-      return m_gpu->view();
-    }
-#endif
-
     //////////////////////////////////////////////////////////////////////
     // data
     //////////////////////////////////////////////////////////////////////
@@ -990,13 +967,13 @@ namespace configuration {
      */
     lattice_sum_struct m_lattice_sum;
 
-#ifdef USE_CUDA
     /**
-     * access to the GPU stored copy
+     * Process-wide unique id (see id() accessor above). Default member
+     * initializer, deliberately not touched by any constructor's
+     * initializer list.
      */
-    std::unique_ptr<gpu::Configuration> m_gpu;
-#endif
-    
+    std::size_t m_id = util::next_identity_token();
+
     /**
      * check the positions for overlapping atoms.
      * @param topo topology

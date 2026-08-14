@@ -7,6 +7,18 @@
 
 #include "gpu/cuda/cuheader.h"
 
+#ifdef USE_CUDA
+#include "gpu/cuda/memory/topology_struct.h"
+#include "gpu/cuda/memory/configuration_struct.h"
+#endif
+
+namespace topology {
+    class Topology;
+}
+namespace configuration {
+    class Configuration;
+}
+
 #define CUDA_VARIABLE_DISABLED() disabled(__FILE__, __LINE__, __func__)
 namespace gpu {
     class CudaDeviceManager;
@@ -170,6 +182,40 @@ namespace gpu {
              */
             int select_best_device() const;
 
+#ifdef USE_CUDA
+            /**
+             * @brief Identity-keyed GPU mirror cache for topology::Topology
+             * (PLAN.md §3.2). Builds the mirror on first call for a given
+             * topo.id(); returns the cached one on subsequent calls unless
+             * `force_resync` is set -- topology data is static for a
+             * normal run, so this is rare (lambda/perturbation-topology
+             * updates are the exception). A cache entry that belonged to a
+             * different, no-longer-live Topology which happened to be
+             * destroyed and have its heap address reused is never a risk
+             * here: the cache is keyed on `id()`, a process-wide token
+             * that's never reused, not on the object's address -- an
+             * unrelated object at the same address has a different id and
+             * is correctly treated as a cache miss, not a stale hit.
+             */
+            gpu::Topology::View topology_view(const topology::Topology & topo,
+                                               bool force_resync = false);
+
+            /**
+             * @brief Identity-keyed GPU mirror cache for
+             * configuration::Configuration (PLAN.md §3.2). Builds the
+             * mirror (full sync -- pos/vel/force/constraint_force, current
+             * and old, plus box/tensors) on first call for a given
+             * conf.id(). Subsequent calls default to a cheap
+             * positions+velocities-only resync (`sync_pos_vel = true`)
+             * since those change every step, unlike the rest of the
+             * mirrored state; pass `false` if the caller already knows
+             * positions/velocities haven't changed since the last call
+             * (e.g. a second read within the same step).
+             */
+            gpu::Configuration::View configuration_view(configuration::Configuration & conf,
+                                                          bool sync_pos_vel = true);
+#endif
+
         private:
             /**
              * @brief Validate a device ID.
@@ -179,6 +225,19 @@ namespace gpu {
             void validate_device_id(int device_id) const;
 #ifdef USE_CUDA
             std::unordered_map<int, std::shared_ptr<CudaDeviceManager> > m_device_managers; ///< Managers for each active device.
+
+            std::unordered_map<std::size_t, std::unique_ptr<gpu::Topology> > m_topologies;
+            std::unordered_map<std::size_t, std::unique_ptr<gpu::Configuration> > m_configurations;
+
+            // 1-entry fast path for the overwhelmingly common single-
+            // topology/single-configuration case, avoiding a hashmap
+            // lookup on every call. 0 is never a real id (util::
+            // next_identity_token() starts at 1), so it's a safe "nothing
+            // cached yet" sentinel.
+            std::size_t m_last_topo_id = 0;
+            gpu::Topology * m_last_topo_gpu = nullptr;
+            std::size_t m_last_conf_id = 0;
+            gpu::Configuration * m_last_conf_gpu = nullptr;
 #endif
     };
 }

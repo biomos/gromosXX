@@ -89,9 +89,6 @@ configuration::Configuration::Configuration() {
   }
   
   special().shake_failure_occurred = false;
-#ifdef USE_CUDA
-  m_gpu = std::make_unique<gpu::Configuration>();
-#endif
 }
 
 /**
@@ -224,10 +221,6 @@ configuration::Configuration::Configuration
   special().force_groups = conf.special().force_groups;
   
   boundary_type = conf.boundary_type;
-#ifdef USE_CUDA
-  m_gpu = std::make_unique<gpu::Configuration>();
-  copy_to_gpu();
-#endif
 }
 
 /**
@@ -353,11 +346,6 @@ configuration::Configuration & configuration::Configuration::operator=
   special().force_groups = conf.special().force_groups;
   
   boundary_type = conf.boundary_type;
-
-#ifdef USE_CUDA
-  m_gpu = std::make_unique<gpu::Configuration>();
-  copy_to_gpu();
-#endif
 
   return *this;
 }

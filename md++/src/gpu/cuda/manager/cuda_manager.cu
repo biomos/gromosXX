@@ -1,4 +1,20 @@
 
+#include "stdheader.h"
+
+#include "algorithm/algorithm.h"
+
+// topology.h/configuration.h no longer pull in any gpu/cuda/... headers
+// (PLAN.md §3.2 removed that circular dependency), so including the full
+// definitions here -- needed for topo.id()/conf.id() and to pass topo/conf
+// to gpu::Topology/gpu::Configuration's own constructors/update methods --
+// is safe. Included before any gpu/cuda/... header (below): configuration.h
+// pulls in <complex> (via mesh.h -> math/fft.h), which nvcc mis-parses if
+// something in the gpu/cuda math headers (device sin/cos/sqrt overloads)
+// has already been seen first in this translation unit -- same ordering
+// every other .cu file in this tree that includes both already uses.
+#include "topology/topology.h"
+#include "configuration/configuration.h"
+
 #include <memory>
 #include <stdexcept>
 #include <sstream>
@@ -38,6 +54,49 @@ gpu::CudaManager& gpu::CudaManager::operator=(const gpu::CudaManager& other) {
         this->m_device_managers = other.m_device_managers;
     }
     return *this;
+}
+
+gpu::Topology::View gpu::CudaManager::topology_view(const topology::Topology & topo,
+                                                     bool force_resync) {
+    const std::size_t id = topo.id();
+
+    if (id == m_last_topo_id && m_last_topo_gpu) {
+        if (force_resync) m_last_topo_gpu->update(topo);
+        return m_last_topo_gpu->view();
+    }
+
+    auto it = m_topologies.find(id);
+    if (it == m_topologies.end()) {
+        it = m_topologies.emplace(id, std::make_unique<gpu::Topology>(topo)).first;
+    } else if (force_resync) {
+        it->second->update(topo);
+    }
+
+    m_last_topo_id  = id;
+    m_last_topo_gpu = it->second.get();
+    return it->second->view();
+}
+
+gpu::Configuration::View gpu::CudaManager::configuration_view(configuration::Configuration & conf,
+                                                                bool sync_pos_vel) {
+    const std::size_t id = conf.id();
+
+    if (id == m_last_conf_id && m_last_conf_gpu) {
+        if (sync_pos_vel) m_last_conf_gpu->copy_pos_vel_to_device(conf);
+        return m_last_conf_gpu->view();
+    }
+
+    auto it = m_configurations.find(id);
+    if (it == m_configurations.end()) {
+        it = m_configurations.emplace(id, std::make_unique<gpu::Configuration>()).first;
+        it->second->copy_to_device(conf); // full sync on first creation
+    } else if (sync_pos_vel) {
+        it->second->copy_pos_vel_to_device(conf);
+    }
+
+    m_last_conf_id  = id;
+    m_last_conf_gpu = it->second.get();
+    return it->second->view();
 }
 
 void gpu::CudaManager::init(const std::vector<int>& device_ids) {
