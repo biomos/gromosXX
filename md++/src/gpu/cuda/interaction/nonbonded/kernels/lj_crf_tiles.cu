@@ -56,23 +56,30 @@ __global__ void lj_crf_tile_kernel(
     gpu::Periodicity<BOUNDARY> periodicity,
     FPL3_TYPE* force,
     double* e_lj_total,
-    double* e_crf_total) {
+    double* e_crf_total,
+    double* virial_total) {
 
     // Dynamic shared memory, sized (by the launch below) to
-    // 2 * num_energy_groups^2 FPL_TYPEs: [0, G*G) is the LJ bucket
-    // matrix, [G*G, 2*G*G) is CRF's. G*G == 1 for the common
-    // single-energy-group case, degenerating to exactly the old
-    // single-scalar behavior.
+    // 2 * num_energy_groups^2 + 9 FPL_TYPEs: [0, G*G) is the LJ bucket
+    // matrix, [G*G, 2*G*G) is CRF's, [2*G*G, 2*G*G+9) is the (not
+    // energy-group-bucketed) 3x3 atomic virial. G*G == 1 for the common
+    // single-energy-group case, degenerating the energy part to exactly
+    // the old single-scalar behavior.
     extern __shared__ FPL_TYPE s_energy[];
     const unsigned num_groups  = nb.num_energy_groups;
     const unsigned num_buckets = num_groups * num_groups;
-    FPL_TYPE* s_lj  = s_energy;
-    FPL_TYPE* s_crf = s_energy + num_buckets;
+    FPL_TYPE* s_lj     = s_energy;
+    FPL_TYPE* s_crf    = s_energy + num_buckets;
+    FPL_TYPE* s_virial = s_energy + 2 * num_buckets;
 
     const unsigned tid = threadIdx.y * blockDim.x + threadIdx.x;
-    for (unsigned k = tid; k < num_buckets; k += blockDim.x * blockDim.y) {
+    const unsigned num_stride = blockDim.x * blockDim.y;
+    for (unsigned k = tid; k < num_buckets; k += num_stride) {
         s_lj[k]  = 0;
         s_crf[k] = 0;
+    }
+    for (unsigned k = tid; k < 9; k += num_stride) {
+        s_virial[k] = 0;
     }
     __syncthreads();
 
@@ -141,15 +148,31 @@ __global__ void lj_crf_tile_kernel(
         const unsigned bucket = eg_i * num_groups + eg_j;
         atomicAdd(&s_lj[bucket],  e_lj_local);
         atomicAdd(&s_crf[bucket], e_crf_local);
+
+        // Atomic virial: virial(b, a) += r(b) * force(a), exact CPU
+        // formula (nonbonded_innerloop.cc) -- not energy-group-bucketed,
+        // unrolled rather than indexed (FPL3_TYPE has no operator[]).
+        atomicAdd(&s_virial[0], rvec.x * fr.x); // (0,0)
+        atomicAdd(&s_virial[1], rvec.x * fr.y); // (0,1)
+        atomicAdd(&s_virial[2], rvec.x * fr.z); // (0,2)
+        atomicAdd(&s_virial[3], rvec.y * fr.x); // (1,0)
+        atomicAdd(&s_virial[4], rvec.y * fr.y); // (1,1)
+        atomicAdd(&s_virial[5], rvec.y * fr.z); // (1,2)
+        atomicAdd(&s_virial[6], rvec.z * fr.x); // (2,0)
+        atomicAdd(&s_virial[7], rvec.z * fr.y); // (2,1)
+        atomicAdd(&s_virial[8], rvec.z * fr.z); // (2,2)
     }
     __syncthreads();
 
     // One atomicAdd per bucket (not per pair) into the global totals --
     // degenerates to exactly one atomicAdd per tile, same as before, when
     // num_buckets == 1 (the common single-energy-group case).
-    for (unsigned k = tid; k < num_buckets; k += blockDim.x * blockDim.y) {
+    for (unsigned k = tid; k < num_buckets; k += num_stride) {
         atomicAdd(&e_lj_total[k],  static_cast<double>(s_lj[k]));
         atomicAdd(&e_crf_total[k], static_cast<double>(s_crf[k]));
+    }
+    for (unsigned k = tid; k < 9; k += num_stride) {
+        atomicAdd(&virial_total[k], static_cast<double>(s_virial[k]));
     }
 }
 
@@ -170,6 +193,7 @@ void gpu::launch_lj_crf_tiles(
     FPL3_TYPE* force,
     double* e_lj_total,
     double* e_crf_total,
+    double* virial_total,
     cudaStream_t stream) {
 
     const unsigned num_tiles = tiles.size();
@@ -177,26 +201,26 @@ void gpu::launch_lj_crf_tiles(
 
     const dim3 dimBlock(gpu::BLOCK_SIZE, gpu::BLOCK_SIZE);
     const size_t shmem_bytes =
-        2ull * nb.num_energy_groups * nb.num_energy_groups * sizeof(FPL_TYPE);
+        (2ull * nb.num_energy_groups * nb.num_energy_groups + 9ull) * sizeof(FPL_TYPE);
 
     switch (boundary) {
         case math::vacuum:
             gpu::lj_crf_tile_kernel<math::vacuum><<<num_tiles, dimBlock, shmem_bytes, stream>>>(
                 tiles, row_order, row_count, col_other_order, col_other_count,
                 pos, iac, charge, atom_energy_group, lj, nb, gpu::Periodicity<math::vacuum>(box),
-                force, e_lj_total, e_crf_total);
+                force, e_lj_total, e_crf_total, virial_total);
             break;
         case math::rectangular:
             gpu::lj_crf_tile_kernel<math::rectangular><<<num_tiles, dimBlock, shmem_bytes, stream>>>(
                 tiles, row_order, row_count, col_other_order, col_other_count,
                 pos, iac, charge, atom_energy_group, lj, nb, gpu::Periodicity<math::rectangular>(box),
-                force, e_lj_total, e_crf_total);
+                force, e_lj_total, e_crf_total, virial_total);
             break;
         case math::triclinic:
             gpu::lj_crf_tile_kernel<math::triclinic><<<num_tiles, dimBlock, shmem_bytes, stream>>>(
                 tiles, row_order, row_count, col_other_order, col_other_count,
                 pos, iac, charge, atom_energy_group, lj, nb, gpu::Periodicity<math::triclinic>(box),
-                force, e_lj_total, e_crf_total);
+                force, e_lj_total, e_crf_total, virial_total);
             break;
         default:
             // Unsupported boundary -- no kernel launch (matches

@@ -86,6 +86,7 @@ namespace {
     std::vector<math::Vec> force;
     double e_lj  = 0.0;
     double e_crf = 0.0;
+    double virial[9] = {0.0}; // flattened row-major 3x3, b*3+a
   };
 
   /**
@@ -138,10 +139,15 @@ namespace {
         const double q = topo.charge(i) * topo.charge(j);
         double f = 0.0, e_lj = 0.0, e_crf = 0.0;
         term.lj_crf_interaction(r, lj.c6, lj.c12, q, f, e_lj, e_crf);
-        ref.force[i] += f * r;
-        ref.force[j] -= f * r;
+        const math::Vec force = f * r;
+        ref.force[i] += force;
+        ref.force[j] -= force;
         ref.e_lj  += e_lj;
         ref.e_crf += e_crf;
+        // Exact CPU formula (nonbonded_innerloop.cc): virial(b,a) += r(b)*force(a).
+        for (unsigned b = 0; b < 3; ++b)
+          for (unsigned a = 0; a < 3; ++a)
+            ref.virial[b * 3 + a] += r(b) * force(a);
       }
     }
     return ref;
@@ -248,12 +254,15 @@ namespace {
     gpu::cuvector<double> e_crf_total;
     e_crf_total.resize(1);
     e_crf_total[0] = 0.0;
+    gpu::cuvector<double> virial_total;
+    virial_total.resize(9);
+    for (unsigned i = 0; i < 9; ++i) virial_total[i] = 0.0;
 
     gpu::launch_lj_crf_tiles(
         tiles.view(), order.data(), n, nullptr, 0u,
         pos.view(), iac.data(), charge.data(), atom_energy_group.data(),
         gpu_lj.view(), nb, force_boundary, s.conf.current().box,
-        gpu_force.data(), e_lj_total.data(), e_crf_total.data());
+        gpu_force.data(), e_lj_total.data(), e_crf_total.data(), virial_total.data());
     cudaDeviceSynchronize();
 
     int errors = 0;
@@ -280,6 +289,13 @@ namespace {
         std::cerr << label << ": force mismatch at atom " << i
                   << ": gpu=" << math::v2s(gpu_f)
                   << " cpu=" << math::v2s(ref.force[i]) << std::endl;
+        ++errors;
+      }
+    }
+    for (unsigned k = 0; k < 9; ++k) {
+      if (std::abs(virial_total[k] - ref.virial[k]) > tol * std::max(1.0, std::abs(ref.virial[k]))) {
+        std::cerr << label << ": virial mismatch at element " << k
+                  << ": gpu=" << virial_total[k] << " cpu=" << ref.virial[k] << std::endl;
         ++errors;
       }
     }

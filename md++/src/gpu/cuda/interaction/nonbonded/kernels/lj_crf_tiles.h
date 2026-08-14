@@ -97,10 +97,20 @@ namespace gpu {
    * degenerates to exactly one bucket, i.e. one `atomicAdd` per tile,
    * same cost as before.
    *
+   * `virial_total` accumulates the atomic virial the same way (shared-
+   * memory bucketed, one flush per tile), always exactly 9 elements
+   * (flattened row-major 3x3, `b*3+a`) regardless of energy-group count
+   * -- the CPU inner loop never buckets virial by energy group either.
+   * `virial_total[b*3+a] += r(b) * force(a)` per active pair, the exact
+   * `nonbonded_innerloop.cc` formula (`r` = `rvec` below, `force(a)` =
+   * `fr(a)`). Always accumulated, independent of whether a virial was
+   * actually requested -- matches CPU convention; the caller decides
+   * whether to use it.
+   *
    * Does not synchronize -- call `cudaDeviceSynchronize()` (or check a
-   * stream/event) before reading `force`/`e_lj_total`/`e_crf_total`, same
-   * convention as the pairlist kernels' launch sites
-   * (`cuda_pairlist_algorithm_impl.cu`).
+   * stream/event) before reading
+   * `force`/`e_lj_total`/`e_crf_total`/`virial_total`, same convention as
+   * the pairlist kernels' launch sites (`cuda_pairlist_algorithm_impl.cu`).
    */
   void launch_lj_crf_tiles(
       TileVecT<Interaction_Tile>::View tiles,
@@ -117,6 +127,7 @@ namespace gpu {
       FPL3_TYPE* force,
       double* e_lj_total,
       double* e_crf_total,
+      double* virial_total,
       cudaStream_t stream = nullptr);
 
 }

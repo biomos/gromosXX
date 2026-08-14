@@ -387,7 +387,7 @@ Before any force/energy number from this pairlist is trusted:
    passing within float precision (`tol = 1e-4`, appropriate for
    `FPL_TYPE = float` in the default mixed-precision build).
 
-9. **Done (v1 scope: no virial, no perturbation/EDS -- multi-energy-group
+9. **Done (v1 scope: no perturbation/EDS -- multi-energy-group and virial
    landed later, see below).**
    `PLAN.md` §10 step 9: `interaction::CUDA_Nonbonded_Interaction`
    (`src/interaction/nonbonded/interaction/cuda_nonbonded_interaction.
@@ -410,12 +410,9 @@ Before any force/energy number from this pairlist is trusted:
    front, not per-`Interaction`) the result into `conf.current().force`
    and `energies.lj_energy[0][0]`/`crf_energy[0][0]`.
 
-   v1 scope, hard-errored in `init()` rather than silently producing wrong
-   numbers (matching this document's established pattern for boundary/
-   atomic-cutoff scope): no virial (the tile kernel doesn't accumulate
-   `r ⊗ f`). (Originally also gated on exactly one energy group -- lifted
-   later, see the multi-energy-group entry after step 10 below.)
-   Also does not implement the CPU twin-range performance optimization of
+   (Originally also hard-errored on exactly one energy group and no
+   virial -- both lifted later, see the entries after step 10 below.)
+   Does not implement the CPU twin-range performance optimization of
    freezing long-range forces between pairlist rebuilds --
    `calculate_interactions()` fully reruns `prepare()`+`update()` (full
    candidate rebuild + reclassification) and recomputes *all* four tile
@@ -575,8 +572,9 @@ Before any force/energy number from this pairlist is trusted:
     is ever extended.).
 
 Step 11 (re-porting `Leap_Frog_*<gpuBackend>`) is done -- see below.
-Multi-energy-group support is also done -- see below. Virial support and
-perturbation are not started.
+Multi-energy-group and atomic-virial support are also done -- see below.
+Perturbation/EDS is not started (a substantially larger piece of work: a
+whole second pairlist/force code path, not a reduction shape change).
 
 ### Multi-energy-group support for `CUDA_Nonbonded_Interaction`
 
@@ -630,8 +628,9 @@ matrix. Closing that gap:
   calculate_interactions()`) -- all three signatures simplified
   accordingly.
 - The `init()` hard-error gate (`topo.energy_groups().size() != 1`) is
-  gone; the virial and perturbation/EDS gates immediately after it are
-  untouched.
+  gone; the virial gate (lifted separately, see below) and
+  perturbation/EDS gate immediately after it were untouched at the time
+  this landed.
 
 Correctness test: `cuda_nonbonded_interaction.t.cc` no longer forces a
 single energy group -- it now runs against aladip's real, unmodified
@@ -640,6 +639,59 @@ resulting matrix against the direct CPU (`Standard_Pairlist_Algorithm` +
 `Nonbonded_Term::lj_crf_interaction`) reference, bucketed the same way.
 Passes exactly, vacuum + rectangular. `lj_crf_tile_kernel.t.cc` (kernel-
 only) updated for the new signature, kept at 1 group (unchanged intent).
+
+### Atomic virial support for `CUDA_Nonbonded_Interaction`
+
+Lifts the `sim.param().pcouple.virial != math::no_virial` hard-error gate
+in `init()`. Once it's gone, `aladip_cuda`'s "molecular virial (finite
+diff)" check moves from the virial error message to the perturbation
+one -- confirming this was genuinely the last thing standing between that
+check and perturbation's own, separate, not-yet-started gate.
+
+The CPU reference (`nonbonded_innerloop.cc`) accumulates the *atomic*
+virial unconditionally, every pair, regardless of whether a virial was
+even requested: `storage.virial_tensor(b, a) += r(b) * force(a)` for
+`a, b` in `0..2`, where `r` is the same periodicity-wrapped pair distance
+already computed for the LJ/CRF math and `force(a) = f * r(a)`. Unlike
+energy, this is *not* bucketed by energy group -- one flat 3x3 tensor
+regardless of group count. Molecular virial (what the failing check
+actually needs) is a *separate* correction applied afterward by
+`Molecular_Virial_Interaction` (`create_forcefield.cc`, pushed into the
+forcefield sequence whenever `pcouple.virial == math::molecular_virial`,
+completely independent of which `Nonbonded_Interaction`/accelerator filled
+in the atomic virial) -- so the only thing `CUDA_Nonbonded_Interaction`
+itself needs to get right is the atomic sum; the molecular correction
+applies to it transparently with zero CUDA-specific code.
+
+Implementation, following exactly the shape of the energy-group work
+above but simpler (no per-group bucketing -- always exactly 9 elements):
+- `CUDA_Pairlist_Algorithm_Impl` gained `m_virial`/`m_virial_long`
+  (9-element `double` accumulators, mirroring `m_e_lj`/`m_e_lj_long`'s
+  short/long-range-frozen split exactly), sized once in `init()`.
+- `lj_crf_tile_kernel` (`lj_crf_tiles.cu`) already computes `rvec` (the
+  pair distance) and `fr` (the force vector) per active pair for the
+  existing LJ/CRF math -- the virial add-on is 9 more shared-memory
+  `atomicAdd`s per pair (`rvec.x*fr.x`, `rvec.x*fr.y`, ... unrolled rather
+  than indexed, since `FPL3_TYPE` has no `operator[]`) into a fixed
+  9-element region of the same dynamic shared-memory block already used
+  for energy bucketing, then one global `atomicAdd` per element (9 per
+  tile, not per pair) at the end -- same bucket-then-flush pattern, just
+  a fixed size instead of `num_groups^2`.
+- `compute_forces_energies()` adds `m_virial + m_virial_long` directly
+  into `conf.current().virial_tensor(b, a)` (`+=`, matching
+  `Forcefield::calculate_interactions()` zeroing it once up front, same
+  as force/energy) at the end, right next to the energy-matrix
+  accumulation loop.
+- The `pcouple.virial != math::no_virial` gate in `init()` is gone.
+
+Correctness tests: `lj_crf_tile_kernel.t.cc` (kernel-only) gained a
+9-element virial check against a direct CPU reference built the exact
+same way the existing force/energy reference already was in that file --
+passes exactly, vacuum + rectangular. End-to-end: `aladip_cuda`'s
+"molecular virial (finite diff)" check no longer fails on the virial gate
+(confirmed via the actual error message, which is now the perturbation
+one instead) -- full molecular-virial finite-difference validation
+against a real, non-trivial topology, not just a hand-built kernel test.
 
 ### Step 11: re-porting `Leap_Frog_*<gpuBackend>` (PLAN.md §10 step 11)
 

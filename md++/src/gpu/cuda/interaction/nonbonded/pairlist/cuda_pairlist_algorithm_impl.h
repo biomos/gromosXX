@@ -201,15 +201,19 @@ namespace interaction {
        * computed and are added into every call's total regardless,
        * frozen in between. Adds (+=, not overwrites --
        * Forcefield::calculate_interactions zeroes conf.current().force/
-       * energies once before every Interaction in the sequence runs) the
-       * combined short+long result into conf.current().force and directly
-       * into conf.current().energies.lj_energy/crf_energy's per-[gi][gj]
-       * matrix -- same accumulation style as nonbonded_innerloop.cc's CPU
-       * inner loop, no scalar out-params. Must be called after
-       * classify_tiles(); m_iac/m_charge/m_atom_energy_group (built once
-       * in init(), topology is static for a normal run) and
-       * m_force/m_e_lj/m_e_crf/m_longrange_force/m_e_lj_long/
-       * m_e_crf_long (sized once in init()) back this.
+       * energies/virial_tensor once before every Interaction in the
+       * sequence runs) the combined short+long result into
+       * conf.current().force, conf.current().energies.lj_energy/
+       * crf_energy's per-[gi][gj] matrix, and conf.current().virial_tensor
+       * (atomic virial -- any molecular-virial correction is
+       * Molecular_Virial_Interaction's job, generic across accelerators,
+       * not this method's) -- same accumulation style as
+       * nonbonded_innerloop.cc's CPU inner loop, no scalar out-params.
+       * Must be called after classify_tiles();
+       * m_iac/m_charge/m_atom_energy_group (built once in init(),
+       * topology is static for a normal run) and
+       * m_force/m_e_lj/m_e_crf/m_virial/m_longrange_force/m_e_lj_long/
+       * m_e_crf_long/m_virial_long (sized once in init()) back this.
        */
       void compute_forces_energies(configuration::Configuration & conf,
                                     topology::Topology & topo,
@@ -316,22 +320,35 @@ namespace interaction {
       gpu::cuvector<FPL3_TYPE> m_force;
       gpu::cuvector<double> m_e_lj;
       gpu::cuvector<double> m_e_crf;
+      /**
+       * Atomic virial tensor accumulator, flattened row-major 3x3
+       * (index b*3+a matches math::Matrix::operator()(b,a), i.e.
+       * conf.current().virial_tensor(b,a) += r(b)*force(a) -- the exact
+       * CPU formula, nonbonded_innerloop.cc). Not bucketed by energy
+       * group (the CPU inner loop never buckets virial that way either).
+       * Always accumulated regardless of sim.param().pcouple.virial,
+       * matching CPU convention -- cheap, and whether it's *used*
+       * downstream is Forcefield/Molecular_Virial_Interaction's decision,
+       * not this kernel's. Sized once in init() (fixed 9 elements).
+       */
+      gpu::cuvector<double> m_virial;
 
       /**
-       * Long-range (solute_long + solvent_long) per-atom force and
-       * per-energy-group-pair energy, frozen between classification/
-       * rebuild steps -- mirrors nonbonded_set.cc's m_longrange_storage
-       * exactly (real GROMOS twin-range: the long-range force *value*,
-       * not just the pair list, is held static between rebuilds, only
-       * recomputed on a classification step). Sized once in init(); only
-       * ever written inside compute_forces_energies() when its
-       * recompute_long parameter is true -- never zeroed/touched
-       * otherwise, so a non-rebuild step's call reuses whatever was last
-       * computed here.
+       * Long-range (solute_long + solvent_long) per-atom force,
+       * per-energy-group-pair energy, and virial, frozen between
+       * classification/rebuild steps -- mirrors nonbonded_set.cc's
+       * m_longrange_storage exactly (real GROMOS twin-range: the
+       * long-range force *value*, not just the pair list, is held static
+       * between rebuilds, only recomputed on a classification step).
+       * Sized once in init(); only ever written inside
+       * compute_forces_energies() when its recompute_long parameter is
+       * true -- never zeroed/touched otherwise, so a non-rebuild step's
+       * call reuses whatever was last computed here.
        */
       gpu::cuvector<FPL3_TYPE> m_longrange_force;
       gpu::cuvector<double> m_e_lj_long;
       gpu::cuvector<double> m_e_crf_long;
+      gpu::cuvector<double> m_virial_long;
 
       /**
        * Position snapshot at the time of the most recent CANDIDATE

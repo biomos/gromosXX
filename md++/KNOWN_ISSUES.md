@@ -1,43 +1,51 @@
 # Known issues
 
-## `aladip_cuda` fails (by design, not a bug): virial isn't supported yet
+## `aladip_cuda` fails (by design, not a bug): perturbation isn't supported yet
 
 - **Test affected:** `aladip_cuda` (`cuda-on` only), specifically the
-  "molecular virial (finite diff)" check within it (which deliberately
-  turns on virial computation to test it) -- all other checks in that test
-  pass. All other regression tests (`aladip`, `aladip_unperturbed`,
-  `aladip_special`, `aladip_atomic`, `c16_cg`, `lambdas`, both presets)
-  pass, as do the CUDA-specific `pairlist_cuda_equivalence`,
-  `lj_crf_tile_kernel`, `cuda_nonbonded_interaction`, `cuda_skin_drift`, and
-  `leap_frog_gpu` tests.
+  "molecular virial (finite diff)" check within it -- all other checks in
+  that test pass. All other regression tests (`aladip`,
+  `aladip_unperturbed`, `aladip_special`, `aladip_atomic`, `c16_cg`,
+  `lambdas`, both presets) pass, as do the CUDA-specific
+  `pairlist_cuda_equivalence`, `lj_crf_tile_kernel`,
+  `cuda_nonbonded_interaction`, `cuda_skin_drift`, and `leap_frog_gpu`
+  tests.
 - **Why:** `CUDA_Nonbonded_Interaction::init()` hard-errors when
-  `sim.param().pcouple.virial != math::no_virial`
-  (`TILE_PAIRLIST_DESIGN.md` §8/§9's v1 scope) -- the tile kernel doesn't
-  accumulate `r ⊗ f` at all yet. `io::messages.add(..., io::message::error)`,
-  so the run fails loudly with a clear message rather than quietly
-  computing a wrong (zero) virial.
-- **Multi-energy-group support landed** (previously the blocker here,
-  hit before virial's gate was even reached since the energy-group check
-  ran first): `CUDA_Pairlist_Algorithm_Impl::compute_forces_energies()`
-  now writes directly into `configuration::Energy::lj_energy`/
-  `crf_energy`'s real `[gi][gj]` matrix -- the tile kernel
-  (`lj_crf_tiles.cu`) buckets its reduction by energy-group pair via a new
-  per-atom `atom_energy_group` array and dynamic shared-memory atomics
-  (degenerating to the old single-atomicAdd-per-tile cost when there's
-  only one group). Verified against aladip's real, unmodified 2-energy-
-  group topology (no synthetic override) by `cuda_nonbonded_interaction`
-  comparing every `[gi][gj]` entry against a direct CPU
-  (`Standard_Pairlist_Algorithm` + `Nonbonded_Term::lj_crf_interaction`)
-  reference, vacuum + rectangular.
-- Perturbation is a separate, still-real gap
-  (`CUDA_Pairlist_Algorithm::update_perturbed()` still errors and does
-  nothing; `CUDA_Nonbonded_Interaction` never builds a
-  `Perturbed_Nonbonded_Set`), but it doesn't currently block
-  `aladip_cuda`'s ctest run at all -- confirmed by re-running it after the
-  multi-energy-group fix: the only error message observed is the virial
-  one above, nothing perturbation-related. Worth re-checking if
-  `aladip_cuda.t.cc`/`aladip_cuda.in` ever change to exercise a code path
-  that does reach `update_perturbed()`.
+  `sim.param().perturbation.perturbation || sim.param().eds.eds` --
+  this class never builds a `Perturbed_Nonbonded_Set` (or any
+  `Nonbonded_Set` at all), and `CUDA_Pairlist_Algorithm::
+  update_perturbed()` still errors and does nothing (no perturbed-
+  pairlist support at all yet). `io::messages.add(..., io::message::
+  error)`, so the run fails loudly with a clear message rather than
+  quietly computing wrong or crashing. Confirmed by the actual error text
+  observed running `aladip_cuda`: `"CUDA_Nonbonded_Interaction does not
+  support perturbation or EDS yet"`.
+- **Multi-energy-group and virial support both landed** (previously the
+  blockers here, hit in that order before perturbation's gate was ever
+  reached -- energy groups first, then virial, each unmasking the next):
+  - `CUDA_Pairlist_Algorithm_Impl::compute_forces_energies()` writes
+    directly into `configuration::Energy::lj_energy`/`crf_energy`'s real
+    `[gi][gj]` matrix -- the tile kernel (`lj_crf_tiles.cu`) buckets its
+    energy reduction by energy-group pair via a per-atom
+    `atom_energy_group` array and dynamic shared-memory atomics
+    (degenerating to the old single-atomicAdd-per-tile cost when there's
+    only one group). Verified against aladip's real, unmodified
+    2-energy-group topology (no synthetic override) by
+    `cuda_nonbonded_interaction`, every `[gi][gj]` entry against a direct
+    CPU (`Standard_Pairlist_Algorithm` + `Nonbonded_Term::
+    lj_crf_interaction`) reference, vacuum + rectangular.
+  - The same method also fills `conf.current().virial_tensor` with the
+    atomic virial (`virial(b,a) += r(b)*force(a)`, exact CPU formula,
+    not energy-group-bucketed -- a fixed 9-element shared-memory
+    accumulator in the tile kernel, same bucket-then-flush pattern as the
+    energy reduction). `Molecular_Virial_Interaction`
+    (`create_forcefield.cc`) applies its center-of-mass correction to
+    this generically, regardless of accelerator, with no CUDA-specific
+    code needed for that part. Verified at the kernel level
+    (`lj_crf_tile_kernel.t.cc`, all 9 tensor elements against a direct
+    CPU reference, vacuum + rectangular) and end-to-end (this is what
+    unmasked perturbation's gate above -- the virial-specific error
+    message is gone, replaced by the perturbation one).
 - **Found and fixed along the way, not just a design gap:**
   `check_forcefield.cc`'s finite-difference hessian check calls
   `Nonbonded_Interaction::calculate_interaction()` (singular) on every
@@ -56,20 +64,23 @@
   `calculate_interactions()`/`calculate_interaction()` from being called
   afterward on `CUDA_Pairlist_Algorithm_Impl` state (`m_iac`/`m_charge`/
   `m_force`/etc.) that `init()` never allocated.
-- **Not fixed here:** virial support (the tile kernel needs to accumulate
-  `r ⊗ f` per pair and reduce it, same shape of problem as the energy
-  bucketing above but for a 3x3 tensor instead of a scalar) and real
-  perturbed-pairlist support (see above). Until either lands, `aladip_cuda`
-  is expected to fail. Don't try to make it pass by loosening the virial
-  hard-error -- that would silently reintroduce exactly the "quiet fake
-  result" failure mode `PAIRLIST_PLAN.md` §5(A) was written to avoid.
-- Non-perturbed CUDA runs, with any number of energy groups, work
-  end-to-end now (`TILE_PAIRLIST_DESIGN.md` §8/§9): real candidate-build +
-  classification (steps 3-7, both chargegroup- and atomic-cutoff) feeding
-  a real LJ + reaction-field force/energy kernel with per-energy-group-pair
-  bucketing (step 8), wired into a real `CUDA_Nonbonded_Interaction` that
-  `create_nonbonded.cc` actually selects for `accelerator = cuda` (step 9,
-  replacing the old always-CPU `Default_Nonbonded_Interaction` pairing).
+- **Not fixed here:** real perturbed-pairlist support requires
+  `CUDA_Pairlist_Algorithm::update_perturbed()` (not started) and a
+  perturbation-aware force path in `CUDA_Nonbonded_Interaction` (also not
+  started) -- a substantially larger piece of work than energy groups or
+  virial (a whole second pairlist/force code path, not just a reduction
+  shape change). Until it lands, `aladip_cuda` is expected to fail. Don't
+  try to make it pass by loosening the perturbation hard-error -- that
+  would silently reintroduce exactly the "quiet fake result" failure mode
+  `PAIRLIST_PLAN.md` §5(A) was written to avoid.
+- Non-perturbed CUDA runs, with any number of energy groups and any
+  virial setting, work end-to-end now (`TILE_PAIRLIST_DESIGN.md` §8/§9):
+  real candidate-build + classification (steps 3-7, both chargegroup- and
+  atomic-cutoff) feeding a real LJ + reaction-field force/energy/virial
+  kernel with per-energy-group-pair bucketing (step 8), wired into a real
+  `CUDA_Nonbonded_Interaction` that `create_nonbonded.cc` actually selects
+  for `accelerator = cuda` (step 9, replacing the old always-CPU
+  `Default_Nonbonded_Interaction` pairing).
 
 ## Latent bug: CUDA context corruption after runtime `atomic_cutoff` toggle (not exercised by the current test suite)
 

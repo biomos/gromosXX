@@ -30,12 +30,15 @@
  * crf_energy's per-energy-group-pair matrices are filled directly by
  * CUDA_Pairlist_Algorithm_Impl::compute_forces_energies() -- the tile
  * kernel buckets its reduction by [eg_i][eg_j] via a per-atom energy-group
- * index array, see lj_crf_tiles.cu). Remaining v1 scope, hard-errored in
- * init() rather than silently producing wrong numbers: no virial
- * (sim.param().pcouple.virial must be math::no_virial; the tile kernel
- * doesn't accumulate r (x) f at all yet) and no perturbation/EDS. Both
- * restrictions inherit from CUDA_Pairlist_Algorithm's own v1 scope
- * (vacuum/rectangular boundary only).
+ * index array, see lj_crf_tiles.cu). The atomic virial is also computed
+ * (same method, exact CPU formula virial(b,a) += r(b)*force(a), not
+ * energy-group-bucketed) -- Molecular_Virial_Interaction's correction
+ * (create_forcefield.cc, generic across accelerators) applies to it
+ * transparently whenever math::molecular_virial is requested. Remaining
+ * v1 scope, hard-errored in init() rather than silently producing wrong
+ * numbers: no perturbation/EDS. This restriction inherits from
+ * CUDA_Pairlist_Algorithm's own v1 scope (vacuum/rectangular boundary
+ * only).
  *
  * Real GROMOS twin-range cadence, matching Nonbonded_Set::calculate_
  * interactions exactly (src/interaction/nonbonded/interaction/

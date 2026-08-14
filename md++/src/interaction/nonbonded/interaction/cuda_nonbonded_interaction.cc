@@ -69,16 +69,6 @@ int interaction::CUDA_Nonbonded_Interaction::init(
     return 1;
   }
 
-  // v1 scope: no virial -- the tile kernel doesn't accumulate r (x) f.
-  if (sim.param().pcouple.virial != math::no_virial) {
-    io::messages.add(
-      "CUDA_Nonbonded_Interaction does not compute a virial yet "
-      "(TILE_PAIRLIST_DESIGN.md §8/§9); set PCOUPLE/VIRIAL to 0 "
-      "(no virial) under accelerator = cuda.",
-      "CUDA_Nonbonded_Interaction", io::message::error);
-    return 1;
-  }
-
   // v1 scope: no perturbation/EDS -- this class never builds a
   // Perturbed_Nonbonded_Set (or any Nonbonded_Set at all) and always
   // calls CUDA_Pairlist_Algorithm::update(), never update_perturbed().

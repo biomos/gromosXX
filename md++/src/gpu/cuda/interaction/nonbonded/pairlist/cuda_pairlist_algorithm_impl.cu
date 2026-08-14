@@ -69,10 +69,12 @@ int interaction::CUDA_Pairlist_Algorithm_Impl::init(topology::Topology &topo,
     m_force.resize(num_atoms);
     m_e_lj.resize(num_buckets);
     m_e_crf.resize(num_buckets);
+    m_virial.resize(9);
 
     m_longrange_force.resize(num_atoms);
     m_e_lj_long.resize(num_buckets);
     m_e_crf_long.resize(num_buckets);
+    m_virial_long.resize(9);
     // Zeroed explicitly (not left as whatever cudaMallocManaged handed
     // back) since these are read every single call, but only written on
     // a recompute_long call -- the very first call, before any
@@ -80,6 +82,7 @@ int interaction::CUDA_Pairlist_Algorithm_Impl::init(topology::Topology &topo,
     cudaMemset(m_longrange_force.data(), 0, sizeof(FPL3_TYPE) * num_atoms);
     cudaMemset(m_e_lj_long.data(),  0, sizeof(double) * num_buckets);
     cudaMemset(m_e_crf_long.data(), 0, sizeof(double) * num_buckets);
+    cudaMemset(m_virial_long.data(), 0, sizeof(double) * 9);
 
     m_candidate_ref_pos.resize(num_atoms);
     m_candidates_built = false;
@@ -614,6 +617,7 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::compute_forces_energies(
     cudaMemset(m_force.data(), 0, sizeof(FPL3_TYPE) * num_atoms);
     cudaMemset(m_e_lj.data(),  0, sizeof(double) * num_buckets);
     cudaMemset(m_e_crf.data(), 0, sizeof(double) * num_buckets);
+    cudaMemset(m_virial.data(), 0, sizeof(double) * 9);
 
     // sync_pos_vel = false: prepare() already did this step's one real
     // resync; called from calculate_interactions(), always after
@@ -636,13 +640,13 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::compute_forces_energies(
         m_tiles.solute_short.view(), m_solute_atom_order.data(), num_solute_atoms,
         m_solvent_atom_order.data(), num_solvent_atoms,
         pos, m_iac.data(), m_charge.data(), m_atom_energy_group.data(), lj, nb, boundary, box,
-        m_force.data(), m_e_lj.data(), m_e_crf.data());
+        m_force.data(), m_e_lj.data(), m_e_crf.data(), m_virial.data());
 
     gpu::launch_lj_crf_tiles(
         m_tiles.solvent_short.view(), m_solvent_atom_order.data(), num_solvent_atoms,
         nullptr, 0u,
         pos, m_iac.data(), m_charge.data(), m_atom_energy_group.data(), lj, nb, boundary, box,
-        m_force.data(), m_e_lj.data(), m_e_crf.data());
+        m_force.data(), m_e_lj.data(), m_e_crf.data(), m_virial.data());
 
     // Long-range: only recomputed on a classification/rebuild step
     // (recompute_long == true) -- otherwise m_longrange_force/
@@ -655,18 +659,19 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::compute_forces_energies(
         cudaMemset(m_longrange_force.data(), 0, sizeof(FPL3_TYPE) * num_atoms);
         cudaMemset(m_e_lj_long.data(),  0, sizeof(double) * num_buckets);
         cudaMemset(m_e_crf_long.data(), 0, sizeof(double) * num_buckets);
+        cudaMemset(m_virial_long.data(), 0, sizeof(double) * 9);
 
         gpu::launch_lj_crf_tiles(
             m_tiles.solute_long.view(), m_solute_atom_order.data(), num_solute_atoms,
             m_solvent_atom_order.data(), num_solvent_atoms,
             pos, m_iac.data(), m_charge.data(), m_atom_energy_group.data(), lj, nb, boundary, box,
-            m_longrange_force.data(), m_e_lj_long.data(), m_e_crf_long.data());
+            m_longrange_force.data(), m_e_lj_long.data(), m_e_crf_long.data(), m_virial_long.data());
 
         gpu::launch_lj_crf_tiles(
             m_tiles.solvent_long.view(), m_solvent_atom_order.data(), num_solvent_atoms,
             nullptr, 0u,
             pos, m_iac.data(), m_charge.data(), m_atom_energy_group.data(), lj, nb, boundary, box,
-            m_longrange_force.data(), m_e_lj_long.data(), m_e_crf_long.data());
+            m_longrange_force.data(), m_e_lj_long.data(), m_e_crf_long.data(), m_virial_long.data());
     }
 
     cudaDeviceSynchronize();
@@ -690,6 +695,18 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::compute_forces_energies(
             const unsigned k = gi * m_num_energy_groups + gj;
             conf.current().energies.lj_energy[gi][gj]  += m_e_lj[k]  + m_e_lj_long[k];
             conf.current().energies.crf_energy[gi][gj] += m_e_crf[k] + m_e_crf_long[k];
+        }
+    }
+
+    // Atomic virial, exact CPU formula (nonbonded_innerloop.cc):
+    // virial_tensor(b, a) += r(b) * force(a). Not energy-group-bucketed.
+    // Whether this is *used* downstream (plain atomic virial, or further
+    // corrected to molecular virial by Molecular_Virial_Interaction,
+    // generic across accelerators) is entirely Forcefield's decision.
+    for (unsigned b = 0; b < 3; ++b) {
+        for (unsigned a = 0; a < 3; ++a) {
+            const unsigned k = b * 3 + a;
+            conf.current().virial_tensor(b, a) += m_virial[k] + m_virial_long[k];
         }
     }
 }
