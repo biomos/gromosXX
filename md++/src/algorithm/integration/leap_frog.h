@@ -50,15 +50,8 @@ class Leap_Frog_Velocity : public Algorithm, private AlgorithmB<Backend>
 public:
     template <typename B>
     static constexpr bool is_supported_backend =
-        std::is_same_v<B, util::cpuBackend>;
-    // TODO(cleanup): gpuBackend disabled for now -- integration/leap_frog_gpu.cu
-    // exists but is not wired into any CMakeLists.txt and calls GPU-mirror APIs
-    // (conf.m_gpu->old_raw(), conf.copy_pos_vel_to_gpu()) that don't fully exist
-    // (gpu::Configuration has no old_raw()) and are being removed anyway per
-    // PLAN.md §3.2. Claiming gpuBackend support here without a linkable
-    // definition breaks the cuda-on link. Re-enable once PLAN.md §10 roadmap
-    // step 11 re-ports leap_frog_gpu.cu against sim.cuda().configuration_view().
-    // ||  std::is_same_v<B, util::gpuBackend>;
+        std::is_same_v<B, util::cpuBackend> ||
+        std::is_same_v<B, util::gpuBackend>;
 
     Leap_Frog_Velocity() : Algorithm("Leap_Frog_Velocity") {}
     virtual ~Leap_Frog_Velocity() {}
@@ -95,9 +88,8 @@ class Leap_Frog_Position : public Algorithm, private AlgorithmB<Backend>
 public:
     template <typename B>
     static constexpr bool is_supported_backend =
-        std::is_same_v<B, util::cpuBackend>;
-    // TODO(cleanup): see Leap_Frog_Velocity above -- same reason, same plan.
-    // ||  std::is_same_v<B, util::gpuBackend>;
+        std::is_same_v<B, util::cpuBackend> ||
+        std::is_same_v<B, util::gpuBackend>;
 
     Leap_Frog_Position() : Algorithm("Leap_Frog_Position") {}
     virtual ~Leap_Frog_Position() {}

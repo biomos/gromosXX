@@ -217,6 +217,18 @@ namespace gpu {
         void copy_forces_from_device(configuration::Configuration& conf);
 
         /**
+         * @brief Copy GPU positions and velocities (current only -- the
+         * "old" state is never GPU-computed, no need to fetch it) back
+         * to the CPU configuration. Calls cudaDeviceSynchronize()
+         * internally. Symmetric counterpart to copy_pos_vel_to_device(),
+         * for GPU-native integrators (e.g. Leap_Frog_*<gpuBackend>) that
+         * compute new positions/velocities on the GPU mirror directly
+         * and need to publish the result back to the CPU-authoritative
+         * state once, rather than round-tripping after every kernel.
+         */
+        void copy_pos_vel_from_device(configuration::Configuration& conf);
+
+        /**
          * @brief Allow to exchange states efficiently
          * Views are exchanged implicitly as well
          * 

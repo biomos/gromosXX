@@ -54,6 +54,7 @@ set(ALGO_CC
 if (USE_CUDA)
     list(APPEND ALGO_CC
     constraints/remove_com_motion_gpu.cc
+    integration/leap_frog_gpu.cc
     )
 endif()
 

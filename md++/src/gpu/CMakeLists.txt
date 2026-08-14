@@ -36,6 +36,7 @@ set(GPU_HEADERS
     cuda/interaction/nonbonded/cuda_nb_sim_params.h
     cuda/interaction/nonbonded/kernels/lj_crf_tiles.h
     cuda/interaction/nonbonded/kernels/displacement.h
+    cuda/algorithm/integration/leap_frog_kernels.h
 )
 
 if(USE_CUDA)
@@ -60,6 +61,7 @@ if(USE_CUDA)
         cuda/interaction/nonbonded/cuda_lj_params.cu
         cuda/interaction/nonbonded/kernels/lj_crf_tiles.cu
         cuda/interaction/nonbonded/kernels/displacement.cu
+        cuda/algorithm/integration/leap_frog_kernels.cu
     )
 
     add_library(grocuda STATIC ${GPU_SOURCES})

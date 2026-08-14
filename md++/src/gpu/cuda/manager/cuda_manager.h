@@ -213,7 +213,19 @@ namespace gpu {
              * (e.g. a second read within the same step).
              */
             gpu::Configuration::View configuration_view(configuration::Configuration & conf,
-                                                          bool sync_pos_vel = true);
+                                                          bool sync_pos_vel = true,
+                                                          bool full_resync = false);
+
+            /**
+             * @brief Publish the GPU mirror's current positions/velocities
+             * back to the CPU-authoritative configuration::Configuration.
+             * For GPU-native integrators (Leap_Frog_*<gpuBackend>) that
+             * leave their result resident on the GPU mirror across
+             * multiple algorithms and only need one sync-back at the very
+             * end, rather than after every kernel. No-op if `conf` has
+             * never been mirrored (nothing to publish).
+             */
+            void sync_configuration_from_device(configuration::Configuration & conf);
 #endif
 
         private:

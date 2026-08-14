@@ -109,6 +109,9 @@ if(USE_CUDA)
 
     list(APPEND EXEC_NAMES cuda_skin_drift)
     add_executable(cuda_skin_drift cuda_skin_drift.t.cc)
+
+    list(APPEND EXEC_NAMES leap_frog_gpu)
+    add_executable(leap_frog_gpu leap_frog_gpu.t.cc)
 endif()
 
 foreach(LOOP_VAR ${EXEC_NAMES})

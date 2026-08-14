@@ -67,6 +67,17 @@ void gpu::Configuration::copy_forces_from_device(configuration::Configuration& c
     }
 }
 
+void gpu::Configuration::copy_pos_vel_from_device(configuration::Configuration& conf) {
+    CUDA_CHECK(cudaDeviceSynchronize());
+    const size_t n = current.pos.size();
+    for (size_t i = 0; i < n; ++i) {
+        const FPL3_TYPE& p = current.pos[i];
+        const FPL3_TYPE& v = current.vel[i];
+        conf.current().pos(i) = math::Vec(p.x, p.y, p.z);
+        conf.current().vel(i) = math::Vec(v.x, v.y, v.z);
+    }
+}
+
 void gpu::Configuration::copy_to_device(configuration::Configuration& conf) {
     CUDA_CHECK_ERROR("At gpu::Configuration::copy_to_device");
     const size_t num_atoms = conf.current().pos.size();

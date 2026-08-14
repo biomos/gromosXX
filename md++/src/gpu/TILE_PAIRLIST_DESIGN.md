@@ -575,5 +575,65 @@ Before any force/energy number from this pairlist is trusted:
     not a bug in the decoupling code -- worth remembering if this test
     is ever extended.).
 
-Step 11 onward (multi-energy-group and virial support, perturbation,
-re-porting `Leap_Frog_*<gpuBackend>`) is not started.
+Step 11 (re-porting `Leap_Frog_*<gpuBackend>`) is done -- see below.
+Multi-energy-group and virial support, and perturbation, are not started.
+
+### Step 11: re-porting `Leap_Frog_*<gpuBackend>` (PLAN.md §10 step 11)
+
+Prerequisite: PLAN.md §3.2's GPU mirror cache (`sim.cuda().
+configuration_view()`/`topology_view()`), landed in a prior commit on this
+branch. The old `leap_frog_gpu.cu` predated that cache and called
+now-removed APIs (`conf.m_gpu`, `conf.copy_pos_vel_to_gpu()`) -- it was
+disabled (`is_supported_backend` excluded `gpuBackend`) and not wired into
+any `CMakeLists.txt`. Replaced entirely, not patched.
+
+- New `gpu::CudaManager::configuration_view(conf, sync_pos_vel, full_resync)`
+  gained a third parameter: `full_resync = true` does a complete
+  `copy_to_device()` (pos/vel/force/box/tensors) instead of the cheap
+  pos+vel-only path. Needed because the integrator's velocity update reads
+  `old().force`, which the existing cheap sync doesn't cover (force is
+  otherwise only ever read fresh on the GPU side within the same nonbonded
+  evaluation that produced it).
+- New `gpu::Configuration::copy_pos_vel_from_device()` and
+  `CudaManager::sync_configuration_from_device()`: the GPU-mirror-to-CPU
+  direction, symmetric to the to-device path, for the one sync-back per
+  step.
+- New kernels, `gpu/cuda/algorithm/integration/leap_frog_kernels.{h,cu}`:
+  plain per-atom elementwise updates (no boundary/periodicity dispatch
+  needed here, unlike every pairlist kernel -- integration doesn't rewrap
+  chargegroups).
+- `algorithm/integration/leap_frog_gpu.cc` (renamed from `.cu` -- plain
+  C++, no kernel syntax; `groalgorithm` has no CUDA language enabled, same
+  constraint `remove_com_motion_gpu.cc` already works within) implements
+  `Leap_Frog_Velocity<gpuBackend>`/`Leap_Frog_Position<gpuBackend>::apply()`,
+  mirroring the CPU reference's exact math and state-exchange order
+  (`leap_frog.cc`).
+
+**The "no round trip between two algorithms" milestone, concretely:**
+`Leap_Frog_Velocity<gpuBackend>::apply()` does the one real resync of the
+step (`full_resync = true`, right after `conf.exchange_state()` so the
+GPU mirror's `old()`/`current()` labeling matches the CPU's post-exchange
+labeling exactly), writes the new velocity into the GPU mirror's
+`current().vel`, and returns -- no sync back to the CPU.
+`Leap_Frog_Position<gpuBackend>::apply()` then calls `configuration_view()`
+with both sync flags `false`: it reads that same cached mirror (same
+`conf.id()`, hits the 1-entry fast path), so it sees the velocity Velocity
+just wrote without any re-upload, computes the new position on the GPU
+mirror's `current().pos`, and only *then* calls
+`sync_configuration_from_device()` once, since no other algorithm in the
+sequence yet consumes GPU-resident state directly and `conf.current()`
+must stay CPU-authoritative for everything downstream.
+
+Polarisable (COS) charges are explicitly not supported on this path yet
+(`Leap_Frog_Position<gpuBackend>::apply()` hard-errors via
+`io::messages.add(..., io::message::error)` if
+`sim.param().polarise.cos` is set, rather than silently computing the
+CPU-only `posV` update wrong).
+
+Test: `src/check/leap_frog_gpu.t.cc` -- two independent simulations built
+from the same aladip topology/config, driven through 5 steps of
+deterministic, externally-supplied per-atom forces (no real nonbonded
+evaluation needed; this test is about the integrator, not the force
+field), one run through the CPU backend and one through the GPU backend.
+Positions and velocities must match within float tolerance at every step
+(confirmed: exact match, 72 atoms, 5 steps).

@@ -78,11 +78,13 @@ gpu::Topology::View gpu::CudaManager::topology_view(const topology::Topology & t
 }
 
 gpu::Configuration::View gpu::CudaManager::configuration_view(configuration::Configuration & conf,
-                                                                bool sync_pos_vel) {
+                                                                bool sync_pos_vel,
+                                                                bool full_resync) {
     const std::size_t id = conf.id();
 
     if (id == m_last_conf_id && m_last_conf_gpu) {
-        if (sync_pos_vel) m_last_conf_gpu->copy_pos_vel_to_device(conf);
+        if (full_resync) m_last_conf_gpu->copy_to_device(conf);
+        else if (sync_pos_vel) m_last_conf_gpu->copy_pos_vel_to_device(conf);
         return m_last_conf_gpu->view();
     }
 
@@ -90,6 +92,8 @@ gpu::Configuration::View gpu::CudaManager::configuration_view(configuration::Con
     if (it == m_configurations.end()) {
         it = m_configurations.emplace(id, std::make_unique<gpu::Configuration>()).first;
         it->second->copy_to_device(conf); // full sync on first creation
+    } else if (full_resync) {
+        it->second->copy_to_device(conf);
     } else if (sync_pos_vel) {
         it->second->copy_pos_vel_to_device(conf);
     }
@@ -97,6 +101,20 @@ gpu::Configuration::View gpu::CudaManager::configuration_view(configuration::Con
     m_last_conf_id  = id;
     m_last_conf_gpu = it->second.get();
     return it->second->view();
+}
+
+void gpu::CudaManager::sync_configuration_from_device(configuration::Configuration & conf) {
+    const std::size_t id = conf.id();
+
+    if (id == m_last_conf_id && m_last_conf_gpu) {
+        m_last_conf_gpu->copy_pos_vel_from_device(conf);
+        return;
+    }
+
+    auto it = m_configurations.find(id);
+    if (it != m_configurations.end()) {
+        it->second->copy_pos_vel_from_device(conf);
+    }
 }
 
 void gpu::CudaManager::init(const std::vector<int>& device_ids) {
