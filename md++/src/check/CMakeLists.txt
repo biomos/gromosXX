@@ -112,6 +112,9 @@ if(USE_CUDA)
 
     list(APPEND EXEC_NAMES leap_frog_gpu)
     add_executable(leap_frog_gpu leap_frog_gpu.t.cc)
+
+    list(APPEND EXEC_NAMES cuda_atomic_cutoff_toggle)
+    add_executable(cuda_atomic_cutoff_toggle cuda_atomic_cutoff_toggle.t.cc)
 endif()
 
 foreach(LOOP_VAR ${EXEC_NAMES})

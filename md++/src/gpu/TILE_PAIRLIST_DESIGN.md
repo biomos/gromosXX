@@ -331,6 +331,25 @@ Before any force/energy number from this pairlist is trusted:
    rectangular, `atomic_cutoff = true`), 4 cases total, all passing
    exactly.
 
+   **Follow-up fix (much later, KNOWN_ISSUES.md's "CUDA context
+   corruption after runtime atomic_cutoff toggle" entry):**
+   `prepare_cog()` sized `m_cg_cog` to `num_solute_chargegroups()`, but
+   `prepare_cog_kernel` writes `cg_cog[cg_i]` for every chargegroup
+   (solute and solvent) and `classify_tiles()` reads it back for
+   solvent candidates too -- an out-of-bounds write on every
+   `prepare_cog()` call whenever any solvent chargegroups exist (i.e.
+   essentially always), found via `compute-sanitizer --tool memcheck`
+   rather than any visible test failure (undefined behaviour that
+   happened not to corrupt anything load-bearing on most runs). Fixed
+   by sizing `m_cg_cog` to `num_chargegroups()`. New regression test,
+   `cuda_atomic_cutoff_toggle.t.cc` (a non-perturbed system, since
+   `aladip_cuda.in`'s `PERTURBATION` setting prevents `ctest` from ever
+   reaching this code at all) -- verified with zero errors under
+   `compute-sanitizer` across 10 toggle cycles. Worth periodically
+   re-running the CUDA suite under `compute-sanitizer` even absent a
+   visible failure; this bug had been silently present since step 3-5's
+   original chargegroup-cutoff implementation.
+
 8. **Done (kernel only; wiring is step 9, not started).** `PLAN.md` §10
    step 8: the LJ + reaction-field force/energy kernel, rewritten against
    tiles instead of the discarded flat-pair-array kernel

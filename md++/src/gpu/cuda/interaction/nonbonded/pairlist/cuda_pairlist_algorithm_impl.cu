@@ -117,9 +117,21 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::prepare_cog(
     const gpu::Configuration::View conf_view = sim.cuda().configuration_view(conf, gpu::MIRROR_POS);
 
     if (!sim.param().pairlist.atomic_cutoff){
-        const size_t num_solute_cg = topo.num_solute_chargegroups();
         const size_t num_cg = topo.num_chargegroups();
-        m_cg_cog.resize(num_solute_cg);
+        // Sized to *all* chargegroups, not just solute: prepare_cog_kernel
+        // (periodicity.cu's prepare_chargegroup) writes cg_cog[cg_i] for
+        // every cg_i < num_chargegroups (solute cog is a true centre of
+        // geometry, solvent gets its first atom's position -- see that
+        // function's doc comment), and classify_tiles() below reads
+        // m_cg_cog for solvent candidates too, not just solute ones. A
+        // num_solute_chargegroups()-sized buffer here is an out-of-bounds
+        // write on every call whenever any solvent chargegroups exist --
+        // found via compute-sanitizer while investigating KNOWN_ISSUES.md's
+        // "CUDA context corruption after runtime atomic_cutoff toggle"
+        // entry: this OOB write happens on every prepare_cog() call
+        // regardless of atomic_cutoff, but only sometimes corrupts memory
+        // that mattered, which is why it looked toggle-specific.
+        m_cg_cog.resize(num_cg);
         m_cg_cells.resize(num_cg);
         m_cg_sort_key.resize(num_cg);
         const gpu::Topology::View topo_view = sim.cuda().topology_view(topo);
