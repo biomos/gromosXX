@@ -61,6 +61,9 @@
 //#include "../../algorithm/constraints/gpu_settle.h"
 #include "../../algorithm/constraints/m_shake.h"
 #include "../../algorithm/constraints/gpu_shake.h"
+#ifdef USE_CUDA
+#include "../../algorithm/constraints/cuda_shake.h"
+#endif
 
 #include "../../algorithm/constraints/rottrans.h"
 
@@ -68,6 +71,34 @@
 
 #include "create_constraints.h"
 
+
+#ifdef USE_CUDA
+namespace {
+  /**
+   * Whether CUDA_Shake's v1 scope (solvent distance constraints only,
+   * see cuda_shake.h) actually covers this run -- mirrors the exact
+   * conditions algorithm::Shake::apply()/init() use to decide solute
+   * SHAKE is active, plus CUDA_Shake's own MPI/shake_pos gates. Used to
+   * fall back to CPU algorithm::Shake gracefully (like the bonded
+   * terms' monitor_dihedrals fallback) rather than hard-erroring the
+   * whole run for a normal, CPU-valid configuration.
+   */
+  bool cuda_shake_covers_run(const topology::Topology & topo,
+                              const simulation::Simulation & sim) {
+    const bool solute_shake_active =
+        (topo.solute().distance_constraints().size() &&
+         sim.param().constraint.solute.algorithm == simulation::constr_shake &&
+         sim.param().constraint.ntc > 1) ||
+        sim.param().dihrest.dihrest == simulation::dihedral_constr ||
+        sim.param().angrest.angrest == simulation::angle_constr;
+    return sim.param().gpu.accelerator == simulation::gpu_cuda &&
+           !sim.param().perturbation.perturbation &&
+           !solute_shake_active &&
+           !sim.mpi_enabled() &&
+           !sim.param().start.shake_pos;
+  }
+}
+#endif
 
 #undef MODULE
 #undef SUBMODULE
@@ -113,12 +144,21 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
     case simulation::constr_shake :
     {
       if (!sim.param().perturbation.perturbation) {
-        // SHAKE
-        algorithm::Shake * s =
-                new algorithm::Shake
-                (sim.param().constraint.solute.shake_tolerance,
-                sim.param().constraint.solvent.shake_tolerance);
-        md_seq.push_back(s);
+#ifdef USE_CUDA
+        if (cuda_shake_covers_run(topo, sim)) {
+          algorithm::CUDA_Shake * gs =
+                  new algorithm::CUDA_Shake(sim.param().constraint.solvent.shake_tolerance);
+          md_seq.push_back(gs);
+        } else
+#endif
+        {
+          // SHAKE
+          algorithm::Shake * s =
+                  new algorithm::Shake
+                  (sim.param().constraint.solute.shake_tolerance,
+                  sim.param().constraint.solvent.shake_tolerance);
+          md_seq.push_back(s);
+        }
 
       } else {
         // perturbed shake also calls normal shake...
@@ -217,12 +257,21 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
     switch (sim.param().constraint.solvent.algorithm) {
       case simulation::constr_shake :
       {
-        // SHAKE
-        algorithm::Shake * s =
-                new algorithm::Shake
-                (sim.param().constraint.solute.shake_tolerance,
-                sim.param().constraint.solvent.shake_tolerance);
-        md_seq.push_back(s);
+#ifdef USE_CUDA
+        if (cuda_shake_covers_run(topo, sim)) {
+          algorithm::CUDA_Shake * gs =
+                  new algorithm::CUDA_Shake(sim.param().constraint.solvent.shake_tolerance);
+          md_seq.push_back(gs);
+        } else
+#endif
+        {
+          // SHAKE
+          algorithm::Shake * s =
+                  new algorithm::Shake
+                  (sim.param().constraint.solute.shake_tolerance,
+                  sim.param().constraint.solvent.shake_tolerance);
+          md_seq.push_back(s);
+        }
 
         break;
       }

@@ -57,6 +57,7 @@ if (USE_CUDA)
     integration/leap_frog_gpu.cc
     temperature/temperature_calculation_gpu.cc
     temperature/berendsen_thermostat_gpu.cc
+    constraints/cuda_shake.cc
     )
 endif()
 

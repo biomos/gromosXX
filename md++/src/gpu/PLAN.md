@@ -700,7 +700,64 @@ Rough dependency order; each step should land as its own reviewable unit.
     presets) still shows only the pre-existing, documented `aladip_cuda`
     perturbation failure.
 
-    Still CPU-only: constraints (SHAKE/SETTLE/LINCS -- step 12 above),
+    **Also done (step 12, constraints): `CUDA_Shake` (solvent SHAKE
+    only)**, a new `Algorithm` subclass (not a `Backend` template --
+    `create_constraints.cc` constructs `algorithm::Shake` directly at
+    several call sites, unlike the `make_algorithm<T>`-only call sites
+    that made the `Backend`-template trick free elsewhere this session;
+    converting `Shake` itself would have meant updating every direct
+    reference across `perturbed_shake.h`, `conjugate_gradient.h/.cc`,
+    `replica_MPI_slave.h` -- out of proportion to the piece actually
+    being GPU-accelerated). Wired via a new
+    `cuda_shake_covers_run(topo, sim)` helper in `create_constraints.cc`
+    that mirrors `Shake::apply()`'s real solute-SHAKE-active condition
+    plus `CUDA_Shake`'s own MPI/`shake_pos` gates, so a normal
+    solute-constraints-on-GPU configuration falls back to CPU `Shake`
+    gracefully (same "valid CPU config, not silently wrong" spirit as
+    the dihedral port's `monitor_dihedrals` fallback) instead of hard-
+    erroring the whole run.
+
+    **Why only solvent:** solvent SHAKE's CPU reference
+    (`algorithm::Shake::solvent()`, `shake.h`) solves each molecule's
+    own small Gauss-Seidel iteration completely independently of every
+    other molecule (no shared atoms) -- parallelizing *across*
+    molecules while keeping each molecule's own inner loop exactly as
+    sequential as the CPU (one GPU thread per molecule, same skip_now/
+    skip_next optimization, same loop structure) is both correct and
+    embarrassingly parallel, and is bit-comparable to the CPU result
+    per molecule. Solute SHAKE's CPU reference
+    (`algorithm::Shake::solute()`) is fundamentally different: one
+    large in-place Gauss-Seidel sweep over *every* solute distance
+    constraint at once, with genuine cross-constraint data dependencies
+    within a single iteration (updating atom *i*'s position mid-sweep
+    changes what the very next constraint in the list sees) -- a
+    correct GPU parallelization of that specific iteration order is a
+    substantially harder problem (a real constraint solver redesign,
+    e.g. a Jacobi-style scheme converging to the same manifold via a
+    different, not-bit-comparable path), and was descoped rather than
+    attempted riskily under this session's remaining time. Hard-errored
+    in `CUDA_Shake::init()` if actually requested (`ntc > 1` and solute
+    distance constraints exist), not silently skipped.
+
+    **Precision:** like the bonded-forces near-cancellation lesson,
+    SHAKE's position corrections directly become the positions the
+    *entire next MD step* integrates from -- far more consequential
+    than a force/energy tolerance. `gpu/cuda/algorithm/constraints/
+    shake_kernels.{h,cu}` deliberately uses raw `double`/`double3`
+    throughout (uploaded/downloaded fresh each call, independent of
+    `FP_PRECISION` and the float position mirror used everywhere else
+    in the GPU pipeline), unlike every other kernel this session, which
+    uses `FPL_TYPE`/`FPL3_TYPE`.
+
+    Verified against the CPU reference (`shake_gpu.t.cc`, positions/
+    velocities/constraint forces/virial, `1e-6` absolute tolerance --
+    tight, since both sides now compute in full double precision) on a
+    displaced-solvent-positions scenario (aladip's own starting
+    configuration already nearly satisfies every constraint, which
+    would barely exercise the iteration at all) and zero
+    `compute-sanitizer` errors.
+
+    Still CPU-only: solute SHAKE (see above), SETTLE/LINCS,
     `NoseHoover_Thermostat`, `Berendsen_Barostat`, `Pressure_Calculation`.
 
 ## 11. Open questions (revisit later, not blocking the plan above)

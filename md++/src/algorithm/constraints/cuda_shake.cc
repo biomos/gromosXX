@@ -1,0 +1,240 @@
+/*
+ * This file is part of GROMOS.
+ *
+ * Copyright (c) 2011, 2012, 2016, 2018, 2021, 2023 Biomos b.v.
+ * See <https://www.gromos.net> for details.
+ *
+ * GROMOS is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+/**
+ * @file cuda_shake.cc
+ * GPU-native SHAKE constraint algorithm. See cuda_shake.h. Plain C++,
+ * no kernel syntax; the real __global__ kernel lives in
+ * gpu/cuda/algorithm/constraints/shake_kernels.cu, compiled into
+ * grocuda.
+ */
+
+#include "../../stdheader.h"
+
+#include "../../algorithm/algorithm.h"
+#include "../../topology/topology.h"
+#include "../../simulation/simulation.h"
+#include "../../configuration/configuration.h"
+
+#include "../../interaction/interaction.h"
+#include "../../interaction/interaction_types.h"
+
+#include "../../util/error.h"
+#include "../../util/debug.h"
+
+#include "cuda_shake.h"
+
+#undef MODULE
+#undef SUBMODULE
+#define MODULE algorithm
+#define SUBMODULE constraints
+
+int algorithm::CUDA_Shake::init(
+    topology::Topology & topo,
+    configuration::Configuration & conf,
+    simulation::Simulation & sim,
+    std::ostream & os,
+    bool quiet) {
+
+  if (sim.mpi_enabled()) {
+    io::messages.add(
+        "CUDA_Shake does not support MPI.",
+        "CUDA_Shake", io::message::error);
+    return 1;
+  }
+  if (topo.solute().distance_constraints().size() &&
+      sim.param().constraint.solute.algorithm == simulation::constr_shake &&
+      sim.param().constraint.ntc > 1) {
+    io::messages.add(
+        "CUDA_Shake does not support solute distance constraints -- solute "
+        "SHAKE's CPU reference is a single in-place iteration with "
+        "cross-constraint dependencies, not the embarrassingly-parallel "
+        "per-molecule problem this class ports (see cuda_shake.h).",
+        "CUDA_Shake", io::message::error);
+    return 1;
+  }
+  if (sim.param().angrest.angrest == simulation::angle_constr ||
+      sim.param().dihrest.dihrest == simulation::dihedral_constr) {
+    io::messages.add(
+        "CUDA_Shake does not support angle/dihedral restraint constraints.",
+        "CUDA_Shake", io::message::error);
+    return 1;
+  }
+  if (sim.param().start.shake_pos) {
+    io::messages.add(
+        "CUDA_Shake does not support shaking initial positions "
+        "(start.shake_pos) -- a startup-only cost, use CPU Shake if needed.",
+        "CUDA_Shake", io::message::error);
+    return 1;
+  }
+
+  if (!quiet) {
+    os << "CUDA_SHAKE (solvent only)\n"
+       << "\ttolerance = " << m_solvent_tolerance << "\n"
+       << "END\n";
+  }
+
+  const std::vector<interaction::bond_type_struct> & bondtypes = topo.bond_types_harm();
+
+  unsigned first_atom = topo.num_solute_atoms();
+  m_solvent_types.resize(topo.num_solvents());
+  for (unsigned s = 0; s < topo.num_solvents(); ++s) {
+    SolventType & st = m_solvent_types[s];
+    st.num_atoms_per_molecule = topo.solvent(s).num_atoms();
+    st.num_molecules = topo.num_solvent_molecules(s);
+    st.first_atom = first_atom;
+
+    if (st.num_atoms_per_molecule > gpu::MAX_SHAKE_ATOMS_PER_MOLECULE) {
+      io::messages.add(
+          "CUDA_Shake: solvent molecule exceeds MAX_SHAKE_ATOMS_PER_MOLECULE "
+          "(gpu/cuda/algorithm/constraints/shake_kernels.h).",
+          "CUDA_Shake", io::message::error);
+      return 1;
+    }
+
+    const std::vector<topology::two_body_term_struct> & dc =
+        topo.solvent(s).distance_constraints();
+    st.constraints.resize(dc.size());
+    for (unsigned c = 0; c < dc.size(); ++c) {
+      const double r0 = bondtypes[dc[c].type].r0;
+      st.constraints[c] = gpu::ShakeConstraint{dc[c].i, dc[c].j, r0 * r0};
+    }
+
+    st.inv_mass_local.resize(st.num_atoms_per_molecule);
+    for (unsigned a = 0; a < st.num_atoms_per_molecule; ++a) {
+      st.inv_mass_local[a] = topo.inverse_mass()(first_atom + a);
+    }
+
+    first_atom += st.num_atoms_per_molecule * st.num_molecules;
+  }
+
+  if (sim.param().constraint.solvent.algorithm == simulation::constr_shake) {
+    for (unsigned int i = topo.num_solute_atoms(); i < topo.num_atoms(); ++i) {
+      constrained_atoms().insert(i);
+    }
+  }
+
+  const unsigned num_atoms = static_cast<unsigned>(topo.num_atoms());
+  m_pos.resize(num_atoms);
+  m_old_pos.resize(num_atoms);
+  m_constraint_force.resize(num_atoms);
+  m_virial.resize(9);
+  m_error_flag.resize(1);
+
+  m_initialized = true;
+  return 0;
+}
+
+int algorithm::CUDA_Shake::apply(
+    topology::Topology & topo,
+    configuration::Configuration & conf,
+    simulation::Simulation & sim) {
+
+  m_timer.start(sim);
+
+  if (!m_initialized) {
+    m_timer.stop();
+    return 1;
+  }
+
+  for (std::set<unsigned int>::const_iterator it = constrained_atoms().begin(),
+       to = constrained_atoms().end(); it != to; ++it) {
+    conf.old().constraint_force(*it) = 0.0;
+  }
+
+  const unsigned num_atoms = static_cast<unsigned>(topo.num_atoms());
+  const unsigned first_solvent = static_cast<unsigned>(topo.num_solute_atoms());
+
+  for (unsigned i = first_solvent; i < num_atoms; ++i) {
+    m_pos[i] = double3{conf.current().pos(i)(0),
+                        conf.current().pos(i)(1),
+                        conf.current().pos(i)(2)};
+    m_old_pos[i] = double3{conf.old().pos(i)(0),
+                            conf.old().pos(i)(1),
+                            conf.old().pos(i)(2)};
+    m_constraint_force[i] = double3{0.0, 0.0, 0.0};
+  }
+  for (unsigned k = 0; k < 9; ++k) m_virial[k] = 0.0;
+  m_error_flag[0] = 0;
+
+  const double dt = sim.time_step_size();
+  const double dt2 = dt * dt;
+
+  for (const SolventType & st : m_solvent_types) {
+    if (st.num_molecules == 0 || st.constraints.size() == 0) continue;
+    gpu::launch_shake_solvent(
+        m_pos.data(), m_old_pos.data(),
+        st.constraints.data(), static_cast<unsigned>(st.constraints.size()),
+        st.inv_mass_local.data(), st.num_atoms_per_molecule,
+        st.first_atom, st.num_molecules,
+        m_solvent_tolerance, static_cast<unsigned>(m_max_iterations),
+        conf.boundary_type, conf.current().box, dt2,
+        m_constraint_force.data(), m_virial.data(), m_error_flag.data());
+  }
+  cudaDeviceSynchronize();
+
+  if (m_error_flag[0] != 0) {
+    if (m_error_flag[0] == 1) {
+      io::messages.add("SHAKE error. vectors orthogonal",
+                        "CUDA_Shake::apply", io::message::error);
+      std::cout << "SHAKE failure in solvent!" << std::endl;
+    } else {
+      io::messages.add("SHAKE error. too many iterations",
+                        "CUDA_Shake::apply", io::message::critical);
+    }
+    conf.special().shake_failure_occurred = true;
+    m_timer.stop();
+    return E_SHAKE_FAILURE_SOLVENT;
+  }
+
+  for (unsigned i = first_solvent; i < num_atoms; ++i) {
+    conf.current().pos(i) = math::Vec(m_pos[i].x, m_pos[i].y, m_pos[i].z);
+    conf.old().constraint_force(i) +=
+        math::Vec(m_constraint_force[i].x, m_constraint_force[i].y,
+                   m_constraint_force[i].z) / dt2;
+  }
+
+  // Matches the CPU's real `V == math::atomic_virial` gate (shake.h's
+  // shake_iteration) -- vacuum boundary never contributes (SPLIT_VIRIAL_
+  // BOUNDARY hardcodes math::no_virial for vacuum), and molecular_virial
+  // gets nothing added here either (same as CPU): SHAKE's virial
+  // contribution is atomic-only, corrected to molecular virial elsewhere
+  // if requested (Molecular_Virial_Interaction, generic across
+  // accelerators).
+  if (conf.boundary_type != math::vacuum &&
+      sim.param().pcouple.virial == math::atomic_virial) {
+    for (unsigned b = 0; b < 3; ++b) {
+      for (unsigned a = 0; a < 3; ++a) {
+        conf.old().virial_tensor(b, a) += m_virial[b * 3 + a];
+      }
+    }
+  }
+
+  if (!sim.param().stochastic.sd && !sim.param().minimise.ntem &&
+      !sim.param().analyze.analyze) {
+    for (std::set<unsigned int>::const_iterator it = constrained_atoms().begin(),
+         to = constrained_atoms().end(); it != to; ++it) {
+      conf.current().vel(*it) = (conf.current().pos(*it) - conf.old().pos(*it)) / dt;
+    }
+  }
+
+  m_timer.stop();
+  return 0;
+}

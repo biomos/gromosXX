@@ -43,6 +43,7 @@ set(GPU_HEADERS
     cuda/interaction/bonded/angle_kernels.h
     cuda/interaction/bonded/improper_dihedral_kernels.h
     cuda/interaction/bonded/dihedral_kernels.h
+    cuda/algorithm/constraints/shake_kernels.h
 )
 
 if(USE_CUDA)
@@ -74,6 +75,7 @@ if(USE_CUDA)
         cuda/interaction/bonded/angle_kernels.cu
         cuda/interaction/bonded/improper_dihedral_kernels.cu
         cuda/interaction/bonded/dihedral_kernels.cu
+        cuda/algorithm/constraints/shake_kernels.cu
     )
 
     add_library(grocuda STATIC ${GPU_SOURCES})
