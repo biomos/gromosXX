@@ -637,3 +637,79 @@ evaluation needed; this test is about the integrator, not the force
 field), one run through the CPU backend and one through the GPU backend.
 Positions and velocities must match within float tolerance at every step
 (confirmed: exact match, 72 atoms, 5 steps).
+
+### Follow-up: GPU-mirror freshness tracking (data-level cache coherence)
+
+The "no round trip between two algorithms" design above shipped with the
+sync decision at each `configuration_view()` call site hand-picked as a
+`sync_pos_vel`/`full_resync` boolean -- each one encoding a private
+assumption about what ran immediately before it. That produced a real,
+silent-wrong-answer bug: `Leap_Frog_Position<gpuBackend>` assumed nothing
+touches `current().vel` between it and `Leap_Frog_Velocity<gpuBackend>`, but
+`create_md_sequence.cc` inserts CPU-only temperature coupling
+(`Berendsen_Thermostat`/`NoseHoover_Thermostat`) between them whenever
+`sim.param().multibath.couple` is set. That thermostat rescales
+`conf.current().vel` on the CPU directly; the GPU-resident value Position
+actually read never saw it. Wrong trajectory, no error message, whenever
+temperature coupling is enabled -- the common case for real runs.
+
+Fixed by replacing the boolean flags with data-level freshness tracking,
+scoped to what's buildable without instrumenting every raw CPU write into
+`configuration::Configuration` (that would mean wrapping `math::VArray`
+itself, used by hundreds of CPU-only call sites and explicitly kept
+GPU-unaware per this directory's `CLAUDE.md`):
+
+- `src/gpu/mirror_fields.h` (new, zero CUDA dependency): `gpu::MirrorField`
+  bits (`MIRROR_POS`/`VEL`/`FORCE`/`BOX`/`ALL`), granularity matching
+  `ConfigurationStateView`, covering `current()`+`old()` together (every
+  upload path already moves both in one call).
+- `gpu::Configuration` (`configuration_struct.h`) gains two bitmask members:
+  `gpu_fresh_fields` (this field's GPU copy is trustworthy, no resync
+  needed for a read) and `gpu_dirty_fields` (subset of fresh -- the GPU
+  holds a value the CPU hasn't seen yet, e.g. from `mark_gpu_dirty()`).
+  Two different concepts: a field can be fresh (just uploaded, matches CPU)
+  without being dirty (GPU-only, diverging from CPU).
+- `CudaManager::configuration_view(conf, read_fields)` replaces the boolean
+  signature: any requested field not already fresh gets resynced (the
+  existing `copy_pos_vel_to_device()`/`copy_to_device()` granularities,
+  chosen by tracked freshness instead of an assumption at the call site).
+  `mark_gpu_dirty(conf, fields)` lets a kernel-writing caller (`Leap_Frog_
+  Velocity<gpuBackend>`, for VEL) vouch for a field without a round trip.
+- **Two new hooks around every `Algorithm::apply()` in `Algorithm_Sequence
+  ::run()`** (also the special-cased `Remove_COM_Motion` call in `init()`):
+  `flush_gpu_dirty(conf, touches)` BEFORE `apply()`, `invalidate_gpu_mirror
+  (conf, touches)` AFTER. `touches` comes from a new virtual
+  `Algorithm::gpu_mirror_touches()`, default `MIRROR_ALL` -- every ordinary
+  (CPU-side) algorithm, including every not-yet-real "GPU-named" backend
+  like `Remove_COM_Motion<gpuBackend>`, needs zero changes and is handled
+  correctly by default. Two hooks, not one, because invalidating only
+  *after* an algorithm ran isn't enough: if that algorithm reads/writes a
+  field while it's still GPU-dirty, it operates on the stale pre-write CPU
+  value *before* the after-hook ever fires. The before-hook publishes
+  anything currently dirty in `touches` to CPU first, so the algorithm
+  about to run sees the correct value. (This gap was caught by writing the
+  regression test below -- the first attempt, with only an after-hook,
+  reproduced a different, subtler wrong-answer bug: invalidating without
+  first publishing made `Leap_Frog_Position<gpuBackend>` resync from a CPU
+  copy that itself had never received Velocity's write, discarding it
+  entirely instead of just missing the thermostat's contribution.)
+- `Leap_Frog_Velocity<gpuBackend>` and `Leap_Frog_Position<gpuBackend>` both
+  override `gpu_mirror_touches()` to return `0` -- neither ever writes
+  `conf` directly (Velocity's `exchange_state()`/box copy aside, which is
+  read fresh again next step regardless); everything goes through
+  `sim.cuda()`'s tracked API. Returning `0` stops the after-hook from
+  immediately erasing the VEL-fresh bit Velocity just set (which Position
+  depends on reading without a resync), and stops the before-hook from
+  wastefully flushing-then-re-uploading on Position's own call when nothing
+  actually interleaved.
+
+Regression test: `leap_frog_gpu.t.cc` gained
+`run_thermostat_interleaved_case()` -- a real `algorithm::Algorithm_Sequence`
+containing `[Leap_Frog_Velocity<gpuBackend>, a local `Vel_Scale_Algorithm`
+(CPU-only, rescales `conf.current().vel`, default `gpu_mirror_touches()`,
+exactly the shape of the real thermostat classes), Leap_Frog_Position
+<gpuBackend>]`, run via `Algorithm_Sequence::run()` so the real hooks fire,
+compared against the identical three-algorithm sequence on the CPU backend.
+Before the fix: fails (velocity ratio off by a compounding `(1/scale_factor)`
+factor per step -- the thermostat's contribution silently never reaches the
+GPU-resident value Position reads). After: exact match, 3 steps, 72 atoms.

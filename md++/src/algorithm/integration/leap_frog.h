@@ -60,6 +60,20 @@ public:
                       configuration::Configuration& conf,
                       simulation::Simulation& sim);
 
+    // gpuBackend: already tracks the fields it touches precisely via
+    // sim.cuda() (mark_gpu_dirty() for VEL, a full resync for
+    // everything else) -- returning 0 stops Algorithm_Sequence::run()'s
+    // default post-apply() invalidation from immediately erasing the
+    // VEL freshness this just set, which Leap_Frog_Position<gpuBackend>
+    // depends on reading without a resync. cpuBackend: matches the
+    // base class default, harmless (nothing GPU-resident to protect).
+    virtual unsigned gpu_mirror_touches() const override {
+        if constexpr (std::is_same_v<Backend, util::gpuBackend>)
+            return 0u;
+        else
+            return gpu::MIRROR_ALL;
+    }
+
     virtual int init(topology::Topology& topo,
                      configuration::Configuration& conf,
                      simulation::Simulation& sim,
@@ -97,6 +111,21 @@ public:
     virtual int apply(topology::Topology& topo,
                       configuration::Configuration& conf,
                       simulation::Simulation& sim);
+
+    // gpuBackend: never writes configuration::Configuration directly
+    // (reads/writes only through sim.cuda(), and its own
+    // sync_configuration_from_device() call already publishes the
+    // final result to CPU before returning) -- returning 0 avoids a
+    // pointless flush-before-self on its own before-apply() hook, and
+    // the subsequent invalidate-after is harmless since nothing is
+    // left dirty by the time it returns. cpuBackend: base class
+    // default, harmless.
+    virtual unsigned gpu_mirror_touches() const override {
+        if constexpr (std::is_same_v<Backend, util::gpuBackend>)
+            return 0u;
+        else
+            return gpu::MIRROR_ALL;
+    }
 
     virtual int init(topology::Topology& topo,
                      configuration::Configuration& conf,

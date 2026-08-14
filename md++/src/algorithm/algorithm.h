@@ -26,6 +26,7 @@
 #pragma once
 
 #include "simulation/simulation.h"
+#include "gpu/mirror_fields.h"
 
 namespace configuration
 {
@@ -81,6 +82,22 @@ namespace algorithm
     virtual int apply(topology::Topology & topo,
 		      configuration::Configuration & conf,
 		      simulation::Simulation & sim) {return 0;}
+
+    /**
+     * @brief Which Configuration-mirror fields (gpu::MirrorField bits)
+     * this algorithm's apply() might have written directly on the CPU
+     * side, for CudaManager's GPU-mirror freshness tracking.
+     * Conservative default: assume everything might have changed, so
+     * Algorithm_Sequence::run() always invalidates the GPU mirror after
+     * algorithms that don't override this -- correct by default for
+     * every existing (CPU-side) algorithm with zero changes needed.
+     * Only the few algorithms that manage their own GPU-mirror
+     * freshness through sim.cuda() (currently just
+     * Leap_Frog_Velocity<gpuBackend>) need to narrow this, so the
+     * sequence's default invalidation doesn't immediately erase what
+     * they just marked fresh.
+     */
+    virtual unsigned gpu_mirror_touches() const { return gpu::MIRROR_ALL; }
 
     /**
      * name of the algorithm

@@ -6,6 +6,7 @@
 #include <stdexcept>
 
 #include "gpu/cuda/cuheader.h"
+#include "gpu/mirror_fields.h"
 
 #ifdef USE_CUDA
 #include "gpu/cuda/memory/topology_struct.h"
@@ -182,6 +183,56 @@ namespace gpu {
              */
             int select_best_device() const;
 
+            /**
+             * @brief Publish any currently GPU-only ("dirty") fields in
+             * `fields` back to the CPU-authoritative
+             * configuration::Configuration, BEFORE an algorithm that
+             * might read/write them on the CPU side runs. This is the
+             * half of the freshness tracker that a plain
+             * invalidate-after-the-fact can't cover: if a CPU-side
+             * algorithm (e.g. a thermostat) runs while a field is
+             * GPU-only-dirty (Leap_Frog_Velocity<gpuBackend>'s velocity
+             * write, never round-tripped to CPU), it would otherwise
+             * silently read/write the stale pre-write CPU value.
+             * Called centrally by Algorithm_Sequence::run() BEFORE
+             * every algorithm's apply(), using that algorithm's
+             * gpu_mirror_touches() -- default MIRROR_ALL, so every
+             * ordinary (CPU-side) algorithm is protected with no
+             * changes needed. Declared unconditionally (like
+             * invalidate_gpu_mirror() below) since
+             * Algorithm_Sequence::run() compiles in CPU-only builds
+             * too; the non-CUDA .cc gives it a DISABLED_VOID() no-op.
+             * No-op if `conf` has no mirror yet, or nothing in
+             * `fields` is currently dirty.
+             */
+            void flush_gpu_dirty(configuration::Configuration & conf,
+                                  unsigned fields = gpu::MIRROR_ALL);
+
+            /**
+             * @brief Clear freshness bits on the Configuration mirror
+             * (data-level cache-coherence layer on top of the
+             * identity-keyed cache, PLAN.md §3.2 follow-up): declares
+             * that `fields` may have been written directly on the CPU
+             * side (by the algorithm that just ran) and can no longer
+             * be trusted resident on the GPU mirror without a resync.
+             * Called centrally by Algorithm_Sequence::run() after
+             * every algorithm's apply(), using that algorithm's
+             * gpu_mirror_touches() -- default MIRROR_ALL, so every
+             * ordinary (CPU-side) algorithm needs no changes to be
+             * handled correctly. Only touches gpu_fresh_fields, not
+             * gpu_dirty_fields -- flush_gpu_dirty() above already
+             * handled publishing anything dirty before this algorithm
+             * ran, so by construction nothing it touched should still
+             * be dirty by the time this runs. Declared unconditionally
+             * (unlike configuration_view()/mark_gpu_dirty() below)
+             * because Algorithm_Sequence::run() compiles in CPU-only
+             * builds too; the non-CUDA .cc gives it a DISABLED_VOID()
+             * no-op. No-op if `conf` has no mirror yet (nothing to
+             * invalidate).
+             */
+            void invalidate_gpu_mirror(configuration::Configuration & conf,
+                                        unsigned fields = gpu::MIRROR_ALL);
+
 #ifdef USE_CUDA
             /**
              * @brief Identity-keyed GPU mirror cache for topology::Topology
@@ -202,19 +253,37 @@ namespace gpu {
 
             /**
              * @brief Identity-keyed GPU mirror cache for
-             * configuration::Configuration (PLAN.md §3.2). Builds the
-             * mirror (full sync -- pos/vel/force/constraint_force, current
-             * and old, plus box/tensors) on first call for a given
-             * conf.id(). Subsequent calls default to a cheap
-             * positions+velocities-only resync (`sync_pos_vel = true`)
-             * since those change every step, unlike the rest of the
-             * mirrored state; pass `false` if the caller already knows
-             * positions/velocities haven't changed since the last call
-             * (e.g. a second read within the same step).
+             * configuration::Configuration (PLAN.md §3.2), now with
+             * data-level freshness tracking instead of hand-picked sync
+             * booleans: `read_fields` (gpu::MirrorField bits) are the
+             * fields the caller needs valid on the GPU side. Any
+             * requested field not already marked fresh
+             * (gpu::Configuration::gpu_fresh_fields) gets resynced from
+             * CPU -- pos+vel via the cheap copy_pos_vel_to_device() path
+             * if only POS/VEL were missing, or a full copy_to_device()
+             * if FORCE/BOX were requested and missing (no per-field
+             * upload routine exists for those, so this falls back to
+             * the coarse-grained copy). Freshly synced fields are
+             * marked fresh afterwards. Builds the mirror (full sync) on
+             * first call for a given conf.id().
              */
             gpu::Configuration::View configuration_view(configuration::Configuration & conf,
-                                                          bool sync_pos_vel = true,
-                                                          bool full_resync = false);
+                                                          unsigned read_fields);
+
+            /**
+             * @brief The caller just wrote `fields` into the
+             * Configuration mirror via a kernel and is vouching for
+             * them being correct/fresh -- no CPU round trip needed.
+             * Sets both gpu_fresh_fields (trustworthy, don't
+             * re-download) and gpu_dirty_fields (CPU hasn't seen this
+             * value yet -- flush_gpu_dirty() must publish it before
+             * any CPU-side algorithm touches it). The writer is
+             * responsible for also overriding gpu_mirror_touches() so
+             * Algorithm_Sequence::run() doesn't immediately undo the
+             * fresh bit via invalidate_gpu_mirror() right after it
+             * returns.
+             */
+            void mark_gpu_dirty(configuration::Configuration & conf, unsigned fields);
 
             /**
              * @brief Publish the GPU mirror's current positions/velocities
@@ -223,7 +292,10 @@ namespace gpu {
              * leave their result resident on the GPU mirror across
              * multiple algorithms and only need one sync-back at the very
              * end, rather than after every kernel. No-op if `conf` has
-             * never been mirrored (nothing to publish).
+             * never been mirrored (nothing to publish). Clears
+             * gpu_dirty_fields for POS/VEL (CPU has now seen them) but
+             * leaves gpu_fresh_fields untouched -- the GPU copy is still
+             * trustworthy (it now matches CPU exactly).
              */
             void sync_configuration_from_device(configuration::Configuration & conf);
 #endif

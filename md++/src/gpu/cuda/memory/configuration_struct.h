@@ -189,6 +189,29 @@ namespace gpu {
         using RawPtrs = ConfigurationRawPtrs;
 
         /**
+         * @brief CudaManager's freshness bookkeeping (gpu::MirrorField
+         * bits, gpu/mirror_fields.h): which fields are currently known
+         * to be valid on the GPU side without a resync from CPU. Not
+         * touched by this struct's own methods -- CudaManager owns the
+         * read/write of this bitmask, layered on top of the dumb copy
+         * routines below.
+         */
+        unsigned gpu_fresh_fields = 0;
+
+        /**
+         * @brief Subset of gpu_fresh_fields that the GPU holds a value
+         * for which the CPU-side configuration::Configuration has NOT
+         * yet seen (set by mark_gpu_dirty(), e.g. Leap_Frog_Velocity
+         * <gpuBackend>'s velocity write). Distinct from
+         * gpu_fresh_fields because a field can be "fresh" (matches
+         * CPU, just uploaded) without being "dirty" (GPU-only,
+         * diverging from CPU) -- only dirty fields need publishing to
+         * CPU before a CPU-side algorithm that might read/write them
+         * runs; see CudaManager::flush_gpu_dirty().
+         */
+        unsigned gpu_dirty_fields = 0;
+
+        /**
          * @brief The current state
          * 
          */

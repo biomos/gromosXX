@@ -49,3 +49,11 @@ std::vector<std::string> gpu::CudaManager::get_active_device_descriptions() cons
 void gpu::CudaManager::validate_device_id(int device_id) const {
     DISABLED_VOID();
 }
+
+void gpu::CudaManager::flush_gpu_dirty(configuration::Configuration & conf, unsigned fields) {
+    DISABLED_VOID();
+}
+
+void gpu::CudaManager::invalidate_gpu_mirror(configuration::Configuration & conf, unsigned fields) {
+    DISABLED_VOID();
+}

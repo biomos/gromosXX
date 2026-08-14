@@ -69,15 +69,16 @@ int algorithm::Leap_Frog_Velocity<util::gpuBackend>::apply(
     conf.exchange_state();
     conf.current().box = conf.old().box;
 
-    // Full resync: unlike the pairlist path, which only ever needs a
-    // cheap pos+vel refresh (force stays GPU-side throughout nonbonded
-    // evaluation), the integrator needs old().force fresh too -- and it
-    // was last published to the CPU-authoritative conf by the nonbonded
-    // interaction's own per-step sync-back. This is the one true
-    // resync point per step for the GPU mirror; everything downstream
-    // through Leap_Frog_Position stays GPU-resident.
-    gpu::Configuration::View view =
-        sim.cuda().configuration_view(conf, /*sync_pos_vel=*/false, /*full_resync=*/true);
+    // Requesting FORCE/BOX forces configuration_view()'s coarse full
+    // upload path (no dedicated per-field routine covers them) -- the
+    // integrator needs old().force fresh, unlike the pairlist path
+    // which only ever needs pos. Freshness tracking (not a hand-picked
+    // boolean) decides whether that upload actually happens: on a
+    // normal step it will, since the nonbonded interaction's own
+    // per-step force sync-back to the CPU was invalidated by
+    // Algorithm_Sequence::run() right after Forcefield::apply() ran.
+    gpu::Configuration::View view = sim.cuda().configuration_view(
+        conf, gpu::MIRROR_POS | gpu::MIRROR_VEL | gpu::MIRROR_FORCE | gpu::MIRROR_BOX);
     const gpu::Topology::View topo_view = sim.cuda().topology_view(topo);
 
     const unsigned num_atoms = static_cast<unsigned>(topo.num_atoms());
@@ -86,6 +87,13 @@ int algorithm::Leap_Frog_Velocity<util::gpuBackend>::apply(
     gpu::launch_leap_frog_velocity(view.old().vel, view.old().force,
                                     view.current().vel, topo_view.mass,
                                     num_atoms, dt);
+
+    // Vouch for the velocity we just wrote: no CPU round trip, and
+    // don't let a subsequent configuration_view() read re-download and
+    // clobber it with the (now stale) CPU value. gpu_mirror_touches()
+    // == 0 keeps Algorithm_Sequence::run()'s default invalidation from
+    // erasing this immediately after apply() returns.
+    sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_VEL);
 
     this->m_timer.stop();
     return 0;
@@ -116,12 +124,17 @@ int algorithm::Leap_Frog_Position<util::gpuBackend>::apply(
     const unsigned num_atoms = static_cast<unsigned>(topo.num_atoms());
     const double   dt        = sim.time_step_size();
 
-    // sync_pos_vel = false, full_resync = false: current().vel was just
-    // written by Leap_Frog_Velocity<gpuBackend> on this same cached GPU
-    // mirror -- re-syncing from the CPU here would clobber it with the
-    // stale value still sitting in conf.current().vel.
+    // POS and VEL are both already marked fresh on the GPU mirror
+    // (Velocity's full upload covered POS, and its mark_gpu_dirty()
+    // covered VEL) -- this resolves to zero extra transfers, not a
+    // hand-picked "skip the sync" boolean. If some intervening
+    // CPU-side algorithm (e.g. a thermostat) had run between Velocity
+    // and Position, Algorithm_Sequence::run()'s default invalidation
+    // after it would have cleared these bits, and this call would
+    // correctly resync from CPU instead of silently reading stale GPU
+    // state.
     gpu::Configuration::View view =
-        sim.cuda().configuration_view(conf, /*sync_pos_vel=*/false, /*full_resync=*/false);
+        sim.cuda().configuration_view(conf, gpu::MIRROR_POS | gpu::MIRROR_VEL);
 
     gpu::launch_leap_frog_position(view.old().pos, view.current().vel,
                                     view.current().pos, num_atoms, dt);

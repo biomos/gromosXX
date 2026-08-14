@@ -77,14 +77,43 @@ gpu::Topology::View gpu::CudaManager::topology_view(const topology::Topology & t
     return it->second->view();
 }
 
+namespace {
+    // Shared by configuration_view()'s two lookup paths: decide which
+    // upload granularity covers `missing` (fields requested but not
+    // already marked fresh), run it, and update the freshness bitmask.
+    // FORCE/BOX have no dedicated per-field upload routine, so any
+    // request touching them falls back to the coarse full copy --
+    // matches today's only two existing granularities
+    // (copy_to_device()/copy_pos_vel_to_device()), just chosen by
+    // tracked freshness instead of a boolean picked at the call site.
+    void resync_missing_fields(gpu::Configuration & mirror,
+                                configuration::Configuration & conf,
+                                unsigned missing) {
+        if (missing == 0) return;
+        if (missing & (gpu::MIRROR_FORCE | gpu::MIRROR_BOX)) {
+            // Full copy_to_device() overwrites POS/VEL too -- if either
+            // is currently GPU-dirty (a kernel wrote it, CPU hasn't
+            // seen it yet), publish it first so this doesn't silently
+            // discard that value in favour of the stale CPU copy.
+            if (mirror.gpu_dirty_fields & (gpu::MIRROR_POS | gpu::MIRROR_VEL)) {
+                mirror.copy_pos_vel_from_device(conf);
+                mirror.gpu_dirty_fields &= ~(gpu::MIRROR_POS | gpu::MIRROR_VEL);
+            }
+            mirror.copy_to_device(conf);
+            mirror.gpu_fresh_fields = gpu::MIRROR_ALL;
+        } else {
+            mirror.copy_pos_vel_to_device(conf);
+            mirror.gpu_fresh_fields |= gpu::MIRROR_POS | gpu::MIRROR_VEL;
+        }
+    }
+}
+
 gpu::Configuration::View gpu::CudaManager::configuration_view(configuration::Configuration & conf,
-                                                                bool sync_pos_vel,
-                                                                bool full_resync) {
+                                                                unsigned read_fields) {
     const std::size_t id = conf.id();
 
     if (id == m_last_conf_id && m_last_conf_gpu) {
-        if (full_resync) m_last_conf_gpu->copy_to_device(conf);
-        else if (sync_pos_vel) m_last_conf_gpu->copy_pos_vel_to_device(conf);
+        resync_missing_fields(*m_last_conf_gpu, conf, read_fields & ~m_last_conf_gpu->gpu_fresh_fields);
         return m_last_conf_gpu->view();
     }
 
@@ -92,10 +121,9 @@ gpu::Configuration::View gpu::CudaManager::configuration_view(configuration::Con
     if (it == m_configurations.end()) {
         it = m_configurations.emplace(id, std::make_unique<gpu::Configuration>()).first;
         it->second->copy_to_device(conf); // full sync on first creation
-    } else if (full_resync) {
-        it->second->copy_to_device(conf);
-    } else if (sync_pos_vel) {
-        it->second->copy_pos_vel_to_device(conf);
+        it->second->gpu_fresh_fields = gpu::MIRROR_ALL;
+    } else {
+        resync_missing_fields(*it->second, conf, read_fields & ~it->second->gpu_fresh_fields);
     }
 
     m_last_conf_id  = id;
@@ -103,17 +131,72 @@ gpu::Configuration::View gpu::CudaManager::configuration_view(configuration::Con
     return it->second->view();
 }
 
+void gpu::CudaManager::mark_gpu_dirty(configuration::Configuration & conf, unsigned fields) {
+    const std::size_t id = conf.id();
+
+    if (id == m_last_conf_id && m_last_conf_gpu) {
+        m_last_conf_gpu->gpu_fresh_fields |= fields;
+        m_last_conf_gpu->gpu_dirty_fields |= fields;
+        return;
+    }
+
+    auto it = m_configurations.find(id);
+    if (it != m_configurations.end()) {
+        it->second->gpu_fresh_fields |= fields;
+        it->second->gpu_dirty_fields |= fields;
+    }
+}
+
+void gpu::CudaManager::flush_gpu_dirty(configuration::Configuration & conf, unsigned fields) {
+    gpu::Configuration * mirror = nullptr;
+    const std::size_t id = conf.id();
+
+    if (id == m_last_conf_id && m_last_conf_gpu) {
+        mirror = m_last_conf_gpu;
+    } else {
+        auto it = m_configurations.find(id);
+        if (it != m_configurations.end()) mirror = it->second.get();
+    }
+    if (!mirror) return;
+
+    const unsigned to_flush = fields & mirror->gpu_dirty_fields;
+    if (to_flush & (gpu::MIRROR_POS | gpu::MIRROR_VEL)) {
+        mirror->copy_pos_vel_from_device(conf);
+        mirror->gpu_dirty_fields &= ~(gpu::MIRROR_POS | gpu::MIRROR_VEL);
+    }
+    // FORCE/BOX: nothing ever marks these dirty today (mark_gpu_dirty()
+    // is only called for VEL), so there's no flush routine needed for
+    // them yet -- add one here if a future writer starts leaving them
+    // GPU-only too.
+}
+
+void gpu::CudaManager::invalidate_gpu_mirror(configuration::Configuration & conf, unsigned fields) {
+    const std::size_t id = conf.id();
+
+    if (id == m_last_conf_id && m_last_conf_gpu) {
+        m_last_conf_gpu->gpu_fresh_fields &= ~fields;
+        return;
+    }
+
+    auto it = m_configurations.find(id);
+    if (it != m_configurations.end()) {
+        it->second->gpu_fresh_fields &= ~fields;
+    }
+}
+
 void gpu::CudaManager::sync_configuration_from_device(configuration::Configuration & conf) {
     const std::size_t id = conf.id();
 
     if (id == m_last_conf_id && m_last_conf_gpu) {
         m_last_conf_gpu->copy_pos_vel_from_device(conf);
+        m_last_conf_gpu->gpu_dirty_fields &= ~(gpu::MIRROR_POS | gpu::MIRROR_VEL);
         return;
     }
 
     auto it = m_configurations.find(id);
     if (it != m_configurations.end()) {
         it->second->copy_pos_vel_from_device(conf);
+        it->second->gpu_dirty_fields &= ~(gpu::MIRROR_POS | gpu::MIRROR_VEL);
     }
 }
 

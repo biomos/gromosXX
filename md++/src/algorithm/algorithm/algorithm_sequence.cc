@@ -71,7 +71,9 @@ int algorithm::Algorithm_Sequence
 
     algorithm::Remove_COM_Motion rcom;
     rcom.init(topo, conf, sim, os, quiet);
+    sim.cuda().flush_gpu_dirty(conf, rcom.gpu_mirror_touches());
     rcom.apply(topo, conf, sim);
+    sim.cuda().invalidate_gpu_mirror(conf, rcom.gpu_mirror_touches());
   }
   
   for(Algorithm_Sequence::iterator 
@@ -104,10 +106,24 @@ int algorithm::Algorithm_Sequence
       ++it){
     int ret = 0;
     DEBUG(7, "algorithm: " << (*it)->name);
+    // GPU-mirror freshness tracking (data-level cache coherence,
+    // CudaManager), two hooks around apply() instead of hand-picked
+    // sync booleans at each GPU call site -- default MIRROR_ALL means
+    // every ordinary (CPU-side) algorithm is handled correctly with no
+    // changes; only the few algorithms that manage their own mirror
+    // freshness through sim.cuda() narrow this via
+    // gpu_mirror_touches(). BEFORE: publish anything currently
+    // GPU-only ("dirty") in the fields this algorithm might touch, so
+    // it doesn't read/write a stale CPU value. AFTER: invalidate the
+    // GPU mirror's freshness for those fields, so the next GPU reader
+    // resyncs instead of trusting a value the CPU may have just
+    // changed.
+    sim.cuda().flush_gpu_dirty(conf, (*it)->gpu_mirror_touches());
     if((ret = (*it)->apply(topo, conf, sim))){
       DEBUG(1, "ERROR in algorithm_sequence::run : bailing out!");
       return ret;
     }
+    sim.cuda().invalidate_gpu_mirror(conf, (*it)->gpu_mirror_touches());
   }
   DEBUG(5, "Algorithm_Sequence: apply algorithm - DONE");
   return 0;
