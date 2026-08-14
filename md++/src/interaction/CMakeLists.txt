@@ -89,6 +89,7 @@ endif()
 
 if(USE_CUDA)
     list (APPEND INTERACTION_CC "nonbonded/pairlist/cuda_pairlist_algorithm.cc")
+    list (APPEND INTERACTION_CC "nonbonded/interaction/cuda_nonbonded_interaction.cc")
 endif()
 
 

@@ -1,38 +1,64 @@
 # Known issues
 
-## `aladip_cuda` fails (by design, not a bug): perturbation isn't supported by the dummy CUDA pairlist
+## `aladip_cuda` fails (by design, not a bug): perturbation and multi-energy-group aren't supported yet
 
 - **Test affected:** `aladip_cuda` (`cuda-on` only). All other regression
   tests (`aladip`, `aladip_unperturbed`, `aladip_special`, `aladip_atomic`,
-  `c16_cg`, `lambdas`, both presets) pass.
+  `c16_cg`, `lambdas`, both presets) pass, as do the CUDA-specific
+  `pairlist_cuda_equivalence`, `lj_crf_tile_kernel`, and
+  `cuda_nonbonded_interaction` tests.
 - **Why:** `aladip_cuda` runs the perturbed aladip system with
-  `accelerator = cuda`, so it calls `Pairlist_Algorithm::update_perturbed`.
-  `CUDA_Pairlist_Algorithm` is currently an explicit dummy placeholder (see
-  `src/gpu/PAIRLIST_PLAN.md` §5/§6) that doesn't implement perturbed
-  pairlists at all -- `update_perturbed` reports an `io::message::error`
-  and does nothing, by design, so the run fails loudly rather than
-  quietly computing wrong energies.
-- **Not fixed here:** real perturbed-pairlist support requires the actual
-  tile-based GPU pairlist (`PLAN.md` §10 step 5 onward), not the dummy.
-  Until then, this test is expected to fail. Don't try to make it pass by
-  loosening `update_perturbed`'s error -- that would silently reintroduce
-  exactly the "quiet fake result" failure mode `PAIRLIST_PLAN.md` §5(A)
-  was written to avoid.
-- Non-perturbed CUDA runs (`accelerator = cuda` without a `PERTURBATION`
-  block) exercise the real candidate-build + classification pipeline now
-  (`TILE_PAIRLIST_DESIGN.md` §3 steps 1-5: chargegroup cog/cell build,
-  Thrust sort-by-key into fixed 32-wide atom blocks, block bounding-sphere
-  computation, block-pair candidate search, exclusion + short/long
-  classification), for both chargegroup-cutoff and atomic-cutoff
-  (`sim.param().pairlist.atomic_cutoff`, `TILE_PAIRLIST_DESIGN.md` §4.2/
-  step 7) -- verified against `Standard_Pairlist_Algorithm` bit-for-bit by
-  the `pairlist_cuda_equivalence` test (vacuum + rectangular, both cutoff
-  modes, 4 cases total). `update()` still ends in the explicit dummy for
-  the CPU-facing `PairlistContainer` it's actually asked to fill (clears
-  it and warns), since nothing downstream (no force kernel) consumes the
-  real tiles (`m_tiles.solute_short`/etc) yet -- so nonbonded forces/
-  energies through the normal `Nonbonded_Interaction` path are still
-  zero, by design.
+  `accelerator = cuda`, and aladip's own topology/input define 2 energy
+  groups (`NEGR = 2`). Neither is supported by `CUDA_Nonbonded_Interaction`
+  yet (`TILE_PAIRLIST_DESIGN.md` §8/§9's v1 scope): its `init()`
+  hard-errors on both (multi-energy-group first, since that check runs
+  first and this system trips it regardless of perturbation) via
+  `io::messages.add(..., io::message::error)`, so the run fails loudly
+  with a clear message rather than quietly computing wrong or crashing.
+  Perturbation specifically would also fail on its own even with a single
+  energy group: `CUDA_Pairlist_Algorithm::update_perturbed()` still
+  reports an error and does nothing (no perturbed-pairlist support at
+  all yet), and `CUDA_Nonbonded_Interaction` never builds a
+  `Perturbed_Nonbonded_Set` (never builds any `Nonbonded_Set` at all).
+- **Found and fixed along the way, not just a design gap:**
+  `check_forcefield.cc`'s finite-difference hessian check calls
+  `Nonbonded_Interaction::calculate_interaction()` (singular) on every
+  `Nonbonded_Interaction` unconditionally, including ones whose `init()`
+  already hard-errored. The base implementation unconditionally indexes
+  `m_nonbonded_set[0]` (guarded only by an `assert`, compiled out under
+  the release build's `-DNDEBUG`) -- since `CUDA_Nonbonded_Interaction`
+  never populates `m_nonbonded_set`, this was a real segfault, not a
+  hypothetical one (reproduced while wiring §9, before the fixes below).
+  Fixed two ways: (1) made `Nonbonded_Interaction::calculate_interaction`
+  virtual (it wasn't) so `CUDA_Nonbonded_Interaction` can safely override
+  it instead of crashing; (2) added an `m_initialized` guard to
+  `CUDA_Nonbonded_Interaction` itself, since `aladip_cuda.t.cc` (like
+  some other test harnesses) calls `Forcefield::init()` without checking
+  its return value -- a hard-errored `init()` does not, by itself, stop
+  `calculate_interactions()`/`calculate_interaction()` from being called
+  afterward on `CUDA_Pairlist_Algorithm_Impl` state (`m_iac`/`m_charge`/
+  `m_force`/etc.) that `init()` never allocated.
+- **Not fixed here:** real perturbed-pairlist support requires
+  `CUDA_Pairlist_Algorithm::update_perturbed` (not started) and a
+  perturbation-aware force path in `CUDA_Nonbonded_Interaction` (also not
+  started). Multi-energy-group support requires reworking the tile
+  kernel's energy reduction from two flat totals to per-energy-group-pair
+  buckets (`TILE_PAIRLIST_DESIGN.md` §8/§9's v1 scope note) -- deliberately
+  deferred, see that file for the reasoning. Until either lands, this test
+  is expected to fail. Don't try to make it pass by loosening either
+  hard-error -- that would silently reintroduce exactly the "quiet fake
+  result" failure mode `PAIRLIST_PLAN.md` §5(A) was written to avoid.
+- Non-perturbed, single-energy-group CUDA runs work end-to-end now
+  (`TILE_PAIRLIST_DESIGN.md` §8/§9): real candidate-build + classification
+  (steps 3-7, both chargegroup- and atomic-cutoff) feeding a real LJ +
+  reaction-field force/energy kernel (step 8), wired into a real
+  `CUDA_Nonbonded_Interaction` that `create_nonbonded.cc` actually selects
+  for `accelerator = cuda` (step 9, replacing the old always-CPU
+  `Default_Nonbonded_Interaction` pairing) -- verified end-to-end against
+  `Standard_Pairlist_Algorithm` + direct `Nonbonded_Term::lj_crf_interaction`
+  summation by the `cuda_nonbonded_interaction` test (vacuum + rectangular,
+  a single-energy-group override of aladip's topology since aladip's own
+  input defines 2).
 
 ## Latent bug: CUDA context corruption after runtime `atomic_cutoff` toggle (not exercised by the current test suite)
 

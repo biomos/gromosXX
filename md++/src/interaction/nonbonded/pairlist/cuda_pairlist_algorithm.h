@@ -35,6 +35,8 @@
 #pragma once
 
 #include "gpu/cuda/interaction/nonbonded/pairlist/cuda_pairlist_algorithm_impl.h"
+#include "gpu/cuda/interaction/nonbonded/cuda_lj_params.h"
+#include "gpu/cuda/interaction/nonbonded/cuda_nb_sim_params.h"
 
 namespace math
 {
@@ -118,12 +120,26 @@ namespace interaction
       return m_impl.to_pairlist_container(topo);
     }
 
+    /**
+     * The real production entry point (TILE_PAIRLIST_DESIGN.md §8/§9,
+     * PLAN.md §10 step 9): runs the LJ + reaction-field tile kernel over
+     * the tiles built by the most recent update() call and accumulates
+     * the result into conf.current().force (+=) and returns the total
+     * LJ/CRF energies. Called by CUDA_Nonbonded_Interaction, never
+     * directly by anything CPU-pairlist-shaped -- unlike update()'s own
+     * `pairlist` parameter, this is where the real numbers come from.
+     */
+    void compute_forces_energies(topology::Topology & topo,
+                                  configuration::Configuration & conf,
+                                  simulation::Simulation & sim,
+                                  gpu::LJParamView lj,
+                                  gpu::NbSimParams nb,
+                                  double & e_lj,
+                                  double & e_crf) {
+      m_impl.compute_forces_energies(conf, topo, sim, lj, nb, e_lj, e_crf);
+    }
+
   private:
     CUDA_Pairlist_Algorithm_Impl m_impl;
-    // TODO(cleanup): dummy placeholder per PAIRLIST_PLAN.md §5(A) -- update()
-    // just clears the pairlist and warns once. Remove once
-    // TILE_PAIRLIST_DESIGN.md's implementation sequence lands the real
-    // tile-based GPU pairlist.
-    bool m_warned_dummy = false;
   };
 } // interaction

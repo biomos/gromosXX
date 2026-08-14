@@ -25,6 +25,7 @@
 #include "gpu/cuda/memory/topology_struct.h"
 #include "gpu/cuda/memory/configuration_struct.h"
 #include "gpu/cuda/kernels/periodicity.h"
+#include "gpu/cuda/interaction/nonbonded/kernels/lj_crf_tiles.h"
 #include "block_pairlist.h"
 
 #include "cuda_pairlist_algorithm_impl.h"
@@ -47,6 +48,22 @@ int interaction::CUDA_Pairlist_Algorithm_Impl::init(topology::Topology &topo,
     std::ostream &os,
     bool quiet) {
     DEBUG(0, "CUDA_Pairlist_Algorithm_Impl::init");
+
+    // Per-atom iac/charge are static for a normal run (same assumption as
+    // gpu::Topology's exclusion CSR, built once in its constructor) --
+    // build them here rather than in compute_forces_energies(), which
+    // runs every step.
+    const unsigned num_atoms = static_cast<unsigned>(topo.num_atoms());
+    m_iac.resize(num_atoms);
+    m_charge.resize(num_atoms);
+    for (unsigned i = 0; i < num_atoms; ++i) {
+        m_iac[i]    = topo.iac(i);
+        m_charge[i] = static_cast<FPL_TYPE>(topo.charge(i));
+    }
+    m_force.resize(num_atoms);
+    m_e_lj.resize(1);
+    m_e_crf.resize(1);
+
     return 0;
 };
 
@@ -495,4 +512,69 @@ interaction::PairlistContainer interaction::CUDA_Pairlist_Algorithm_Impl::to_pai
     unpack_tiles_into(m_tiles.solvent_long,  m_solvent_atom_order, nullptr, result.solvent_long);
 
     return result;
+}
+
+void interaction::CUDA_Pairlist_Algorithm_Impl::compute_forces_energies(
+                configuration::Configuration & conf,
+                topology::Topology & topo,
+                simulation::Simulation & sim,
+                gpu::LJParamView lj,
+                gpu::NbSimParams nb,
+                double & e_lj,
+                double & e_crf)
+{
+    const unsigned num_atoms = static_cast<unsigned>(m_force.size());
+
+    // IEEE-754 zero is the all-zero bit pattern -- cudaMemset is safe and
+    // matches the existing convention (TileVecT::clear() zeroes its tile
+    // array the same way).
+    cudaMemset(m_force.data(), 0, sizeof(FPL3_TYPE) * num_atoms);
+    m_e_lj[0]  = 0.0;
+    m_e_crf[0] = 0.0;
+
+    const math::CuVArray::View pos = conf.get_gpu_view().current().pos;
+    const math::boundary_enum boundary = conf.boundary_type;
+    const math::Box box = conf.current().box;
+
+    const unsigned num_solute_atoms  = static_cast<unsigned>(m_solute_atom_order.size());
+    const unsigned num_solvent_atoms = static_cast<unsigned>(m_solvent_atom_order.size());
+
+    // Same row_order/col_other_order convention as classify_tiles_kernel
+    // (block_pairlist.h): solute_short/solute_long tiles may reference
+    // either solute or solvent atoms on their column side (col_from_b),
+    // solvent_short/solvent_long tiles never do.
+    gpu::launch_lj_crf_tiles(
+        m_tiles.solute_short.view(), m_solute_atom_order.data(), num_solute_atoms,
+        m_solvent_atom_order.data(), num_solvent_atoms,
+        pos, m_iac.data(), m_charge.data(), lj, nb, boundary, box,
+        m_force.data(), m_e_lj.data(), m_e_crf.data());
+
+    gpu::launch_lj_crf_tiles(
+        m_tiles.solute_long.view(), m_solute_atom_order.data(), num_solute_atoms,
+        m_solvent_atom_order.data(), num_solvent_atoms,
+        pos, m_iac.data(), m_charge.data(), lj, nb, boundary, box,
+        m_force.data(), m_e_lj.data(), m_e_crf.data());
+
+    gpu::launch_lj_crf_tiles(
+        m_tiles.solvent_short.view(), m_solvent_atom_order.data(), num_solvent_atoms,
+        nullptr, 0u,
+        pos, m_iac.data(), m_charge.data(), lj, nb, boundary, box,
+        m_force.data(), m_e_lj.data(), m_e_crf.data());
+
+    gpu::launch_lj_crf_tiles(
+        m_tiles.solvent_long.view(), m_solvent_atom_order.data(), num_solvent_atoms,
+        nullptr, 0u,
+        pos, m_iac.data(), m_charge.data(), lj, nb, boundary, box,
+        m_force.data(), m_e_lj.data(), m_e_crf.data());
+
+    cudaDeviceSynchronize();
+
+    // Forcefield::calculate_interactions() zeroes conf.current().force
+    // once before every Interaction in the sequence runs -- accumulate
+    // (+=), don't overwrite.
+    for (unsigned i = 0; i < num_atoms; ++i) {
+        conf.current().force(i) += math::Vec(m_force[i].x, m_force[i].y, m_force[i].z);
+    }
+    e_lj  = m_e_lj[0];
+    e_crf = m_e_crf[0];
 }

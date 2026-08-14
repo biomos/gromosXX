@@ -387,6 +387,83 @@ Before any force/energy number from this pairlist is trusted:
    passing within float precision (`tol = 1e-4`, appropriate for
    `FPL_TYPE = float` in the default mixed-precision build).
 
-Step 9 onward (wiring a real `CUDA_Nonbonded_Interaction` end-to-end: real
-`PairlistContainer` output instead of the dummy, hard-error gate, virial,
-twin-range short/long semantics) is `PLAN.md` §10 step 9, not started.
+9. **Done (v1 scope: single energy group, no virial, no perturbation/EDS).**
+   `PLAN.md` §10 step 9: `interaction::CUDA_Nonbonded_Interaction`
+   (`src/interaction/nonbonded/interaction/cuda_nonbonded_interaction.
+   {h,cc}`), a real `Nonbonded_Interaction` subclass wired into
+   `create_nonbonded.cc`'s `accelerator == gpu_cuda` branch (replacing the
+   old, permanent mismatch of a real `CUDA_Pairlist_Algorithm` paired with
+   the CPU `Default_Nonbonded_Interaction`, which silently ignored every
+   real tile the pairlist built). `calculate_interactions()` drives
+   `CUDA_Pairlist_Algorithm::prepare()`/`update()` then a new
+   `compute_forces_energies()` passthrough (added to
+   `CUDA_Pairlist_Algorithm`/`_Impl`) that runs `gpu::lj_crf_tile_kernel`
+   over all four classified buckets (`solute_short/long`,
+   `solvent_short/long`), accumulating into a persistent per-atom GPU
+   force buffer and two energy accumulators (`m_iac`/`m_charge`/`m_force`/
+   `m_e_lj`/`m_e_crf`, all built/sized once in
+   `CUDA_Pairlist_Algorithm_Impl::init()` -- which is now actually called
+   from `CUDA_Pairlist_Algorithm::init()`; it existed but nothing invoked
+   it before), then adds (`+=`, matching `Forcefield::calculate_
+   interactions()` zeroing `conf.current().force`/`energies` once up
+   front, not per-`Interaction`) the result into `conf.current().force`
+   and `energies.lj_energy[0][0]`/`crf_energy[0][0]`.
+
+   v1 scope, hard-errored in `init()` rather than silently producing wrong
+   numbers (matching this document's established pattern for boundary/
+   atomic-cutoff scope): exactly one energy group
+   (`Configuration::Energy::lj_energy`/`crf_energy` are per-energy-group-
+   pair matrices; the tile kernel's reduction only ever produces two flat
+   totals) and no virial (the tile kernel doesn't accumulate `r ⊗ f`).
+   Also does not implement the CPU twin-range performance optimization of
+   freezing long-range forces between pairlist rebuilds --
+   `calculate_interactions()` fully reruns `prepare()`+`update()` (full
+   candidate rebuild + reclassification) and recomputes *all* four tile
+   buckets from current positions every call, regardless of
+   `sim.param().pairlist.skip_step`. Numerically exact for any single
+   evaluation (right after a rebuild, "recompute fresh" and "reuse what
+   was frozen at this same rebuild" are the same numbers) so this doesn't
+   compromise the correctness test below, but doesn't reproduce
+   `skip_step`'s performance characteristic or (for a multi-step
+   trajectory drifting across the `cutoff_short`/`cutoff_long` boundary
+   between what would have been rebuild steps) its exact per-step
+   energies either. Revisit before this runs production MD.
+
+   Found and fixed two real bugs while wiring this, not just new work:
+   - `check_forcefield.cc`'s finite-difference hessian check calls
+     `Nonbonded_Interaction::calculate_interaction()` (singular)
+     unconditionally on every `Nonbonded_Interaction`, including ones
+     whose `init()` already hard-errored (aladip's own topology defines
+     2 energy groups, tripping the gate above). The base implementation
+     unconditionally indexes `m_nonbonded_set[0]`, guarded only by an
+     `assert` that's compiled out under the release build's `-DNDEBUG` --
+     since this class never populates `m_nonbonded_set`, that's a real
+     segfault (reproduced via `aladip_cuda`, not hypothetical). Fixed by
+     making `calculate_interaction` virtual (it wasn't) and overriding it
+     to fail safely instead of indexing out of bounds.
+   - Even with that fix, the same test still crashed: `aladip_cuda.t.cc`
+     calls `Forcefield::init()` without checking its return value, so a
+     hard-errored `init()` doesn't by itself stop `calculate_
+     interactions()` from running afterward against `CUDA_Pairlist_
+     Algorithm_Impl` state (`m_iac`/`m_charge`/`m_force`/etc.) that
+     `init()` never allocated -- `cudaMemset` on a still-null,
+     zero-capacity buffer. Fixed with an `m_initialized` guard: both
+     overridden methods return a safe no-op instead of touching any GPU
+     state if `init()` didn't complete. See `KNOWN_ISSUES.md`'s
+     `aladip_cuda` entry for the full account.
+
+   Correctness test: `src/check/cuda_nonbonded_interaction.t.cc` --
+   unlike the step-6/step-8 tests (pairlist only; kernel only, hand-built
+   tile), this drives the exact `CUDA_Pairlist_Algorithm` +
+   `CUDA_Nonbonded_Interaction` pairing `create_nonbonded.cc` uses, and
+   compares against `Standard_Pairlist_Algorithm`'s real pairlist summed
+   through `Nonbonded_Term::lj_crf_interaction` directly (all four
+   buckets). aladip's topology has 2 energy groups, which the gate above
+   rejects, so the test forces every atom into a single energy group
+   after loading (consistently on both the CPU-reference and GPU sides,
+   same idea as overriding `boundary_type` in `pairlist_cuda_equivalence.
+   t.cc`) -- vacuum + rectangular, both passing within float precision.
+
+Step 10 onward (force/energy comparison against a *running* MD trajectory
+rather than a single evaluation, skin-drift test, multi-energy-group and
+virial support, perturbation) is `PLAN.md` §10 step 10 onward, not started.

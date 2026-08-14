@@ -103,6 +103,9 @@ if(USE_CUDA)
 
     list(APPEND EXEC_NAMES lj_crf_tile_kernel)
     add_executable(lj_crf_tile_kernel lj_crf_tile_kernel.t.cc)
+
+    list(APPEND EXEC_NAMES cuda_nonbonded_interaction)
+    add_executable(cuda_nonbonded_interaction cuda_nonbonded_interaction.t.cc)
 endif()
 
 foreach(LOOP_VAR ${EXEC_NAMES})

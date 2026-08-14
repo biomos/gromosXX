@@ -48,6 +48,7 @@
 #include "../../interaction/nonbonded/pairlist/grid_cell_pairlist.h"
 #ifdef USE_CUDA
 #include "../../interaction/nonbonded/pairlist/cuda_pairlist_algorithm.h"
+#include "../../interaction/nonbonded/interaction/cuda_nonbonded_interaction.h"
 #endif
 
 #include "../../interaction/nonbonded/interaction/nonbonded_outerloop.h"
@@ -239,14 +240,18 @@ using Default_Nonbonded_Interaction =
 Nonbonded_Interaction * ni;
 
 #if defined(USE_CUDA)
-  // TODO(cleanup): CUDA_Nonbonded_Interaction was discarded per PLAN.md §7
-  // (CPU pairlist + full per-step upload + one-thread-per-pair kernel,
-  // violates D5/D6). The tile-based replacement, plus the hard-error gate
-  // of PLAN.md §6.1 for accelerator==gpu_cuda, is PLAN.md §10 roadmap step 9
-  // ("CUDA_Nonbonded_Interaction wired end-to-end"). Until then, always
-  // build the default CPU nonbonded interaction; pairing it with
-  // CUDA_Pairlist_Algorithm would be a worse mismatch than not using it.
-  ni = new Default_Nonbonded_Interaction(pa);
+  // PLAN.md §10 roadmap step 9: accelerator==gpu_cuda gets the real
+  // tile-based GPU nonbonded interaction (TILE_PAIRLIST_DESIGN.md §8/§9),
+  // paired with the CUDA_Pairlist_Algorithm constructed above -- never
+  // the CPU Default_Nonbonded_Interaction, which would silently ignore
+  // the real tiles CUDA_Pairlist_Algorithm builds (PLAN.md §6.1's
+  // hard-error-gate intent: GPU accelerator implies GPU nonbonded path,
+  // no CPU/GPU mismatch).
+  if (sim.param().gpu.accelerator == simulation::gpu_cuda) {
+    ni = new CUDA_Nonbonded_Interaction(pa);
+  } else {
+    ni = new Default_Nonbonded_Interaction(pa);
+  }
 #elif defined(XXMPI)
   if (sim.mpi_enabled()){
     if (sim.mpiControl().threadID == sim.mpiControl().masterID)

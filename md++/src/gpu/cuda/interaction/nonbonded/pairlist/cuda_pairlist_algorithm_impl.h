@@ -3,6 +3,8 @@
 #include "gpu/cuda/memory/precision.h"
 #include "gpu/cuda/memory/cuvector.h"
 #include "gpu/cuda/memory/pairlist/tile.h"
+#include "gpu/cuda/interaction/nonbonded/cuda_lj_params.h"
+#include "gpu/cuda/interaction/nonbonded/cuda_nb_sim_params.h"
 #include "interaction/nonbonded/pairlist/pairlist.h"
 
 namespace interaction {
@@ -122,6 +124,28 @@ namespace interaction {
        */
       interaction::PairlistContainer to_pairlist_container(topology::Topology & topo) const;
 
+      /**
+       * The real production entry point (TILE_PAIRLIST_DESIGN.md §8/§9):
+       * runs gpu::lj_crf_tile_kernel over all four classified tile buckets
+       * (solute_short/long, solvent_short/long), accumulating forces into
+       * a device buffer and energies into two double accumulators, then
+       * adds (+=, not overwrites -- Forcefield::calculate_interactions
+       * zeroes conf.current().force/energies once before every
+       * Interaction in the sequence runs) the result into
+       * conf.current().force and returns the total LJ/CRF energies via
+       * e_lj/e_crf. Must be called after classify_tiles(); m_iac/m_charge
+       * (built once in init(), topology is static for a normal run) and
+       * m_force/m_e_lj/m_e_crf (sized once in init(), re-zeroed every
+       * call here) back this.
+       */
+      void compute_forces_energies(configuration::Configuration & conf,
+                                    topology::Topology & topo,
+                                    simulation::Simulation & sim,
+                                    gpu::LJParamView lj,
+                                    gpu::NbSimParams nb,
+                                    double & e_lj,
+                                    double & e_crf);
+
     protected:
       /**
        * squared shortrange cutoff.
@@ -194,5 +218,22 @@ namespace interaction {
        * Candidate and short/long-classified tiles. See tiles() accessor.
        */
       gpu::TileContainer m_tiles;
+
+      /**
+       * Per-atom integer atom code / charge, built once in init() (static
+       * for a normal run, like the exclusion CSR in gpu::Topology) --
+       * compute_forces_energies() reads these directly instead of going
+       * through TopologyView every call.
+       */
+      gpu::cuvector<int> m_iac;
+      gpu::cuvector<FPL_TYPE> m_charge;
+      /**
+       * Per-atom force accumulator and total LJ/CRF energy accumulators,
+       * sized once in init(), re-zeroed at the top of every
+       * compute_forces_energies() call.
+       */
+      gpu::cuvector<FPL3_TYPE> m_force;
+      gpu::cuvector<double> m_e_lj;
+      gpu::cuvector<double> m_e_crf;
   };
 }

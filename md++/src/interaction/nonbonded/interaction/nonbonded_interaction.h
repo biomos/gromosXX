@@ -78,12 +78,19 @@ namespace interaction
     /**
      * calculate the interaction for a given atom pair.
      * SLOW! as it has to create the periodicity...
+     *
+     * virtual (unlike its declaration might suggest at a glance -- this
+     * used to be a plain member function): CUDA_Nonbonded_Interaction
+     * overrides it to avoid the default implementation's unconditional
+     * m_nonbonded_set[0] access, since that class never populates
+     * m_nonbonded_set. Made virtual rather than adding a special case
+     * here, to keep this base class agnostic of any specific subclass.
      */
-    int calculate_interaction(topology::Topology & topo,
+    virtual int calculate_interaction(topology::Topology & topo,
 			      configuration::Configuration & conf,
 			      simulation::Simulation & sim,
 			      unsigned int atom_i, unsigned int atom_j,
-			      math::Vec & force, 
+			      math::Vec & force,
 			      double &e_lj, double &e_crf);
     
 

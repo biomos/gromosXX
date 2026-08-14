@@ -67,6 +67,8 @@ int interaction::CUDA_Pairlist_Algorithm::init(
     return 1;
   }
 
+  m_impl.init(topo, conf, sim, os, quiet);
+
   if (!quiet)
     os << "\tcuda pairlist algorithm\n";
   return 0;
@@ -108,11 +110,14 @@ int interaction::CUDA_Pairlist_Algorithm::prepare(
  * interactions' pairlist_update check) -- the real candidate-build +
  * classification work, per TILE_PAIRLIST_DESIGN.md §3 steps 1-5.
  * m_impl.tiles() now holds real, exclusion-checked, short/long-classified
- * atom-pair tiles after this call. Still ends by leaving the CPU-facing
- * `pairlist` (interaction::PairlistContainer) an explicit, warned-about
- * dummy: nothing downstream (no force kernel) consumes m_impl.tiles()
- * yet, so there is nothing real to report through this container -- see
- * PAIRLIST_PLAN.md §5(A).
+ * atom-pair tiles after this call, consumed for real by
+ * compute_forces_energies() (TILE_PAIRLIST_DESIGN.md §8/§9), called
+ * separately by CUDA_Nonbonded_Interaction -- not through this method's
+ * own `pairlist` parameter, which stays an unused, empty
+ * interaction::PairlistContainer: the base Pairlist_Algorithm::update()
+ * interface is CPU-Pairlist-shaped and nothing reads this parameter for
+ * the CUDA path (kept only because update() is virtual and must be
+ * implemented with this signature).
  */
 void interaction::CUDA_Pairlist_Algorithm::update(topology::Topology & topo,
                                       configuration::Configuration & conf,
@@ -130,18 +135,5 @@ void interaction::CUDA_Pairlist_Algorithm::update(topology::Topology & topo,
   m_impl.build_candidates(conf, topo, sim);
   m_impl.classify_tiles(conf, topo, sim);
 
-  // TODO(cleanup): dummy placeholder, see PAIRLIST_PLAN.md §5(A). Not the
-  // real force-consumable output -- produces an intentionally empty
-  // pairlist (zero nonbonded pairs) so that selecting accelerator=cuda
-  // fails loudly (visibly wrong, zero energy, plus this warning) rather
-  // than quietly running a plausible-looking but fake result.
   pairlist.clear();
-  if (!m_warned_dummy) {
-    io::messages.add(
-      "CUDA pairlist algorithm is a placeholder (PAIRLIST_PLAN.md); "
-      "it produces zero nonbonded pairs until the real tile-based GPU "
-      "pairlist (TILE_PAIRLIST_DESIGN.md) is implemented.",
-      "CUDA_Pairlist_Algorithm", io::message::warning);
-    m_warned_dummy = true;
-  }
 }
