@@ -520,10 +520,26 @@ Rough dependency order; each step should land as its own reviewable unit.
 9. **`CUDA_Nonbonded_Interaction` wired end-to-end**, hard-error gate (§6.1)
    in place.
 10. **Force/energy comparison tests** (§9.3), skin drift test (§9.4).
-11. **Re-port `Leap_Frog_*<gpuBackend>`** against `sim.cuda().
+11. **DONE.** **Re-port `Leap_Frog_*<gpuBackend>`** against `sim.cuda().
     configuration_view()` instead of the removed `conf.m_gpu` API — first
     real "runs entirely on GPU across two algorithms without a round trip"
-    milestone.
+    milestone. Landed in two parts: the re-port itself (new
+    `gpu/cuda/algorithm/integration/leap_frog_kernels.{h,cu}` +
+    `algorithm/integration/leap_frog_gpu.cc`, validated by
+    `leap_frog_gpu.t.cc`), then a correctness fix for a real bug the re-port
+    shipped with — `Leap_Frog_Position<gpuBackend>` silently used a stale
+    GPU-resident velocity whenever CPU-only temperature coupling
+    (`multibath.couple`) ran between it and `Leap_Frog_Velocity<gpuBackend>`.
+    The fix generalizes past this one case: `CudaManager` now tracks
+    per-field freshness on the `Configuration` mirror
+    (`gpu_fresh_fields`/`gpu_dirty_fields`, `gpu/mirror_fields.h`) instead of
+    relying on hand-picked `sync_pos_vel`/`full_resync` booleans at each call
+    site, with `Algorithm_Sequence::run()` centrally flushing/invalidating
+    it around every algorithm's `apply()` via a new
+    `Algorithm::gpu_mirror_touches()` hook (default-safe for every existing
+    CPU algorithm; see `TILE_PAIRLIST_DESIGN.md`'s "Follow-up: GPU-mirror
+    freshness tracking" section for the full design and the regression test
+    that caught it).
 12. **Shake/constraints on GPU** (currently only stubs in
     `gpu/cuda/algorithm/constraints.*`, which are being deleted per §3.6 —
     this is new work using the same backend-dispatch pattern as
