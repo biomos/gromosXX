@@ -282,8 +282,54 @@ Before any force/energy number from this pairlist is trusted:
      and checks `io::messages` after every run (`flush_messages()`),
      treating any error-or-worse severity as a hard failure rather than
      silently continuing.
-7. Atomic-cutoff axis as a template branch, same kernels, second
-   equivalence test against `Standard_Pairlist_Algorithm_Atomic`.
+7. **Done.** Atomic-cutoff axis, same kernels/tiles: `classify_tiles_kernel`
+   gained a compile-time `ATOMIC_CUTOFF` template bool (alongside its
+   existing `BOUNDARY` template) that switches the distance-test input
+   (atom-atom `nearest_image` vs. chargegroup cog-cog) and the
+   same-chargegroup handling (real distance test in atomic mode, matching
+   `Standard_Pairlist_Algorithm::update_atomic`'s "no special-casing"; an
+   assumed-always-short shortcut in chargegroup mode, matching
+   `_update_cg`'s direct push to `solute_short`) -- both gated by an
+   exclusion check first, and both skipping solvent same-chargegroup
+   (same-molecule) pairs unconditionally, since those have no CSR entries
+   to check either way. `reorder()` gained a new `atomic_cutoff`-only path
+   (`gpu::atom_cell_kernel`, `_atom_sort_key_atomic`) that computes each
+   atom's own Morton sort key from a locally box-wrapped position copy,
+   since `prepare_cog()` skips the chargegroup cog/cell build entirely in
+   this mode (matching `update_atomic`'s CPU reference, which never wraps
+   positions either -- `nearest_image` alone handles PBC). `prepare_cog()`
+   now always refreshes the GPU position mirror (`conf.copy_to_gpu()`)
+   regardless of mode, since atomic-cutoff has no other call site that
+   does. `CUDA_Pairlist_Algorithm::init()`'s former atomic_cutoff
+   hard-error, and `prepare()`/`update()`'s runtime re-check guards against
+   a toggle mid-run, are both removed -- no longer needed now that every
+   stage re-reads `sim.param().pairlist.atomic_cutoff` fresh and both
+   modes are real, safe-to-toggle-between implementations.
+
+   Found and fixed a real, pre-existing correctness bug in step 5's
+   chargegroup-cutoff code while building this, not just new work: the
+   original `classify_tiles_kernel` unconditionally skipped *every*
+   same-chargegroup pair (`if (cg1 != cg2)`), but
+   `Standard_Pairlist_Algorithm::_update_cg` only does that for *solvent*
+   chargegroups (structural, since solvent atoms have no exclusion-CSR
+   entries) -- solute same-chargegroup pairs are supposed to go through
+   a real exclusion check and, if not excluded, land in `solute_short`
+   unconditionally (no distance test). The blanket skip happened to match
+   `aladip`'s topology (apparently every intra-chargegroup solute pair is
+   already 1-2/1-3-excluded there) so step 6's equivalence test didn't
+   catch it, but it would silently drop real short-range interactions for
+   any topology with a chargegroup containing a non-excluded internal
+   pair. Fixed as part of this step's kernel rework (see above); the
+   existing vacuum/rectangular chargegroup-cutoff equivalence cases still
+   pass exactly after the fix, confirming it didn't change `aladip`'s
+   result.
+
+   Second equivalence test: extended `pairlist_cuda_equivalence.t.cc`
+   (not a separate file -- `Standard_Pairlist_Algorithm` already dispatches
+   chargegroup/atomic internally via the same `atomic_cutoff` flag, no
+   separate "`_Atomic`" class exists) with two more cases (vacuum +
+   rectangular, `atomic_cutoff = true`), 4 cases total, all passing
+   exactly.
 
 Step 8 onward (force kernel consuming `TileContainer`, wiring into a real
 `CUDA_Nonbonded_Interaction`) is `PLAN.md` §10 steps 6-9, unchanged, out of

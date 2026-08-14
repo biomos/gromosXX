@@ -145,18 +145,31 @@ namespace gpu {
    * when processing solute_candidates, and {nullptr, 0} when processing
    * solvent_candidates (col_from_b is never set on those tiles).
    *
-   * Chargegroup-cutoff mode only (TILE_PAIRLIST_DESIGN.md §4.2: atomic-
-   * cutoff is a follow-up axis, same kernel, different distance-test
-   * input) -- cutoff decisions use each pair's owning chargegroups' cog
-   * (`cg_cog`, via `topo.chargegroup` for the atom->chargegroup lookup),
-   * not the atoms' own positions.
+   * ATOMIC_CUTOFF (TILE_PAIRLIST_DESIGN.md §4.2/step 7) selects the
+   * distance-test input, same kernel/tiles otherwise: false uses each
+   * pair's owning chargegroups' cog (`cg_cog`, via `topo.chargegroup` for
+   * the atom->chargegroup lookup); true uses the atoms' own positions
+   * (`pos`) directly, matching Standard_Pairlist_Algorithm::update_atomic.
+   * Same-chargegroup pairs are handled differently by mode too, matching
+   * their respective CPU references exactly:
+   *  - solvent same-chargegroup (same molecule) pairs are always skipped
+   *    in both modes -- structural (loop-bounds) in the CPU atomic code,
+   *    not exclusion-list-based, since solvent atoms have no CSR entries
+   *    (see TopologyView::excl_ptr's doc comment).
+   *  - solute same-chargegroup pairs: chargegroup-cutoff mode assumes
+   *    they're always in range (no distance test, matches
+   *    Standard_Pairlist_Algorithm::_update_cg's direct push to
+   *    solute_short after only an exclusion check); atomic-cutoff mode
+   *    does a real atom-atom distance test like any other pair (matches
+   *    update_atomic, which never special-cases same-chargegroup pairs).
    */
-  template <math::boundary_enum BOUNDARY>
+  template <bool ATOMIC_CUTOFF, math::boundary_enum BOUNDARY>
   __global__ void classify_tiles_kernel(
       TileVecT<Interaction_Tile>::View candidates,
       const unsigned* row_order, unsigned row_count,
       const unsigned* col_other_order, unsigned col_other_count,
       math::CuVArray::View cg_cog,
+      math::CuVArray::View pos,
       Topology::View topo,
       Periodicity<BOUNDARY> periodicity,
       FPL_TYPE cutoff_short2, FPL_TYPE cutoff_long2,

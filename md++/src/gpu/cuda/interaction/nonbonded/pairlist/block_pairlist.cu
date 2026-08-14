@@ -136,12 +136,13 @@ __global__ void gpu::atom_sort_key_kernel(
     }
 }
 
-template <math::boundary_enum BOUNDARY>
+template <bool ATOMIC_CUTOFF, math::boundary_enum BOUNDARY>
 __global__ void gpu::classify_tiles_kernel(
     gpu::TileVecT<gpu::Interaction_Tile>::View candidates,
     const unsigned* row_order, unsigned row_count,
     const unsigned* col_other_order, unsigned col_other_count,
     math::CuVArray::View cg_cog,
+    math::CuVArray::View pos,
     gpu::Topology::View topo,
     gpu::Periodicity<BOUNDARY> periodicity,
     FPL_TYPE cutoff_short2, FPL_TYPE cutoff_long2,
@@ -178,17 +179,43 @@ __global__ void gpu::classify_tiles_kernel(
 
         const unsigned cg1 = gpu::atom_to_chargegroup(topo.chargegroup, topo.num_chargegroups, a1);
         const unsigned cg2 = gpu::atom_to_chargegroup(topo.chargegroup, topo.num_chargegroups, a2);
+        const bool same_group = (cg1 == cg2);
+        // same_group implies same class (chargegroups are wholly solute or
+        // wholly solvent) -- checking a1 alone is enough.
+        const bool solvent_pair = (a1 >= topo.num_solute_atoms);
 
-        if (cg1 != cg2) { // never emit intramolecular (same-chargegroup) pairs
+        // Solvent same-chargegroup (same molecule) pairs are always
+        // skipped in both modes -- structural, not exclusion-list-based
+        // (solvent atoms have no CSR entries, see TopologyView::excl_ptr).
+        if (!(same_group && solvent_pair)) {
             const unsigned i = a1 < a2 ? a1 : a2;
             const unsigned j = a1 < a2 ? a2 : a1;
             if (!topo.is_excluded(i, j)) {
-                const FPL3_TYPE d = periodicity.nearest_image(cg_cog(cg1), cg_cog(cg2));
-                const FPL_TYPE dist2 = abs2(d);
-                if (dist2 < cutoff_short2) {
+                if constexpr (ATOMIC_CUTOFF) {
+                    // Real atom-atom distance test for every pair, same as
+                    // any other -- update_atomic() never special-cases
+                    // same-chargegroup solute pairs.
+                    const FPL3_TYPE d = periodicity.nearest_image(pos(a1), pos(a2));
+                    const FPL_TYPE dist2 = abs2(d);
+                    if (dist2 < cutoff_short2) {
+                        hit_short = true;
+                    } else if (dist2 < cutoff_long2) {
+                        hit_long = true;
+                    }
+                } else if (same_group) {
+                    // Chargegroup-cutoff: intra-chargegroup pairs are
+                    // assumed always in range, no distance test -- matches
+                    // Standard_Pairlist_Algorithm::_update_cg's direct push
+                    // to solute_short after only an exclusion check.
                     hit_short = true;
-                } else if (dist2 < cutoff_long2) {
-                    hit_long = true;
+                } else {
+                    const FPL3_TYPE d = periodicity.nearest_image(cg_cog(cg1), cg_cog(cg2));
+                    const FPL_TYPE dist2 = abs2(d);
+                    if (dist2 < cutoff_short2) {
+                        hit_short = true;
+                    } else if (dist2 < cutoff_long2) {
+                        hit_long = true;
+                    }
                 }
             }
         }
@@ -229,24 +256,46 @@ __global__ void gpu::classify_tiles_kernel(
     }
 }
 
-// explicit instantiations to allow linking
-template __global__ void gpu::classify_tiles_kernel<math::vacuum>(
+// explicit instantiations to allow linking -- both ATOMIC_CUTOFF values,
+// every boundary type.
+template __global__ void gpu::classify_tiles_kernel<false, math::vacuum>(
     gpu::TileVecT<gpu::Interaction_Tile>::View,
     const unsigned*, unsigned, const unsigned*, unsigned,
-    math::CuVArray::View, gpu::Topology::View,
+    math::CuVArray::View, math::CuVArray::View, gpu::Topology::View,
     gpu::Periodicity<math::vacuum>, FPL_TYPE, FPL_TYPE,
     gpu::TileVecT<gpu::Interaction_Tile>::View, gpu::TileVecT<gpu::Interaction_Tile>::View);
 
-template __global__ void gpu::classify_tiles_kernel<math::rectangular>(
+template __global__ void gpu::classify_tiles_kernel<true, math::vacuum>(
     gpu::TileVecT<gpu::Interaction_Tile>::View,
     const unsigned*, unsigned, const unsigned*, unsigned,
-    math::CuVArray::View, gpu::Topology::View,
+    math::CuVArray::View, math::CuVArray::View, gpu::Topology::View,
+    gpu::Periodicity<math::vacuum>, FPL_TYPE, FPL_TYPE,
+    gpu::TileVecT<gpu::Interaction_Tile>::View, gpu::TileVecT<gpu::Interaction_Tile>::View);
+
+template __global__ void gpu::classify_tiles_kernel<false, math::rectangular>(
+    gpu::TileVecT<gpu::Interaction_Tile>::View,
+    const unsigned*, unsigned, const unsigned*, unsigned,
+    math::CuVArray::View, math::CuVArray::View, gpu::Topology::View,
     gpu::Periodicity<math::rectangular>, FPL_TYPE, FPL_TYPE,
     gpu::TileVecT<gpu::Interaction_Tile>::View, gpu::TileVecT<gpu::Interaction_Tile>::View);
 
-template __global__ void gpu::classify_tiles_kernel<math::triclinic>(
+template __global__ void gpu::classify_tiles_kernel<true, math::rectangular>(
     gpu::TileVecT<gpu::Interaction_Tile>::View,
     const unsigned*, unsigned, const unsigned*, unsigned,
-    math::CuVArray::View, gpu::Topology::View,
+    math::CuVArray::View, math::CuVArray::View, gpu::Topology::View,
+    gpu::Periodicity<math::rectangular>, FPL_TYPE, FPL_TYPE,
+    gpu::TileVecT<gpu::Interaction_Tile>::View, gpu::TileVecT<gpu::Interaction_Tile>::View);
+
+template __global__ void gpu::classify_tiles_kernel<false, math::triclinic>(
+    gpu::TileVecT<gpu::Interaction_Tile>::View,
+    const unsigned*, unsigned, const unsigned*, unsigned,
+    math::CuVArray::View, math::CuVArray::View, gpu::Topology::View,
+    gpu::Periodicity<math::triclinic>, FPL_TYPE, FPL_TYPE,
+    gpu::TileVecT<gpu::Interaction_Tile>::View, gpu::TileVecT<gpu::Interaction_Tile>::View);
+
+template __global__ void gpu::classify_tiles_kernel<true, math::triclinic>(
+    gpu::TileVecT<gpu::Interaction_Tile>::View,
+    const unsigned*, unsigned, const unsigned*, unsigned,
+    math::CuVArray::View, math::CuVArray::View, gpu::Topology::View,
     gpu::Periodicity<math::triclinic>, FPL_TYPE, FPL_TYPE,
     gpu::TileVecT<gpu::Interaction_Tile>::View, gpu::TileVecT<gpu::Interaction_Tile>::View);

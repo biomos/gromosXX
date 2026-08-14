@@ -67,19 +67,6 @@ int interaction::CUDA_Pairlist_Algorithm::init(
     return 1;
   }
 
-  // TILE_PAIRLIST_DESIGN.md §4.2: chargegroup-cutoff first, atomic-cutoff
-  // as a separate follow-up step. Calling with atomic_cutoff=true today
-  // would silently skip the chargegroup cog/cell build this pairlist
-  // currently depends on entirely, producing an empty (wrong) candidate
-  // list rather than a working atomic-cutoff one -- hard-error instead.
-  if (sim.param().pairlist.atomic_cutoff) {
-    io::messages.add(
-      "CUDA_Pairlist_Algorithm does not support atomic_cutoff yet "
-      "(TILE_PAIRLIST_DESIGN.md §4.2: chargegroup-cutoff lands first).",
-      "CUDA_Pairlist_Algorithm", io::message::error);
-    return 1;
-  }
-
   if (!quiet)
     os << "\tcuda pairlist algorithm\n";
   return 0;
@@ -103,19 +90,15 @@ int interaction::CUDA_Pairlist_Algorithm::prepare(
   m_impl.set_cutoff(sim.param().pairlist.cutoff_short,
 	     sim.param().pairlist.cutoff_long);
 
-  // init()'s atomic_cutoff hard-error is a one-time, construction-time
-  // check; sim.param().pairlist.atomic_cutoff can still be flipped at
-  // runtime after init() ran (confirmed by check_forcefield.cc's "atomic
-  // cutoff" comparison test, which reuses one already-initialized
-  // Forcefield/CUDA_Pairlist_Algorithm under both settings) -- prepare_cog
-  // already no-ops when atomic_cutoff is true, so this stays a no-op too,
-  // but don't rely on init() alone to keep that guarantee. See update()'s
-  // matching guard for why this matters beyond just prepare_cog: reorder()/
-  // build_candidates() must not run against a chargegroup-mode cog/cell
-  // build that was silently skipped this call.
-  if (!sim.param().pairlist.atomic_cutoff) {
-    m_impl.prepare_cog(conf, topo, sim);
-  }
+  // prepare_cog() itself branches on atomic_cutoff (TILE_PAIRLIST_DESIGN.md
+  // §4.2/step 7): always refreshes the GPU position mirror, and only does
+  // the chargegroup cog/cell box-wrap when chargegroup-cutoff mode is
+  // active. Safe to call unconditionally, and safe to call every step even
+  // if atomic_cutoff is toggled between calls -- reorder()/build_candidates()/
+  // classify_tiles() below re-read sim.param().pairlist.atomic_cutoff fresh
+  // on every call too, so there's no stale chargegroup-mode state to fall
+  // out of sync with.
+  m_impl.prepare_cog(conf, topo, sim);
 
   return 0;
 }
@@ -139,29 +122,13 @@ void interaction::CUDA_Pairlist_Algorithm::update(topology::Topology & topo,
                                       unsigned int stride) {
   DEBUG(0, "cuda pairlist algorithm : update");
 
-  // Same runtime-toggle concern as prepare()'s guard above: only run
-  // reorder()/build_candidates() when this call's atomic_cutoff setting
-  // actually matches what prepare_cog() built this cycle. Observed for
-  // real: check_forcefield.cc's "atomic cutoff" check flips
-  // sim.param().pairlist.atomic_cutoff to true on an already-initialized
-  // CUDA_Pairlist_Algorithm and calls update() again -- without this
-  // guard, reorder() ran thrust::sort_by_key while the CUDA context was
-  // apparently left in a bad state by that surrounding test sequence
-  // (manifested as "invalid device ordinal" from CUB/Thrust) instead of
-  // cleanly no-op'ing like every other part of this class already does
-  // for atomic_cutoff.
-  if (!sim.param().pairlist.atomic_cutoff) {
-    m_impl.reorder(conf, topo, sim);
-    m_impl.build_candidates(conf, topo, sim);
-    m_impl.classify_tiles(conf, topo, sim);
-  } else if (!m_warned_atomic_cutoff) {
-    io::messages.add(
-      "CUDA_Pairlist_Algorithm does not support atomic_cutoff yet "
-      "(TILE_PAIRLIST_DESIGN.md §4.2); skipping the candidate build this "
-      "call.",
-      "CUDA_Pairlist_Algorithm", io::message::warning);
-    m_warned_atomic_cutoff = true;
-  }
+  // reorder()/build_candidates()/classify_tiles() each branch on
+  // sim.param().pairlist.atomic_cutoff themselves (TILE_PAIRLIST_DESIGN.md
+  // §4.2/step 7) -- chargegroup-cutoff and atomic-cutoff are both fully
+  // supported now, so there's nothing to guard here.
+  m_impl.reorder(conf, topo, sim);
+  m_impl.build_candidates(conf, topo, sim);
+  m_impl.classify_tiles(conf, topo, sim);
 
   // TODO(cleanup): dummy placeholder, see PAIRLIST_PLAN.md §5(A). Not the
   // real force-consumable output -- produces an intentionally empty

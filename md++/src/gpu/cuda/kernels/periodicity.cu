@@ -65,6 +65,42 @@ __global__ void gpu::prepare_cog_kernel(
     }
 }
 
+template <math::boundary_enum BOUNDARY>
+__global__ void gpu::atom_cell_kernel(
+    gpu::Configuration::View conf,
+    unsigned num_atoms,
+    gpu::Periodicity<BOUNDARY> periodicity,
+    gpu::cuvector<unsigned>::View sort_key) {
+
+    unsigned idx = blockIdx.x * blockDim.x + threadIdx.x;
+    unsigned stride = blockDim.x * gridDim.x;
+
+    for (unsigned a = idx; a < num_atoms; a += stride) {
+        FPL3_TYPE p = conf.current().pos(a);
+        periodicity.put_into_box(p);
+        sort_key(a) = periodicity.get_cell(p).w;
+    }
+}
+
+// explicit instantiation to allow linking
+template __global__ void gpu::atom_cell_kernel(
+    gpu::Configuration::View conf,
+    unsigned num_atoms,
+    gpu::Periodicity<math::vacuum> periodicity,
+    gpu::cuvector<unsigned>::View sort_key);
+
+template __global__ void gpu::atom_cell_kernel(
+    gpu::Configuration::View conf,
+    unsigned num_atoms,
+    gpu::Periodicity<math::rectangular> periodicity,
+    gpu::cuvector<unsigned>::View sort_key);
+
+template __global__ void gpu::atom_cell_kernel(
+    gpu::Configuration::View conf,
+    unsigned num_atoms,
+    gpu::Periodicity<math::triclinic> periodicity,
+    gpu::cuvector<unsigned>::View sort_key);
+
 // explicit instantiation to allow linking
 template __global__ void gpu::prepare_cog_kernel(
     gpu::Topology::View topo,

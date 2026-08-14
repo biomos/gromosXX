@@ -59,6 +59,17 @@ namespace interaction {
                   simulation::Simulation & sim);
 
       /**
+       * atomic_cutoff mode's atom sort key: computed directly from each
+       * atom's own position (a locally box-wrapped copy for the cell
+       * lookup only, TILE_PAIRLIST_DESIGN.md §4.2/step 7), not inherited
+       * from a chargegroup. Called from reorder() instead of
+       * atom_sort_key_kernel when sim.param().pairlist.atomic_cutoff.
+       */
+      template<math::boundary_enum b>
+      void _atom_sort_key_atomic(configuration::Configuration & conf,
+                                  unsigned num_atoms);
+
+      /**
        * Block-pair candidate search (TILE_PAIRLIST_DESIGN.md §3 step 4):
        * test every solute-solute, solute-solvent, and solvent-solvent
        * block-pair's bounding-sphere distance against cutoff_long + skin,
@@ -76,11 +87,12 @@ namespace interaction {
 
       /**
        * Exclusion + short/long classification (TILE_PAIRLIST_DESIGN.md §3
-       * step 5): resolves every candidate tile's atom pairs, applies
-       * exclusions, and buckets survivors into m_tiles.solute_short/
-       * solute_long/solvent_short/solvent_long by chargegroup-cog-cog
-       * distance (chargegroup-cutoff mode; atomic-cutoff is a follow-up).
-       * Must be called after build_candidates().
+       * step 5, §4.2/step 7): resolves every candidate tile's atom pairs,
+       * applies exclusions, and buckets survivors into m_tiles.solute_short/
+       * solute_long/solvent_short/solvent_long, using either chargegroup-
+       * cog-cog distance or atom-atom distance depending on
+       * sim.param().pairlist.atomic_cutoff. Must be called after
+       * build_candidates().
        */
       void classify_tiles(configuration::Configuration & conf,
                   topology::Topology & topo,

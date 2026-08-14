@@ -21,12 +21,13 @@
 /**
  * @file pairlist_cuda_equivalence.t.cc
  * Pairlist equivalence test: CUDA_Pairlist_Algorithm vs
- * Standard_Pairlist_Algorithm. TILE_PAIRLIST_DESIGN.md §5/§6 -- the
- * actual correctness gate for the tile-based GPU pairlist work
- * (steps 3-5): asserts the two algorithms produce exactly the same
+ * Standard_Pairlist_Algorithm. TILE_PAIRLIST_DESIGN.md §5/§6/§4.2/step 7
+ * -- the actual correctness gate for the tile-based GPU pairlist work
+ * (steps 3-7): asserts the two algorithms produce exactly the same
  * per-atom short/long pair sets (including exclusions) on the same
- * topology/configuration, at skin = 0. Only USE_CUDA builds run this
- * (CUDA_Pairlist_Algorithm doesn't exist otherwise).
+ * topology/configuration, at skin = 0, for both chargegroup-cutoff and
+ * atomic-cutoff (sim.param().pairlist.atomic_cutoff). Only USE_CUDA
+ * builds run this (CUDA_Pairlist_Algorithm doesn't exist otherwise).
  */
 
 #include "../stdheader.h"
@@ -156,7 +157,7 @@ namespace {
 
   int run_case(const std::string & stopo, const std::string & sconf,
                const std::string & sinput, math::boundary_enum force_boundary,
-               const char * label, bool quiet) {
+               bool atomic_cutoff, const char * label, bool quiet) {
     // Fresh simulation per case (not reused across cases): pairlist
     // prepare() mutates chargegroup positions in place (box-wrapping),
     // so reusing one topo/conf across differently-shaped boundary cases
@@ -177,6 +178,7 @@ namespace {
     // the GPU candidate radius is exactly cutoff_long, same as the CPU
     // reference's rebuild radius.
     s.sim.param().pairlist.skin = 0.0;
+    s.sim.param().pairlist.atomic_cutoff = atomic_cutoff;
 
     s.conf.boundary_type = force_boundary;
     s.sim.param().boundary.boundary = force_boundary;
@@ -247,8 +249,16 @@ int main(int argc, char* argv[]) {
   // pairs -- boundary_type is overridden per case below precisely to
   // sidestep that and test vacuum/rectangular specifically (§4.1's v1
   // scope), reusing aladip's real solute+solvent topology/coordinates.
-  total += run_case(stopo, sconf, sinput, math::vacuum, "vacuum", quiet);
-  total += run_case(stopo, sconf, sinput, math::rectangular, "rectangular", quiet);
+  total += run_case(stopo, sconf, sinput, math::vacuum, false, "vacuum (cg)", quiet);
+  total += run_case(stopo, sconf, sinput, math::rectangular, false, "rectangular (cg)", quiet);
+
+  // Atomic-cutoff axis (TILE_PAIRLIST_DESIGN.md §4.2/step 7): same test,
+  // sim.param().pairlist.atomic_cutoff = true -- Standard_Pairlist_
+  // Algorithm::update() dispatches to update_atomic() internally for the
+  // CPU side, CUDA_Pairlist_Algorithm's update()/reorder()/classify_tiles()
+  // dispatch on the same flag for the GPU side.
+  total += run_case(stopo, sconf, sinput, math::vacuum, true, "vacuum (atomic)", quiet);
+  total += run_case(stopo, sconf, sinput, math::rectangular, true, "rectangular (atomic)", quiet);
 
   return total;
 }

@@ -23,13 +23,16 @@
   (`TILE_PAIRLIST_DESIGN.md` §3 steps 1-5: chargegroup cog/cell build,
   Thrust sort-by-key into fixed 32-wide atom blocks, block bounding-sphere
   computation, block-pair candidate search, exclusion + short/long
-  classification), verified against `Standard_Pairlist_Algorithm` bit-
-  for-bit by the `pairlist_cuda_equivalence` test (vacuum + rectangular).
-  `update()` still ends in the explicit dummy for the CPU-facing
-  `PairlistContainer` it's actually asked to fill (clears it and warns),
-  since nothing downstream (no force kernel) consumes the real tiles
-  (`m_tiles.solute_short`/etc) yet -- so nonbonded forces/energies through
-  the normal `Nonbonded_Interaction` path are still zero, by design.
+  classification), for both chargegroup-cutoff and atomic-cutoff
+  (`sim.param().pairlist.atomic_cutoff`, `TILE_PAIRLIST_DESIGN.md` §4.2/
+  step 7) -- verified against `Standard_Pairlist_Algorithm` bit-for-bit by
+  the `pairlist_cuda_equivalence` test (vacuum + rectangular, both cutoff
+  modes, 4 cases total). `update()` still ends in the explicit dummy for
+  the CPU-facing `PairlistContainer` it's actually asked to fill (clears
+  it and warns), since nothing downstream (no force kernel) consumes the
+  real tiles (`m_tiles.solute_short`/etc) yet -- so nonbonded forces/
+  energies through the normal `Nonbonded_Interaction` path are still
+  zero, by design.
 
 ## Latent bug: CUDA context corruption after runtime `atomic_cutoff` toggle (not exercised by the current test suite)
 
@@ -45,23 +48,33 @@
   (e.g. `gpu::Configuration::copy_to_device`). This looks like permanent
   corruption of the process's CUDA context/state, not a one-off failure at
   the toggle point itself.
-- **What's already fixed, and isn't the root cause:** `CUDA_Pairlist_
-  Algorithm::prepare()`/`update()` didn't originally re-check
-  `atomic_cutoff` per call, only relying on `init()`'s one-time hard-error
-  -- so a runtime toggle after `init()` would run `thrust::sort_by_key`
-  against a chargegroup-mode cog/cell build that `prepare_cog()` had
-  silently skipped that cycle. That's fixed (both methods now guard
-  per-call, matching `prepare_cog()`'s existing behavior) and is a real,
-  worthwhile fix on its own, but it only stops *this specific class* from
-  running against mismatched state -- it does not explain or prevent the
-  process-wide corruption, which persists and affects unrelated code
-  (`copy_to_device`) too.
+- **What's already fixed, and isn't the root cause:** as of
+  `TILE_PAIRLIST_DESIGN.md` §4.2/step 7, `atomic_cutoff` is now a fully
+  supported, real code path (not a no-op) -- `prepare_cog()`/`reorder()`/
+  `build_candidates()`/`classify_tiles()` all re-read
+  `sim.param().pairlist.atomic_cutoff` fresh on every call, so a runtime
+  toggle between calls is no longer "running against mismatched state"
+  the way it was when this bug was first observed (a no-op'd chargegroup
+  build followed by a `thrust::sort_by_key` that assumed it had run).
+  That class of problem is gone. It does not explain or prevent the
+  process-wide corruption described below, which persists and affects
+  unrelated code (`copy_to_device`) too -- this entry stays open.
 - **Why this isn't in `ctest` today:** the real, checked-in `aladip_cuda.in`
   has `PERTURBATION` enabled, and (separately confirmed) a perturbed run
   never reaches `CUDA_Pairlist_Algorithm::update()`/`prepare()` at all --
   only `update_perturbed()`, which errors out immediately (see the first
-  entry above). So today's test suite cannot hit this even though the
-  underlying corruption is real and reproducible.
+  entry above), regardless of `atomic_cutoff`. `check_atomic_cutoff`'s
+  toggle (`check_forcefield.cc`, exercised by `aladip_cuda.t.cc`) still
+  only ever hits `update_perturbed()` on this system for the same reason,
+  confirmed by re-running the full `aladip_cuda` ctest after implementing
+  real `atomic_cutoff` support (step 7): same pre-existing failure mode
+  (wrong energies from the always-empty perturbed pairlist), no crash, no
+  new failure. So today's test suite still cannot hit this even though the
+  underlying corruption is real and reproducible, and real `atomic_cutoff`
+  support landing doesn't change that -- but a *future* non-perturbed CUDA
+  regression test that exercises a runtime `atomic_cutoff` toggle (there
+  isn't one yet) would be worth checking against this bug specifically,
+  since `atomic_cutoff` is no longer a guaranteed no-op that could mask it.
 - **Not fixed here:** the actual root cause (why does exercising
   atomic_cutoff, even now that it correctly no-ops in
   `CUDA_Pairlist_Algorithm`, corrupt the CUDA context for the rest of the
