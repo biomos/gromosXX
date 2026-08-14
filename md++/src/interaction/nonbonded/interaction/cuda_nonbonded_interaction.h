@@ -36,24 +36,28 @@
  * from CUDA_Pairlist_Algorithm's own v1 scope (vacuum/rectangular
  * boundary only).
  *
- * Also does not implement the CPU twin-range performance optimization of
- * freezing long-range forces between pairlist rebuilds
- * (Nonbonded_Set::calculate_interactions holds solute_long/solvent_long
- * force contributions static between rebuilds, only solute_short/
- * solvent_short forces are recomputed every step) -- every call to
- * calculate_interactions() here fully re-runs prepare()+update()
- * (candidate build + classification) and recomputes forces/energies for
- * *all* four tile buckets from current positions, every step, regardless
- * of sim.param().pairlist.skip_step. This is numerically exact for any
- * single evaluation (right after a rebuild, "recompute fresh" and
- * "reuse what was frozen at this same rebuild" are the same numbers) and
- * therefore doesn't compromise a force/energy comparison test, but it
- * does not reproduce skip_step's performance characteristic, nor -- for
- * a multi-step trajectory where atoms drift across the cutoff_short/
- * cutoff_long boundary between what would have been rebuild steps -- the
- * exact per-step energies a real skip_step > 1 CPU run would produce.
- * Revisit once this needs to actually run production MD, not just be
- * numerically validated once.
+ * Real GROMOS twin-range cadence, matching Nonbonded_Set::calculate_
+ * interactions exactly (src/interaction/nonbonded/interaction/
+ * nonbonded_set.cc): calculate_interactions() below computes
+ * `pairlist_update = !(sim.steps() % skip_step)`, the identical
+ * expression the CPU path uses. On a pairlist_update step,
+ * CUDA_Pairlist_Algorithm::update() (candidate rebuild + classification)
+ * runs and the long-range (solute_long/solvent_long) force/energy
+ * contribution is recomputed fresh; on every other step update() is
+ * skipped entirely and the long-range contribution from the last
+ * pairlist_update step is reused unchanged (held in
+ * CUDA_Pairlist_Algorithm_Impl's m_longrange_force/m_e_lj_long/
+ * m_e_crf_long). Short-range (solute_short/solvent_short) is recomputed
+ * from current positions every single call, regardless. This is what
+ * PLAN.md §10's roadmap calls the "twin-range cadence" step, closing the
+ * v1 simplification the original step-9 landing explicitly deferred.
+ *
+ * Still does not decouple the (expensive) candidate rebuild from
+ * classification via `skin` -- both happen on the same pairlist_update
+ * cadence for now, i.e. `skin` remains a documented no-op on the GPU
+ * path too (see CUDA_Pairlist_Algorithm_Impl::needs_candidate_rebuild's
+ * doc comment once that lands, TILE_PAIRLIST_DESIGN.md §10). That's a
+ * separate, later piece of this same design.
  */
 
 #pragma once

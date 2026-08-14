@@ -122,21 +122,30 @@ namespace interaction
 
     /**
      * The real production entry point (TILE_PAIRLIST_DESIGN.md §8/§9,
-     * PLAN.md §10 step 9): runs the LJ + reaction-field tile kernel over
-     * the tiles built by the most recent update() call and accumulates
-     * the result into conf.current().force (+=) and returns the total
-     * LJ/CRF energies. Called by CUDA_Nonbonded_Interaction, never
-     * directly by anything CPU-pairlist-shaped -- unlike update()'s own
-     * `pairlist` parameter, this is where the real numbers come from.
+     * PLAN.md §10 step 9/twin-range cadence): runs the LJ + reaction-
+     * field tile kernel over the tiles built by the most recent
+     * update() call and accumulates the result into conf.current().
+     * force (+=) and returns the total LJ/CRF energies. Called by
+     * CUDA_Nonbonded_Interaction, never directly by anything
+     * CPU-pairlist-shaped -- unlike update()'s own `pairlist`
+     * parameter, this is where the real numbers come from.
+     *
+     * `recompute_long`: real GROMOS twin-range only recomputes the
+     * long-range (solute_long/solvent_long) contribution on a
+     * classification/rebuild step -- pass true only when the caller
+     * also called update() this same cycle (see CUDA_Nonbonded_
+     * Interaction::calculate_interactions()'s pairlist_update check).
+     * Short-range is always recomputed regardless.
      */
     void compute_forces_energies(topology::Topology & topo,
                                   configuration::Configuration & conf,
                                   simulation::Simulation & sim,
                                   gpu::LJParamView lj,
                                   gpu::NbSimParams nb,
+                                  bool recompute_long,
                                   double & e_lj,
                                   double & e_crf) {
-      m_impl.compute_forces_energies(conf, topo, sim, lj, nb, e_lj, e_crf);
+      m_impl.compute_forces_energies(conf, topo, sim, lj, nb, recompute_long, e_lj, e_crf);
     }
 
   private:

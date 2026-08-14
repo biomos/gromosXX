@@ -64,6 +64,17 @@ int interaction::CUDA_Pairlist_Algorithm_Impl::init(topology::Topology &topo,
     m_e_lj.resize(1);
     m_e_crf.resize(1);
 
+    m_longrange_force.resize(num_atoms);
+    m_e_lj_long.resize(1);
+    m_e_crf_long.resize(1);
+    // Zeroed explicitly (not left as whatever cudaMallocManaged handed
+    // back) since these are read every single call, but only written on
+    // a recompute_long call -- the very first call, before any
+    // classification has run, must see zero long-range contribution.
+    cudaMemset(m_longrange_force.data(), 0, sizeof(FPL3_TYPE) * num_atoms);
+    m_e_lj_long[0]  = 0.0;
+    m_e_crf_long[0] = 0.0;
+
     return 0;
 };
 
@@ -520,6 +531,7 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::compute_forces_energies(
                 simulation::Simulation & sim,
                 gpu::LJParamView lj,
                 gpu::NbSimParams nb,
+                bool recompute_long,
                 double & e_lj,
                 double & e_crf)
 {
@@ -539,18 +551,14 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::compute_forces_energies(
     const unsigned num_solute_atoms  = static_cast<unsigned>(m_solute_atom_order.size());
     const unsigned num_solvent_atoms = static_cast<unsigned>(m_solvent_atom_order.size());
 
-    // Same row_order/col_other_order convention as classify_tiles_kernel
-    // (block_pairlist.h): solute_short/solute_long tiles may reference
-    // either solute or solvent atoms on their column side (col_from_b),
-    // solvent_short/solvent_long tiles never do.
+    // Short-range: real GROMOS twin-range recomputes this every step,
+    // regardless of recompute_long -- same row_order/col_other_order
+    // convention as classify_tiles_kernel (block_pairlist.h):
+    // solute_short/solute_long tiles may reference either solute or
+    // solvent atoms on their column side (col_from_b), solvent_short/
+    // solvent_long tiles never do.
     gpu::launch_lj_crf_tiles(
         m_tiles.solute_short.view(), m_solute_atom_order.data(), num_solute_atoms,
-        m_solvent_atom_order.data(), num_solvent_atoms,
-        pos, m_iac.data(), m_charge.data(), lj, nb, boundary, box,
-        m_force.data(), m_e_lj.data(), m_e_crf.data());
-
-    gpu::launch_lj_crf_tiles(
-        m_tiles.solute_long.view(), m_solute_atom_order.data(), num_solute_atoms,
         m_solvent_atom_order.data(), num_solvent_atoms,
         pos, m_iac.data(), m_charge.data(), lj, nb, boundary, box,
         m_force.data(), m_e_lj.data(), m_e_crf.data());
@@ -561,20 +569,44 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::compute_forces_energies(
         pos, m_iac.data(), m_charge.data(), lj, nb, boundary, box,
         m_force.data(), m_e_lj.data(), m_e_crf.data());
 
-    gpu::launch_lj_crf_tiles(
-        m_tiles.solvent_long.view(), m_solvent_atom_order.data(), num_solvent_atoms,
-        nullptr, 0u,
-        pos, m_iac.data(), m_charge.data(), lj, nb, boundary, box,
-        m_force.data(), m_e_lj.data(), m_e_crf.data());
+    // Long-range: only recomputed on a classification/rebuild step
+    // (recompute_long == true) -- otherwise m_longrange_force/
+    // m_e_lj_long/m_e_crf_long are left untouched, holding whatever was
+    // last computed here, matching nonbonded_set.cc's frozen
+    // m_longrange_storage exactly. The zero must stay inside this
+    // branch: zeroing unconditionally would wipe the frozen values a
+    // non-rebuild step is supposed to reuse.
+    if (recompute_long) {
+        cudaMemset(m_longrange_force.data(), 0, sizeof(FPL3_TYPE) * num_atoms);
+        m_e_lj_long[0]  = 0.0;
+        m_e_crf_long[0] = 0.0;
+
+        gpu::launch_lj_crf_tiles(
+            m_tiles.solute_long.view(), m_solute_atom_order.data(), num_solute_atoms,
+            m_solvent_atom_order.data(), num_solvent_atoms,
+            pos, m_iac.data(), m_charge.data(), lj, nb, boundary, box,
+            m_longrange_force.data(), m_e_lj_long.data(), m_e_crf_long.data());
+
+        gpu::launch_lj_crf_tiles(
+            m_tiles.solvent_long.view(), m_solvent_atom_order.data(), num_solvent_atoms,
+            nullptr, 0u,
+            pos, m_iac.data(), m_charge.data(), lj, nb, boundary, box,
+            m_longrange_force.data(), m_e_lj_long.data(), m_e_crf_long.data());
+    }
 
     cudaDeviceSynchronize();
 
     // Forcefield::calculate_interactions() zeroes conf.current().force
     // once before every Interaction in the sequence runs -- accumulate
-    // (+=), don't overwrite.
+    // (+=), don't overwrite. Add the (possibly frozen-from-an-earlier-
+    // call) long-range contribution in unconditionally, same as
+    // nonbonded_set.cc's m_storage.force += m_longrange_storage.force.
     for (unsigned i = 0; i < num_atoms; ++i) {
         conf.current().force(i) += math::Vec(m_force[i].x, m_force[i].y, m_force[i].z);
+        conf.current().force(i) += math::Vec(m_longrange_force[i].x,
+                                              m_longrange_force[i].y,
+                                              m_longrange_force[i].z);
     }
-    e_lj  = m_e_lj[0];
-    e_crf = m_e_crf[0];
+    e_lj  = m_e_lj[0]  + m_e_lj_long[0];
+    e_crf = m_e_crf[0] + m_e_crf_long[0];
 }

@@ -464,6 +464,45 @@ Before any force/energy number from this pairlist is trusted:
    same idea as overriding `boundary_type` in `pairlist_cuda_equivalence.
    t.cc`) -- vacuum + rectangular, both passing within float precision.
 
-Step 10 onward (force/energy comparison against a *running* MD trajectory
-rather than a single evaluation, skin-drift test, multi-energy-group and
-virial support, perturbation) is `PLAN.md` §10 step 10 onward, not started.
+10. **Done (part 1 of 2): real twin-range cadence, matching CPU exactly.**
+    `PLAN.md` §10 step 10 / §9.4's prerequisite: step 9 landed a
+    deliberate simplification (`CUDA_Nonbonded_Interaction::calculate_
+    interactions()` fully rebuilt + reclassified + recomputed *all* four
+    tile buckets every single call, ignoring `skip_step` entirely).
+    That's now fixed to match `nonbonded_set.cc`'s real semantics
+    exactly: `pairlist_update = !(sim.steps() % skip_step)` (identical
+    expression, same operand order) gates `CUDA_Pairlist_Algorithm::
+    update()` (candidate rebuild + classification) and the long-range
+    (`solute_long`/`solvent_long`) force/energy recompute; short-range
+    (`solute_short`/`solvent_short`) still recomputes every call
+    regardless. `CUDA_Pairlist_Algorithm_Impl::compute_forces_energies`
+    gained a `bool recompute_long` parameter and three new members
+    (`m_longrange_force`, `m_e_lj_long`, `m_e_crf_long`, sized once in
+    `init()`) that hold the long-range contribution frozen between
+    `pairlist_update` steps, added into every call's total unconditionally
+    -- mirroring `nonbonded_set.cc`'s `m_storage.force +=
+    m_longrange_storage.force` line for line. The zero-before-recompute
+    for these three lives strictly inside the `if (recompute_long)`
+    branch; zeroing them unconditionally would silently wipe the frozen
+    value a non-rebuild step depends on.
+
+    Existing single-evaluation tests (`pairlist_cuda_equivalence`,
+    `lj_crf_tile_kernel`, `cuda_nonbonded_interaction`) are unaffected and
+    still pass: at `sim.steps() == 0`, `pairlist_update` is always true
+    regardless of `skip_step`, so a single `calculate_interactions()`
+    call still does a full rebuild+recompute exactly as before. This
+    piece doesn't need its own new test since it's only observable across
+    multiple steps -- see step 10's second part below, which does drive a
+    multi-step trajectory and would catch a regression here too.
+
+    `skin` still doesn't do anything on the GPU path -- the candidate
+    rebuild stays on the exact same cadence as classification (`M = N`
+    in the design's own terms). Decoupling that is the second half of
+    this step, not yet done as of this paragraph; see the next entry
+    once it lands.
+
+Step 10's second part (decoupling the candidate rebuild from
+classification via `skin` + displacement tracking, `PLAN.md` §9.4's skin
+buffer drift test) and step 11 onward (multi-energy-group and virial
+support, perturbation, re-porting `Leap_Frog_*<gpuBackend>`) are not
+started.

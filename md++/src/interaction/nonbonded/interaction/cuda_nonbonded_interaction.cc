@@ -159,18 +159,24 @@ int interaction::CUDA_Nonbonded_Interaction::calculate_interactions(
   CUDA_Pairlist_Algorithm * pa =
       static_cast<CUDA_Pairlist_Algorithm *>(m_pairlist_algorithm);
 
-  // v1 simplification: always fully rebuild + reclassify, every call --
-  // see this class's header comment for why that's numerically exact
-  // for a single evaluation despite not reproducing skip_step's
-  // performance characteristic.
-  pa->prepare(topo, conf, sim);
+  pa->prepare(topo, conf, sim); // every step: box-wrap + cog + GPU pos mirror refresh
 
-  interaction::PairlistContainer dummy;
-  dummy.resize(static_cast<unsigned>(topo.num_atoms()));
-  pa->update(topo, conf, sim, dummy, 0, static_cast<unsigned>(topo.num_atoms()), 1);
+  // Exact structural mirror of nonbonded_set.cc's pairlist_update check
+  // (same operator, same operand order) -- real GROMOS twin-range: the
+  // pairlist rebuild + classification, and the long-range force
+  // recompute, only happen every skip_step steps; short-range forces
+  // recompute every step regardless (see compute_forces_energies()).
+  const bool pairlist_update = !(sim.steps() % sim.param().pairlist.skip_step);
+
+  if (pairlist_update) {
+    interaction::PairlistContainer dummy;
+    dummy.resize(static_cast<unsigned>(topo.num_atoms()));
+    pa->update(topo, conf, sim, dummy, 0, static_cast<unsigned>(topo.num_atoms()), 1);
+  }
 
   double e_lj = 0.0, e_crf = 0.0;
-  pa->compute_forces_energies(topo, conf, sim, m_gpu_lj.view(), m_nb, e_lj, e_crf);
+  pa->compute_forces_energies(topo, conf, sim, m_gpu_lj.view(), m_nb,
+                               pairlist_update, e_lj, e_crf);
 
   // Single energy group only (init()'s gate) -- everything lands in the
   // one (0, 0) bucket.
