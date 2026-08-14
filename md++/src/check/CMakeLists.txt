@@ -118,6 +118,9 @@ if(USE_CUDA)
 
     list(APPEND EXEC_NAMES remove_com_motion_gpu)
     add_executable(remove_com_motion_gpu remove_com_motion_gpu.t.cc)
+
+    list(APPEND EXEC_NAMES temperature_gpu)
+    add_executable(temperature_gpu temperature_gpu.t.cc)
 endif()
 
 foreach(LOOP_VAR ${EXEC_NAMES})

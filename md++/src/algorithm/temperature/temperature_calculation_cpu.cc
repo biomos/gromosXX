@@ -19,8 +19,11 @@
  */
 
 /**
- * @file temperature_calculation.cc
- * calculates the temperature.
+ * @file temperature_calculation_cpu.cc
+ * calculates the temperature -- CPU backend. Byte-for-byte the original
+ * (pre-backend-template) implementation, just wrapped in an explicit
+ * template specialization. init() moved into temperature_calculation.h
+ * as a plain inline template method (no backend-specific logic).
  */
 
 #include "../../stdheader.h"
@@ -43,7 +46,8 @@
 
 #include "../../util/debug.h"
 
-int algorithm::Temperature_Calculation
+template<>
+int algorithm::Temperature_Calculation<util::cpuBackend>
 ::apply(topology::Topology & topo,
 	configuration::Configuration & conf,
 	simulation::Simulation & sim)
@@ -239,28 +243,11 @@ int algorithm::Temperature_Calculation
   } // if perturbation...
 
   m_timer.stop();
-  
+
   return 0;
-  
+
 }
 
-int algorithm::Temperature_Calculation
-::init(topology::Topology & topo,
-       configuration::Configuration & conf,
-       simulation::Simulation & sim,
-       std::ostream & os,
-       bool quiet)
-{
-  apply(topo, conf, sim);
-  
-  if (!quiet){
-    // os << "Temperature calculation\n";
-    io::print_MULTIBATH_COUPLING(os, sim.multibath());
-    io::print_DEGREESOFFREEDOM(os, sim.multibath());
-    io::print_MULTIBATH(os, sim.multibath(),
-			conf.old().energies,
-			"INITIAL TEMPERATURES");
-  }
-  return 0;
-}
+// explicit instantiation for linker
+template class algorithm::Temperature_Calculation<util::cpuBackend>;
 

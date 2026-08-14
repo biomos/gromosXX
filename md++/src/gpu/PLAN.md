@@ -555,9 +555,39 @@ Rough dependency order; each step should land as its own reviewable unit.
     `gpu/cuda/algorithm/constraints/remove_com_motion_kernels.{h,cu}`,
     matching `remove_com_motion_cpu.cc`'s formulas exactly. Verified against
     the CPU reference (`remove_com_motion_gpu.t.cc`) and with zero
-    `compute-sanitizer --tool memcheck` errors. Still CPU-only: all bonded
-    terms, constraints (SHAKE/SETTLE/LINCS -- step 12 above), thermostats,
-    barostat, `Temperature_Calculation`, `Pressure_Calculation`.
+    `compute-sanitizer --tool memcheck` errors.
+
+    **Also done:** `Temperature_Calculation<gpuBackend>` +
+    `Berendsen_Thermostat<gpuBackend>`. Unlike `Remove_COM_Motion`, neither
+    class had a `Backend` template at all before this -- both converted
+    from plain classes to templates (`create_md_sequence.cc` already
+    called both through `make_algorithm<T>`, so no call-site changes were
+    needed once they became templates; it was silently resolving to
+    `make_algorithm`'s legacy non-templated overload before). The real
+    complexity: both need a temperature group's centre-of-mass velocity,
+    an inherently two-level (atom → molecule) reduction, done via a new
+    `launch_group_velocity_reduce()` kernel
+    (`gpu/cuda/algorithm/temperature/temperature_kernels.{h,cu}`) bucketed
+    by a per-atom temperature-group index (built by hand from
+    `topo.temperature_groups()`, since -- found the hard way -- that CSR
+    list uses a *different* convention than `energy_groups()`: `num_groups
+    + 1` entries with a leading `0` and exclusive-end boundaries, not
+    `num_groups` entries with an inclusive end and an implicit start at 0;
+    confirmed directly from `in_topology.cc`'s parsing code, not
+    guessed). `Berendsen_Thermostat<gpuBackend>` leaves the scaled
+    velocity resident on the GPU mirror (`mark_gpu_dirty()`, no
+    sync-back) -- it sits between `Leap_Frog_Velocity<gpuBackend>` and
+    `Leap_Frog_Position<gpuBackend>` in `create_md_sequence.cc`, so that
+    whole three-algorithm chain now runs with zero host round trips when
+    temperature coupling is on, the exact scenario this session's
+    GPU-mirror freshness-tracking fix was built around. Verified against
+    the CPU reference on a synthetic 3-bath setup exercising both of
+    `Thermostat::scale()`'s cases (`com_bath == ir_bath` and `!=`,
+    `temperature_gpu.t.cc`) and with zero `compute-sanitizer` errors.
+
+    Still CPU-only: all bonded terms, constraints (SHAKE/SETTLE/LINCS --
+    step 12 above), `NoseHoover_Thermostat`, `Berendsen_Barostat`,
+    `Pressure_Calculation`.
 
 ## 11. Open questions (revisit later, not blocking the plan above)
 

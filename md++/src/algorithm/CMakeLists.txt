@@ -6,9 +6,9 @@ set(ALGO_CC
     integration/scaled_leap_frog.cc
     integration/monte_carlo.cc
     integration/stochastic.cc
-    temperature/temperature_calculation.cc
+    temperature/temperature_calculation_cpu.cc
     temperature/thermostat.cc
-    temperature/berendsen_thermostat.cc
+    temperature/berendsen_thermostat_cpu.cc
     temperature/nosehoover_thermostat.cc
     pressure/pressure_calculation.cc
     pressure/berendsen_barostat.cc
@@ -19,9 +19,9 @@ set(ALGO_CC
     integration/scaled_leap_frog.cc
     integration/monte_carlo.cc
     integration/stochastic.cc
-    temperature/temperature_calculation.cc
+    temperature/temperature_calculation_cpu.cc
     temperature/thermostat.cc
-    temperature/berendsen_thermostat.cc
+    temperature/berendsen_thermostat_cpu.cc
     temperature/nosehoover_thermostat.cc
     pressure/pressure_calculation.cc
     pressure/berendsen_barostat.cc
@@ -55,6 +55,8 @@ if (USE_CUDA)
     list(APPEND ALGO_CC
     constraints/remove_com_motion_gpu.cc
     integration/leap_frog_gpu.cc
+    temperature/temperature_calculation_gpu.cc
+    temperature/berendsen_thermostat_gpu.cc
     )
 endif()
 

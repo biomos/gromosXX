@@ -38,6 +38,7 @@ set(GPU_HEADERS
     cuda/interaction/nonbonded/kernels/displacement.h
     cuda/algorithm/integration/leap_frog_kernels.h
     cuda/algorithm/constraints/remove_com_motion_kernels.h
+    cuda/algorithm/temperature/temperature_kernels.h
 )
 
 if(USE_CUDA)
@@ -64,6 +65,7 @@ if(USE_CUDA)
         cuda/interaction/nonbonded/kernels/displacement.cu
         cuda/algorithm/integration/leap_frog_kernels.cu
         cuda/algorithm/constraints/remove_com_motion_kernels.cu
+        cuda/algorithm/temperature/temperature_kernels.cu
     )
 
     add_library(grocuda STATIC ${GPU_SOURCES})
