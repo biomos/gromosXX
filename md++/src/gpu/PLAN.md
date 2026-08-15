@@ -815,7 +815,41 @@ Rough dependency order; each step should land as its own reviewable unit.
     associativity by orders of magnitude) and zero `compute-sanitizer`
     errors.
 
-    Still CPU-only: LINCS, `NoseHoover_Thermostat`.
+17. **`CUDA_Lincs`** (own branch `cuda_claude_lincs`, on top of SETTLE),
+    covering both solute (one "group" spanning the whole solute system)
+    and solvent (one group per solvent type) LINCS --
+    `gpu/cuda/algorithm/constraints/lincs_kernels.{h,cu}`. The key
+    finding that made this port straightforward: LINCS's own CPU
+    recursion (`_solve_lincs`'s `rec` loop, `lincs.cc`) is **already
+    Jacobi-shaped**, not Gauss-Seidel like SHAKE -- each round only
+    reads the *previous* round's solution vector and writes a new one
+    for every constraint, with no within-round ordering dependency. So
+    unlike solute SHAKE, this port needed no algorithmic reformulation
+    to parallelize: one GPU thread per (group instance, local
+    constraint) per round is the same iteration structure as the CPU,
+    just executed in parallel, and *is* bit-comparable to the CPU
+    result (unlike solute SHAKE's Jacobi-vs-Gauss-Seidel divergence).
+    `A[i].a[n]` (the CPU's cached per-coupled-pair coefficient) isn't
+    stored on the GPU -- `dot(B(i), B(coupled))` is recomputed on the
+    fly inside the round kernel instead, trading a few redundant dot
+    products for much less GPU memory traffic (coupling degree is
+    small). `setup_lincs()` (the coupling-graph builder,
+    `_setup_lincs` renamed and exposed via `lincs.h` since it's pure
+    topology math, no CPU/GPU-specific content) is shared verbatim
+    between `Lincs::init()` and `CUDA_Lincs::init()`. Unlike SHAKE/
+    SETTLE, LINCS's CPU reference never touches `constraint_force` or
+    `virial_tensor` at all -- neither does this port. Hard-errored in
+    init(): MPI, `start.shake_pos`/`start.shake_vel` (the CPU class's
+    recursive initial-constraining path, a startup-only cost not worth
+    replicating). Verified against the CPU reference (`lincs_gpu.t.cc`,
+    a synthetic *chained* solute constraint list -- sharing atoms
+    between constraints so `lincs.coupled_constr` is genuinely
+    non-empty, unlike a set of fully-disjoint constraints -- plus
+    aladip's real solvent switched to LINCS; `1e-6` relative tolerance)
+    plus an explicit constraint-satisfaction check, and zero
+    `compute-sanitizer` errors.
+
+    Still CPU-only: `NoseHoover_Thermostat`.
 
 15. **`Pressure_Calculation`/`Berendsen_Barostat`: reviewed, no kernel
     needed.** `Pressure_Calculation::apply()` is nine multiply-adds on

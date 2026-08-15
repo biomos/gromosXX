@@ -285,10 +285,10 @@ int algorithm::Lincs::apply(topology::Topology & topo,
   return 0;	   
 }
 
-static void _setup_lincs(topology::Topology const & topo,
+void algorithm::setup_lincs(topology::Topology const & topo,
 			 topology::Compound::lincs_struct & lincs,
 			 std::vector<topology::two_body_term_struct> const & constr,
-			 unsigned int offset = 0)
+			 unsigned int offset)
 {
   const unsigned int num_constr = unsigned(constr.size());  
   lincs.coupled_constr.resize(num_constr);
@@ -388,7 +388,7 @@ int algorithm::Lincs::init(topology::Topology & topo,
 
   // setup lincs
   DEBUG(8, "setting up lincs");
-  _setup_lincs(topo, topo.solute().lincs(),
+  algorithm::setup_lincs(topo, topo.solute().lincs(),
 	       topo.solute().distance_constraints());
   
   // the first atom of a solvent
@@ -397,7 +397,7 @@ int algorithm::Lincs::init(topology::Topology & topo,
   // for all solvents
   for(unsigned int i=0; i<topo.num_solvents(); ++i){  //Initialize lincs for each solvent
     if (topo.num_solvent_molecules(i) != 0){
-      _setup_lincs(topo, topo.solvent(i).lincs(),
+      algorithm::setup_lincs(topo, topo.solvent(i).lincs(),
 		    topo.solvent(i).distance_constraints(),
 		    first);
       first+=topo.solvent(i).num_atoms();

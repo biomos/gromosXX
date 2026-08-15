@@ -64,6 +64,7 @@
 #ifdef USE_CUDA
 #include "../../algorithm/constraints/cuda_shake.h"
 #include "../../algorithm/constraints/cuda_settle.h"
+#include "../../algorithm/constraints/cuda_lincs.h"
 #endif
 
 #include "../../algorithm/constraints/rottrans.h"
@@ -95,6 +96,20 @@ namespace {
            !restraint_constraints_active &&
            !sim.mpi_enabled() &&
            !sim.param().start.shake_pos;
+  }
+
+  /**
+   * Whether CUDA_Lincs's remaining gates (MPI, shake_pos/shake_vel)
+   * allow using it. Perturbation is excluded here too (falls back to
+   * CPU Lincs) even though the CPU class itself only warns rather than
+   * refusing under perturbation -- CUDA_Lincs hasn't been validated
+   * against a perturbed run.
+   */
+  bool cuda_lincs_covers_run(const simulation::Simulation & sim) {
+    return sim.param().gpu.accelerator == simulation::gpu_cuda &&
+           !sim.param().perturbation.perturbation &&
+           !sim.mpi_enabled() &&
+           !sim.param().start.shake_pos && !sim.param().start.shake_vel;
   }
 }
 #endif
@@ -173,9 +188,17 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
     }
     case simulation::constr_lincs :
     {
-      algorithm::Lincs * s =
-              new algorithm::Lincs;
-      md_seq.push_back(s);
+#ifdef USE_CUDA
+      if (cuda_lincs_covers_run(sim)) {
+        algorithm::CUDA_Lincs * gs = new algorithm::CUDA_Lincs();
+        md_seq.push_back(gs);
+      } else
+#endif
+      {
+        algorithm::Lincs * s =
+                new algorithm::Lincs;
+        md_seq.push_back(s);
+      }
 
       if (sim.param().perturbation.perturbation) {
         io::messages.add("no free energy derivatives for LINCS, so you better don't "
@@ -278,9 +301,17 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
       }
       case simulation::constr_lincs :
       {
-        algorithm::Lincs * s =
-                new algorithm::Lincs;
-        md_seq.push_back(s);
+#ifdef USE_CUDA
+        if (cuda_lincs_covers_run(sim)) {
+          algorithm::CUDA_Lincs * gs = new algorithm::CUDA_Lincs();
+          md_seq.push_back(gs);
+        } else
+#endif
+        {
+          algorithm::Lincs * s =
+                  new algorithm::Lincs;
+          md_seq.push_back(s);
+        }
 
         break;
       }

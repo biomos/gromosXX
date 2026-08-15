@@ -29,6 +29,19 @@
 namespace algorithm {
 
   /**
+   * Builds `lincs.coupled_constr`/`coef`/`sdiag` from a constraint
+   * list (topo.solute().distance_constraints() or
+   * topo.solvent(i).distance_constraints()) -- shared by
+   * Lincs::init() and CUDA_Lincs::init() (cuda_lincs.cc), since the
+   * setup itself is plain topology math with no GPU/CPU-specific
+   * content.
+   */
+  void setup_lincs(topology::Topology const & topo,
+                    topology::Compound::lincs_struct & lincs,
+                    std::vector<topology::two_body_term_struct> const & constr,
+                    unsigned int offset = 0);
+
+  /**
    * @class Lincs
    * implements the lincs algorithm.
    */

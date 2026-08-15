@@ -145,6 +145,9 @@ if(USE_CUDA)
 
     list(APPEND EXEC_NAMES settle_gpu)
     add_executable(settle_gpu settle_gpu.t.cc)
+
+    list(APPEND EXEC_NAMES lincs_gpu)
+    add_executable(lincs_gpu lincs_gpu.t.cc)
 endif()
 
 foreach(LOOP_VAR ${EXEC_NAMES})
