@@ -789,7 +789,33 @@ Rough dependency order; each step should land as its own reviewable unit.
     constraint to its target length" check (so a silent no-op couldn't
     pass by coincidence), and zero `compute-sanitizer` errors.
 
-    Still CPU-only: SETTLE/LINCS, `NoseHoover_Thermostat`.
+16. **`CUDA_Settle`** (own branch `cuda_claude_settle`, on top of solute
+    SHAKE), the analytical (Miyamoto & Kollman) rigid 3-site-water
+    constraint algorithm -- `gpu/cuda/algorithm/constraints/
+    settle_kernels.{h,cu}` translates `algorithm::Settle::solvent()`
+    (`settle.cc`) line-for-line into one thread per molecule. Unlike
+    every SHAKE variant, SETTLE has **no iteration at all**: it's a
+    single fixed sequence of closed-form vector algebra per molecule,
+    so this port is bit-comparable to the CPU per molecule (up to
+    ordinary floating-point non-associativity), the same as solvent
+    SHAKE's per-molecule independence but simpler (no convergence loop,
+    no skip lists). `CUDA_Settle::init()` mirrors every one of
+    `algorithm::Settle::init()`'s hard gates (exactly one solvent type,
+    exactly 3 atoms/molecule, H1/H2 same mass, exactly 3 distance
+    constraints with matching O-H lengths, no MPI, no
+    `start.shake_pos`/`shake_vel`) -- since the CPU class itself refuses
+    any configuration outside that shape, trying `CUDA_Settle`
+    whenever just accelerator/perturbation allow it loses no graceful
+    CPU fallback (there isn't one to fall back to). Verified against
+    the CPU reference (`settle_gpu.t.cc`, `1e-6` *relative* tolerance --
+    tight, since this is a single deterministic evaluation, not an
+    iterative solve; the constraint-force comparison specifically needs
+    relative rather than absolute tolerance because dividing the
+    position correction by `dt^2` amplifies ordinary FP non-
+    associativity by orders of magnitude) and zero `compute-sanitizer`
+    errors.
+
+    Still CPU-only: LINCS, `NoseHoover_Thermostat`.
 
 15. **`Pressure_Calculation`/`Berendsen_Barostat`: reviewed, no kernel
     needed.** `Pressure_Calculation::apply()` is nine multiply-adds on

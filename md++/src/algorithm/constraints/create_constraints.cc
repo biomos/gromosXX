@@ -63,6 +63,7 @@
 #include "../../algorithm/constraints/gpu_shake.h"
 #ifdef USE_CUDA
 #include "../../algorithm/constraints/cuda_shake.h"
+#include "../../algorithm/constraints/cuda_settle.h"
 #endif
 
 #include "../../algorithm/constraints/rottrans.h"
@@ -291,9 +292,26 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
       }
       case simulation::constr_settle :
       {
-        algorithm::Settle * s =
-                new algorithm::Settle;
-        md_seq.push_back(s);
+#ifdef USE_CUDA
+        // SETTLE has no MPI/shake_pos support on the CPU side either
+        // (algorithm::Settle::init() hard-errors the same way) -- no
+        // graceful CPU fallback is lost by trying CUDA_Settle whenever
+        // just accelerator/perturbation allow it; its own init() gates
+        // (water-model shape) mirror the CPU's checks 1:1, so an
+        // unsupported configuration fails the same way either path.
+        if (sim.param().gpu.accelerator == simulation::gpu_cuda &&
+            !sim.param().perturbation.perturbation &&
+            !sim.mpi_enabled() &&
+            !sim.param().start.shake_pos && !sim.param().start.shake_vel) {
+          algorithm::CUDA_Settle * gs = new algorithm::CUDA_Settle();
+          md_seq.push_back(gs);
+        } else
+#endif
+        {
+          algorithm::Settle * s =
+                  new algorithm::Settle;
+          md_seq.push_back(s);
+        }
 
         break;
       }

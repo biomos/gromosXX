@@ -58,6 +58,7 @@ if (USE_CUDA)
     temperature/temperature_calculation_gpu.cc
     temperature/berendsen_thermostat_gpu.cc
     constraints/cuda_shake.cc
+    constraints/cuda_settle.cc
     )
 endif()
 

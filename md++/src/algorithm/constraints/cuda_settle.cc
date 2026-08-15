@@ -1,0 +1,189 @@
+/*
+ * This file is part of GROMOS.
+ *
+ * Copyright (c) 2011, 2012, 2016, 2018, 2021, 2023 Biomos b.v.
+ * See <https://www.gromos.net> for details.
+ *
+ * GROMOS is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+/**
+ * @file cuda_settle.cc
+ * GPU-native SETTLE constraint algorithm. See cuda_settle.h. Plain
+ * C++, no kernel syntax; the real __global__ kernel lives in
+ * gpu/cuda/algorithm/constraints/settle_kernels.cu, compiled into
+ * grocuda.
+ */
+
+#include "../../stdheader.h"
+
+#include "../../algorithm/algorithm.h"
+#include "../../topology/topology.h"
+#include "../../simulation/simulation.h"
+#include "../../configuration/configuration.h"
+
+#include "../../interaction/interaction.h"
+#include "../../interaction/interaction_types.h"
+
+#include "../../util/error.h"
+#include "../../util/debug.h"
+
+#include "cuda_settle.h"
+
+#undef MODULE
+#undef SUBMODULE
+#define MODULE algorithm
+#define SUBMODULE constraints
+
+int algorithm::CUDA_Settle::init(
+    topology::Topology & topo,
+    configuration::Configuration & conf,
+    simulation::Simulation & sim,
+    std::ostream & os,
+    bool quiet) {
+
+  if (sim.mpi_enabled()) {
+    io::messages.add("CUDA_Settle does not support MPI.",
+                      "CUDA_Settle", io::message::error);
+    return 1;
+  }
+  if (sim.param().start.shake_pos || sim.param().start.shake_vel) {
+    io::messages.add("initial settle-ing is not possible.",
+                      "CUDA_Settle", io::message::error);
+    return 1;
+  }
+  if (topo.num_solvents() != 1) {
+    io::messages.add("SETTLE does only work if 1 solvent.",
+                      "CUDA_Settle", io::message::error);
+    return 1;
+  }
+  if (topo.solvent(0).num_atoms() != 3) {
+    io::messages.add("SETTLE does only work with water like molecules (3 atoms).",
+                      "CUDA_Settle", io::message::error);
+    return 1;
+  }
+  if (topo.solvent(0).atom(1).mass != topo.solvent(0).atom(2).mass) {
+    io::messages.add("SETTLE does only work with water like molecules (wrong masses).",
+                      "CUDA_Settle", io::message::error);
+    return 1;
+  }
+  if (topo.solvent(0).distance_constraints().size() != 3) {
+    io::messages.add("SETTLE does only work with water like molecules (3 distance constraints).",
+                      "CUDA_Settle", io::message::error);
+    return 1;
+  }
+  if (topo.bond_types_harm()[topo.solvent(0).distance_constraint(0).type].r0 !=
+      topo.bond_types_harm()[topo.solvent(0).distance_constraint(1).type].r0) {
+    io::messages.add("SETTLE does only work with water like molecules (distance constraints wrong).",
+                      "CUDA_Settle", io::message::error);
+    return 1;
+  }
+
+  for (unsigned int i = topo.num_solute_atoms(); i < topo.num_atoms(); ++i) {
+    constrained_atoms().insert(i);
+  }
+
+  m_mass_O = topo.solvent(0).atom(0).mass;
+  m_mass_H = topo.solvent(0).atom(1).mass;
+  m_dist_OH = topo.bond_types_harm()[topo.solvent(0).distance_constraint(0).type].r0;
+  m_dist_HH = topo.bond_types_harm()[topo.solvent(0).distance_constraint(2).type].r0;
+  m_first_atom = static_cast<unsigned>(topo.num_solute_atoms());
+  m_num_molecules = static_cast<unsigned>(topo.num_solvent_molecules(0));
+
+  const unsigned num_atoms = static_cast<unsigned>(topo.num_atoms());
+  m_pos.resize(num_atoms);
+  m_old_pos.resize(num_atoms);
+  m_vel.resize(num_atoms);
+  m_constraint_force.resize(num_atoms);
+  m_virial.resize(9);
+  m_error_flag.resize(1);
+
+  m_initialized = true;
+
+  if (!quiet) {
+    os << "CUDA_SETTLE\n"
+       << "\tsolvent\n"
+       << "END\n";
+  }
+  return 0;
+}
+
+int algorithm::CUDA_Settle::apply(
+    topology::Topology & topo,
+    configuration::Configuration & conf,
+    simulation::Simulation & sim) {
+
+  m_timer.start(sim);
+
+  if (!m_initialized) {
+    m_timer.stop();
+    return 1;
+  }
+
+  if (!(sim.param().system.nsm &&
+        sim.param().constraint.solvent.algorithm == simulation::constr_settle)) {
+    m_timer.stop();
+    return 0;
+  }
+
+  const unsigned num_atoms = static_cast<unsigned>(topo.num_atoms());
+  for (unsigned i = m_first_atom; i < num_atoms; ++i) {
+    m_pos[i] = double3{conf.current().pos(i)(0), conf.current().pos(i)(1),
+                        conf.current().pos(i)(2)};
+    m_old_pos[i] = double3{conf.old().pos(i)(0), conf.old().pos(i)(1),
+                            conf.old().pos(i)(2)};
+    m_vel[i] = double3{conf.current().vel(i)(0), conf.current().vel(i)(1),
+                        conf.current().vel(i)(2)};
+  }
+  for (unsigned k = 0; k < 9; ++k) m_virial[k] = 0.0;
+  m_error_flag[0] = 0;
+
+  const bool do_velocity = !sim.param().stochastic.sd && !sim.param().minimise.ntem &&
+      !sim.param().analyze.analyze;
+  const double dt_i = 1.0 / sim.time_step_size();
+
+  gpu::launch_settle(
+      m_pos.data(), m_old_pos.data(), m_vel.data(), m_first_atom, m_num_molecules,
+      m_mass_O, m_mass_H, m_dist_OH, m_dist_HH, dt_i, do_velocity,
+      m_constraint_force.data(), m_virial.data(), m_error_flag.data());
+  cudaDeviceSynchronize();
+
+  if (m_error_flag[0] != 0) {
+    io::messages.add("SETTLE error", "CUDA_Settle", io::message::error);
+    std::cout << "SETTLE: exiting with error condition at step " << sim.steps() << std::endl;
+    conf.special().shake_failure_occurred = true;
+    m_timer.stop();
+    return 1;
+  }
+
+  for (unsigned i = m_first_atom; i < num_atoms; ++i) {
+    conf.current().pos(i) = math::Vec(m_pos[i].x, m_pos[i].y, m_pos[i].z);
+    conf.old().constraint_force(i) = math::Vec(m_constraint_force[i].x,
+                                                 m_constraint_force[i].y,
+                                                 m_constraint_force[i].z);
+    if (do_velocity)
+      conf.current().vel(i) = math::Vec(m_vel[i].x, m_vel[i].y, m_vel[i].z);
+  }
+
+  if (sim.param().pcouple.virial == math::atomic_virial) {
+    for (unsigned b = 0; b < 3; ++b) {
+      for (unsigned a = 0; a < 3; ++a) {
+        conf.old().virial_tensor(b, a) += m_virial[b * 3 + a];
+      }
+    }
+  }
+
+  m_timer.stop();
+  return 0;
+}
