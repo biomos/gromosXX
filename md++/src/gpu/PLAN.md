@@ -849,7 +849,34 @@ Rough dependency order; each step should land as its own reviewable unit.
     plus an explicit constraint-satisfaction check, and zero
     `compute-sanitizer` errors.
 
-    Still CPU-only: `NoseHoover_Thermostat`.
+18. **`NoseHoover_Thermostat`** (own branch `cuda_claude_nosehoover`, on
+    top of LINCS) -- converted to a `Backend` template, same shape as
+    `Berendsen_Thermostat` (`berendsen_thermostat.h`):
+    `calc_scaling()`/`calc_chain_scaling()` (O(num_baths) scalar math)
+    stay plain inline template methods, unchanged. The key
+    simplification: `Thermostat::scale()` (the O(num_atoms) per-atom
+    velocity-scaling formula both `Berendsen_Thermostat` and
+    `NoseHoover_Thermostat` inherit) is *exactly the same* between the
+    two thermostats, so `NoseHoover_Thermostat<gpuBackend>::apply()`
+    reuses `Berendsen_Thermostat<gpuBackend>`'s existing kernel
+    (`launch_thermostat_scale_apply`, `temperature_kernels.cu`)
+    verbatim -- no new kernel needed, just a new `apply()` that calls
+    `calc_scaling()` or `calc_chain_scaling()` (matching
+    `multibath.algorithm`) before the same reduction + scale-apply
+    sequence. Same "leave velocity GPU-resident" `gpu_mirror_touches()`
+    override as Berendsen, for the same zero-round-trip payoff between
+    `Leap_Frog_Velocity`/`Leap_Frog_Position`. Verified against the CPU
+    reference (`nosehoover_gpu.t.cc`, the same synthetic 3-bath setup as
+    `temperature_gpu.t.cc`, run once with plain Nose-Hoover
+    (`multibath.algorithm == 1`) and once with a Nose-Hoover chain
+    (`== 3`), since those are the two calc-scaling paths that must both
+    feed the shared kernel correctly) and zero `compute-sanitizer`
+    errors.
+
+    **This closes out every "vanilla" single-step MD algorithm on the
+    roadmap** (bonded forces, SHAKE/SETTLE/LINCS constraints,
+    temperature coupling, pressure coupling) -- see PLAN.md's overall
+    status for what's next (multi-GPU, replica exchange, etc., §11).
 
 15. **`Pressure_Calculation`/`Berendsen_Barostat`: reviewed, no kernel
     needed.** `Pressure_Calculation::apply()` is nine multiply-adds on

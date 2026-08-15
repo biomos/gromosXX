@@ -9,7 +9,7 @@ set(ALGO_CC
     temperature/temperature_calculation_cpu.cc
     temperature/thermostat.cc
     temperature/berendsen_thermostat_cpu.cc
-    temperature/nosehoover_thermostat.cc
+    temperature/nosehoover_thermostat_cpu.cc
     pressure/pressure_calculation.cc
     pressure/berendsen_barostat.cc
     constraints/create_constraints.cc
@@ -22,7 +22,7 @@ set(ALGO_CC
     temperature/temperature_calculation_cpu.cc
     temperature/thermostat.cc
     temperature/berendsen_thermostat_cpu.cc
-    temperature/nosehoover_thermostat.cc
+    temperature/nosehoover_thermostat_cpu.cc
     pressure/pressure_calculation.cc
     pressure/berendsen_barostat.cc
     constraints/create_constraints.cc
@@ -60,6 +60,7 @@ if (USE_CUDA)
     constraints/cuda_shake.cc
     constraints/cuda_settle.cc
     constraints/cuda_lincs.cc
+    temperature/nosehoover_thermostat_gpu.cc
     )
 endif()
 
