@@ -20,26 +20,29 @@
 
 /**
  * @file cuda_shake.h
- * GPU-native SHAKE constraint algorithm (PLAN.md §10 step 15) -- only
- * ever included under USE_CUDA, see create_constraints.cc, the only
- * call site.
+ * GPU-native SHAKE constraint algorithm (PLAN.md §10 step 15/17) --
+ * only ever included under USE_CUDA, see create_constraints.cc, the
+ * only call site.
  *
- * v1 scope: SOLVENT distance constraints only. Solvent SHAKE is
- * embarrassingly parallel (every molecule solves its own small,
- * independent Gauss-Seidel iteration -- see shake_kernels.h's doc
- * comment), which is why it's the piece ported here. Solute SHAKE's
- * CPU reference (algorithm::Shake::solute(), shake.h) is a single
- * in-place Gauss-Seidel sweep over *every* solute distance constraint
- * with genuine cross-constraint data dependencies within one iteration
- * -- a fundamentally different (and much harder to parallelize
- * correctly) problem, not attempted here. Hard-errored in init() if
- * actually requested (`ntc > 1` and solute distance constraints exist)
- * rather than silently falling back to a wrong/no-op result -- same
- * convention as every other CUDA scope gate in this codebase. Also
- * hard-errored: MPI (`sim.mpi_enabled()`), angle/dihedral restraint
- * constraints (solute-only, need the same cross-dependency solute
- * solve), and `start.shake_pos` (a startup-only one-time cost, not
- * worth this class's added complexity -- use CPU `Shake` if that
+ * Covers both solvent and solute distance constraints, via two
+ * genuinely different algorithms (see shake_kernels.h's doc comment
+ * for the full derivation of each):
+ *  - Solvent: every molecule solves its own small, independent
+ *    Gauss-Seidel iteration, bit-comparable to the CPU per molecule
+ *    (`launch_shake_solvent`).
+ *  - Solute: a Jacobi-style parallel constraint solve (`launch_shake_
+ *    solute_round`/`launch_shake_solute_apply`) -- converges to the
+ *    same constrained manifold as the CPU's single in-place Gauss-
+ *    Seidel sweep (both are standard iterative constraint solvers),
+ *    but is **not** bit-comparable to its specific iteration order,
+ *    since every constraint in a round reads the same starting
+ *    positions instead of the latest updated ones.
+ *
+ * Hard-errored in init() rather than silently producing a wrong/no-op
+ * result: MPI (`sim.mpi_enabled()`), angle/dihedral restraint
+ * constraints (solute-only, use a different data structure/solve not
+ * ported here), and `start.shake_pos` (a startup-only one-time cost,
+ * not worth this class's added complexity -- use CPU `Shake` if that
  * combination is needed).
  */
 
@@ -52,10 +55,12 @@ namespace algorithm {
 
   class CUDA_Shake : public Algorithm {
   public:
-    explicit CUDA_Shake(double const solvent_tolerance = 0.000001,
+    explicit CUDA_Shake(double const solute_tolerance = 0.000001,
+                         double const solvent_tolerance = 0.000001,
                          int const max_iterations = 1000,
                          std::string const name = "CUDA_Shake")
       : Algorithm(name),
+        m_solute_tolerance(solute_tolerance),
         m_solvent_tolerance(solvent_tolerance),
         m_max_iterations(max_iterations) {}
 
@@ -85,10 +90,17 @@ namespace algorithm {
       unsigned num_molecules = 0;
     };
 
+    double m_solute_tolerance;
     double m_solvent_tolerance;
     int m_max_iterations;
     std::set<unsigned int> m_constrained_atoms;
     std::vector<SolventType> m_solvent_types;
+
+    bool m_solute_active = false;
+    gpu::cuvector<gpu::ShakeConstraint> m_solute_constraints;
+    gpu::cuvector<double> m_solute_inv_mass;
+    gpu::cuvector<double3> m_solute_delta;
+    gpu::cuvector<int> m_changed_flag;
 
     gpu::cuvector<double3> m_pos;
     gpu::cuvector<double3> m_old_pos;

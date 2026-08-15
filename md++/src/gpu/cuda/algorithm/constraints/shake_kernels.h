@@ -20,20 +20,37 @@
 
 /**
  * @file shake_kernels.h
- * Host-callable entry point for the per-solvent-molecule SHAKE kernel
- * (PLAN.md §10 step 15, constraints). One CUDA thread per solvent
- * molecule, doing the *exact same* sequential Gauss-Seidel iteration
- * (with the skip_now/skip_next per-atom convergence-tracking
- * optimization) as the CPU reference (algorithm::Shake::shake_iteration
- * / algorithm::Shake::solvent, shake.h) -- molecules are independent of
+ * Host-callable entry points for the SHAKE kernels (PLAN.md §10 step
+ * 15/17, constraints).
+ *
+ * `launch_shake_solvent`: one CUDA thread per solvent molecule, doing
+ * the *exact same* sequential Gauss-Seidel iteration (with the
+ * skip_now/skip_next per-atom convergence-tracking optimization) as
+ * the CPU reference (algorithm::Shake::shake_iteration /
+ * algorithm::Shake::solvent, shake.h) -- molecules are independent of
  * each other (no shared atoms), so parallelizing *across* molecules
  * while keeping each molecule's own inner loop sequential (exactly like
- * the CPU) is both correct and embarrassingly parallel. This is why
- * solvent SHAKE, unlike solute SHAKE, ports faithfully: solute SHAKE's
- * CPU reference is one large in-place Gauss-Seidel sweep over every
- * solute distance constraint with genuine cross-constraint data
- * dependencies within a single iteration -- not attempted here (see
- * cuda_shake.h's doc comment for the v1 scope gate).
+ * the CPU) is both correct and embarrassingly parallel.
+ *
+ * `launch_shake_solute_round`/`launch_shake_solute_apply`: solute
+ * SHAKE's CPU reference (algorithm::Shake::solute()) is a fundamentally
+ * different problem -- one large in-place Gauss-Seidel sweep over
+ * *every* solute distance constraint at once, with genuine cross-
+ * constraint data dependencies within a single iteration (updating
+ * atom i's position mid-sweep changes what the very next constraint in
+ * the list sees). These two kernels instead implement a **Jacobi-style**
+ * parallel constraint solve: one thread per constraint reads a fixed
+ * snapshot of positions (not updated mid-round) and atomicAdd's its
+ * correction into a per-atom delta buffer (`launch_shake_solute_round`);
+ * a second kernel then applies every atom's accumulated delta to the
+ * position snapshot in one pass (`launch_shake_solute_apply`), so
+ * atoms shared by multiple constraints (e.g. a constrained chain)
+ * still get every constraint's contribution, just all computed
+ * against the same starting point rather than sequentially. This
+ * converges to the same constrained manifold as Gauss-Seidel (both are
+ * standard iterative constraint solvers) but is **not** bit-comparable
+ * to the CPU's specific iteration path -- see cuda_shake.h's doc
+ * comment.
  *
  * Deliberately uses plain `double`/`double3` throughout, not
  * `FPL_TYPE`/`FPL3_TYPE` -- unlike a force/energy kernel, SHAKE's
@@ -118,6 +135,49 @@ namespace gpu {
       double3* constraint_force,
       double* virial,
       int* error_flag,
+      cudaStream_t stream = 0);
+
+  /**
+   * One round of the Jacobi-style solute constraint solve: one thread
+   * per constraint, reading `pos` (the fixed snapshot for this round --
+   * NOT concurrently modified by this kernel) and atomicAdd-ing its
+   * correction, scaled by inverse mass, into `delta` (device, global,
+   * num_solute_atoms-sized, NOT zeroed by this kernel -- caller zeroes
+   * before launch). Also atomicAdd's into `constraint_force`/`virial`
+   * (raw, undivided by dt2 -- same convention as launch_shake_solvent)
+   * and atomicExch's `changed_flag` to 1 if any constraint exceeded
+   * tolerance (mirrors the CPU's `convergence = false`).
+   * `launch_shake_solute_apply` (below) must be called afterwards, on
+   * the same stream, to actually add `delta` into `pos` -- kept as two
+   * kernels specifically so every constraint in this round sees the
+   * same starting positions, matching the Jacobi (not Gauss-Seidel)
+   * scheme this class deliberately uses (see this file's doc comment).
+   */
+  void launch_shake_solute_round(
+      const double3* pos,
+      const double3* old_pos,
+      const ShakeConstraint* constraints,
+      unsigned num_constraints,
+      const double* inv_mass,
+      double tolerance,
+      math::boundary_enum boundary,
+      math::Box box,
+      double dt2,
+      double3* delta,
+      double3* constraint_force,
+      double* virial,
+      int* changed_flag,
+      int* error_flag,
+      cudaStream_t stream = 0);
+
+  /**
+   * Applies `delta` (accumulated by launch_shake_solute_round) into
+   * `pos` and resets `delta` to zero, one thread per solute atom.
+   */
+  void launch_shake_solute_apply(
+      double3* pos,
+      double3* delta,
+      unsigned num_atoms,
       cudaStream_t stream = 0);
 
 } // namespace gpu

@@ -188,3 +188,147 @@ void gpu::launch_shake_solvent(
       break;
   }
 }
+
+namespace gpu {
+
+template <math::boundary_enum BOUNDARY>
+__global__ void shake_solute_round_kernel(
+    const double3* __restrict__ pos,
+    const double3* __restrict__ old_pos,
+    const gpu::ShakeConstraint* __restrict__ constraints,
+    unsigned num_constraints,
+    const double* __restrict__ inv_mass,
+    double tolerance,
+    gpu::Periodicity<BOUNDARY> periodicity,
+    double dt2,
+    double3* __restrict__ delta,
+    double3* __restrict__ constraint_force,
+    double* __restrict__ virial,
+    int* __restrict__ changed_flag,
+    int* __restrict__ error_flag) {
+
+  const unsigned c = blockIdx.x * blockDim.x + threadIdx.x;
+  if (c >= num_constraints) return;
+
+  const unsigned i = constraints[c].i;
+  const unsigned j = constraints[c].j;
+
+  const double3 r = periodicity.nearest_image(pos[i], pos[j]);
+  const double dist2 = dot(r, r);
+  const double r0sq = constraints[c].r0sq;
+  const double diff = r0sq - dist2;
+
+  if (fabs(diff) < r0sq * tolerance * 2.0) return;
+
+  double3 ref_r = periodicity.nearest_image(old_pos[i], old_pos[j]);
+  const double sp = dot(ref_r, r);
+
+  // 1e-12, matching math::epsilon -- see shake_solvent_kernel's comment.
+  if (sp < r0sq * 1.0e-12) {
+    atomicExch(error_flag, 1);
+    return;
+  }
+
+  const double lambda = diff / (sp * 2.0 * (inv_mass[i] + inv_mass[j]));
+
+  const double3 cons_force = lambda * ref_r;
+  atomicAdd(&constraint_force[i].x, cons_force.x);
+  atomicAdd(&constraint_force[i].y, cons_force.y);
+  atomicAdd(&constraint_force[i].z, cons_force.z);
+  atomicAdd(&constraint_force[j].x, -cons_force.x);
+  atomicAdd(&constraint_force[j].y, -cons_force.y);
+  atomicAdd(&constraint_force[j].z, -cons_force.z);
+
+  atomicAdd(&virial[0], ref_r.x * ref_r.x * lambda / dt2);
+  atomicAdd(&virial[1], ref_r.x * ref_r.y * lambda / dt2);
+  atomicAdd(&virial[2], ref_r.x * ref_r.z * lambda / dt2);
+  atomicAdd(&virial[3], ref_r.y * ref_r.x * lambda / dt2);
+  atomicAdd(&virial[4], ref_r.y * ref_r.y * lambda / dt2);
+  atomicAdd(&virial[5], ref_r.y * ref_r.z * lambda / dt2);
+  atomicAdd(&virial[6], ref_r.z * ref_r.x * lambda / dt2);
+  atomicAdd(&virial[7], ref_r.z * ref_r.y * lambda / dt2);
+  atomicAdd(&virial[8], ref_r.z * ref_r.z * lambda / dt2);
+
+  ref_r *= lambda;
+  const double3 di = ref_r * inv_mass[i];
+  const double3 dj = ref_r * inv_mass[j];
+  atomicAdd(&delta[i].x, di.x);
+  atomicAdd(&delta[i].y, di.y);
+  atomicAdd(&delta[i].z, di.z);
+  atomicAdd(&delta[j].x, -dj.x);
+  atomicAdd(&delta[j].y, -dj.y);
+  atomicAdd(&delta[j].z, -dj.z);
+
+  atomicExch(changed_flag, 1);
+}
+
+__global__ void shake_solute_apply_kernel(
+    double3* __restrict__ pos,
+    double3* __restrict__ delta,
+    unsigned num_atoms) {
+  const unsigned a = blockIdx.x * blockDim.x + threadIdx.x;
+  if (a >= num_atoms) return;
+  pos[a] += delta[a];
+  delta[a] = double3{0.0, 0.0, 0.0};
+}
+
+} // namespace gpu
+
+void gpu::launch_shake_solute_round(
+    const double3* pos,
+    const double3* old_pos,
+    const gpu::ShakeConstraint* constraints,
+    unsigned num_constraints,
+    const double* inv_mass,
+    double tolerance,
+    math::boundary_enum boundary,
+    math::Box box,
+    double dt2,
+    double3* delta,
+    double3* constraint_force,
+    double* virial,
+    int* changed_flag,
+    int* error_flag,
+    cudaStream_t stream) {
+
+  if (num_constraints == 0) return;
+
+  const unsigned threads = 128;
+  const unsigned blocks = (num_constraints + threads - 1) / threads;
+
+  switch (boundary) {
+    case math::vacuum:
+      gpu::shake_solute_round_kernel<math::vacuum><<<blocks, threads, 0, stream>>>(
+          pos, old_pos, constraints, num_constraints, inv_mass, tolerance,
+          gpu::Periodicity<math::vacuum>(box), dt2, delta, constraint_force,
+          virial, changed_flag, error_flag);
+      break;
+    case math::rectangular:
+      gpu::shake_solute_round_kernel<math::rectangular><<<blocks, threads, 0, stream>>>(
+          pos, old_pos, constraints, num_constraints, inv_mass, tolerance,
+          gpu::Periodicity<math::rectangular>(box), dt2, delta, constraint_force,
+          virial, changed_flag, error_flag);
+      break;
+    case math::triclinic:
+      gpu::shake_solute_round_kernel<math::triclinic><<<blocks, threads, 0, stream>>>(
+          pos, old_pos, constraints, num_constraints, inv_mass, tolerance,
+          gpu::Periodicity<math::triclinic>(box), dt2, delta, constraint_force,
+          virial, changed_flag, error_flag);
+      break;
+    default:
+      break;
+  }
+}
+
+void gpu::launch_shake_solute_apply(
+    double3* pos,
+    double3* delta,
+    unsigned num_atoms,
+    cudaStream_t stream) {
+
+  if (num_atoms == 0) return;
+
+  const unsigned threads = 128;
+  const unsigned blocks = (num_atoms + threads - 1) / threads;
+  gpu::shake_solute_apply_kernel<<<blocks, threads, 0, stream>>>(pos, delta, num_atoms);
+}

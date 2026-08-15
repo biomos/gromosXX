@@ -59,17 +59,6 @@ int algorithm::CUDA_Shake::init(
         "CUDA_Shake", io::message::error);
     return 1;
   }
-  if (topo.solute().distance_constraints().size() &&
-      sim.param().constraint.solute.algorithm == simulation::constr_shake &&
-      sim.param().constraint.ntc > 1) {
-    io::messages.add(
-        "CUDA_Shake does not support solute distance constraints -- solute "
-        "SHAKE's CPU reference is a single in-place iteration with "
-        "cross-constraint dependencies, not the embarrassingly-parallel "
-        "per-molecule problem this class ports (see cuda_shake.h).",
-        "CUDA_Shake", io::message::error);
-    return 1;
-  }
   if (sim.param().angrest.angrest == simulation::angle_constr ||
       sim.param().dihrest.dihrest == simulation::dihedral_constr) {
     io::messages.add(
@@ -85,13 +74,44 @@ int algorithm::CUDA_Shake::init(
     return 1;
   }
 
+  m_solute_active = topo.solute().distance_constraints().size() &&
+      sim.param().constraint.solute.algorithm == simulation::constr_shake &&
+      sim.param().constraint.ntc > 1;
+
   if (!quiet) {
-    os << "CUDA_SHAKE (solvent only)\n"
-       << "\ttolerance = " << m_solvent_tolerance << "\n"
-       << "END\n";
+    os << "CUDA_SHAKE\n"
+       << "\tsolute\t" << (m_solute_active ? "ON" : "OFF") << "\n";
+    if (m_solute_active)
+      os << "\t\ttolerance = " << m_solute_tolerance << "\n";
+    os << "\tsolvent\t"
+       << (sim.param().constraint.solvent.algorithm == simulation::constr_shake ? "ON" : "OFF")
+       << "\n";
+    if (sim.param().constraint.solvent.algorithm == simulation::constr_shake)
+      os << "\t\ttolerance = " << m_solvent_tolerance << "\n";
+    os << "END\n";
   }
 
   const std::vector<interaction::bond_type_struct> & bondtypes = topo.bond_types_harm();
+
+  if (m_solute_active) {
+    const std::vector<topology::two_body_term_struct> & dc =
+        topo.solute().distance_constraints();
+    m_solute_constraints.resize(dc.size());
+    for (unsigned c = 0; c < dc.size(); ++c) {
+      const double r0 = bondtypes[dc[c].type].r0;
+      m_solute_constraints[c] = gpu::ShakeConstraint{dc[c].i, dc[c].j, r0 * r0};
+      constrained_atoms().insert(dc[c].i);
+      constrained_atoms().insert(dc[c].j);
+    }
+
+    const unsigned num_solute_atoms = static_cast<unsigned>(topo.num_solute_atoms());
+    m_solute_inv_mass.resize(num_solute_atoms);
+    for (unsigned a = 0; a < num_solute_atoms; ++a) {
+      m_solute_inv_mass[a] = topo.inverse_mass()(a);
+    }
+    m_solute_delta.resize(num_solute_atoms);
+    m_changed_flag.resize(1);
+  }
 
   unsigned first_atom = topo.num_solute_atoms();
   m_solvent_types.resize(topo.num_solvents());
@@ -160,9 +180,9 @@ int algorithm::CUDA_Shake::apply(
   }
 
   const unsigned num_atoms = static_cast<unsigned>(topo.num_atoms());
-  const unsigned first_solvent = static_cast<unsigned>(topo.num_solute_atoms());
+  const unsigned num_solute_atoms = static_cast<unsigned>(topo.num_solute_atoms());
 
-  for (unsigned i = first_solvent; i < num_atoms; ++i) {
+  for (unsigned i = 0; i < num_atoms; ++i) {
     m_pos[i] = double3{conf.current().pos(i)(0),
                         conf.current().pos(i)(1),
                         conf.current().pos(i)(2)};
@@ -176,6 +196,46 @@ int algorithm::CUDA_Shake::apply(
 
   const double dt = sim.time_step_size();
   const double dt2 = dt * dt;
+
+  if (m_solute_active) {
+    for (unsigned a = 0; a < num_solute_atoms; ++a) m_solute_delta[a] = double3{0.0, 0.0, 0.0};
+
+    unsigned iterations = 0;
+    bool converged = false;
+    while (!converged) {
+      m_changed_flag[0] = 0;
+      gpu::launch_shake_solute_round(
+          m_pos.data(), m_old_pos.data(),
+          m_solute_constraints.data(), static_cast<unsigned>(m_solute_constraints.size()),
+          m_solute_inv_mass.data(), m_solute_tolerance,
+          conf.boundary_type, conf.current().box, dt2,
+          m_solute_delta.data(), m_constraint_force.data(), m_virial.data(),
+          m_changed_flag.data(), m_error_flag.data());
+      gpu::launch_shake_solute_apply(m_pos.data(), m_solute_delta.data(), num_solute_atoms);
+      cudaDeviceSynchronize();
+
+      if (m_error_flag[0] != 0) break;
+      converged = (m_changed_flag[0] == 0);
+      if (++iterations > static_cast<unsigned>(m_max_iterations)) {
+        m_error_flag[0] = 2;
+        break;
+      }
+    }
+
+    if (m_error_flag[0] != 0) {
+      if (m_error_flag[0] == 1) {
+        io::messages.add("SHAKE error. vectors orthogonal",
+                          "CUDA_Shake::apply", io::message::error);
+        std::cout << "SHAKE failure in solute!" << std::endl;
+      } else {
+        io::messages.add("SHAKE error. too many iterations",
+                          "CUDA_Shake::apply", io::message::critical);
+      }
+      conf.special().shake_failure_occurred = true;
+      m_timer.stop();
+      return E_SHAKE_FAILURE_SOLUTE;
+    }
+  }
 
   for (const SolventType & st : m_solvent_types) {
     if (st.num_molecules == 0 || st.constraints.size() == 0) continue;
@@ -204,7 +264,7 @@ int algorithm::CUDA_Shake::apply(
     return E_SHAKE_FAILURE_SOLVENT;
   }
 
-  for (unsigned i = first_solvent; i < num_atoms; ++i) {
+  for (unsigned i = 0; i < num_atoms; ++i) {
     conf.current().pos(i) = math::Vec(m_pos[i].x, m_pos[i].y, m_pos[i].z);
     conf.old().constraint_force(i) +=
         math::Vec(m_constraint_force[i].x, m_constraint_force[i].y,

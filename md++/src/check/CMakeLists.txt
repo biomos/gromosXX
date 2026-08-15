@@ -139,6 +139,9 @@ if(USE_CUDA)
 
     list(APPEND EXEC_NAMES pressure_barostat_gpu)
     add_executable(pressure_barostat_gpu pressure_barostat_gpu.t.cc)
+
+    list(APPEND EXEC_NAMES solute_shake_gpu)
+    add_executable(solute_shake_gpu solute_shake_gpu.t.cc)
 endif()
 
 foreach(LOOP_VAR ${EXEC_NAMES})

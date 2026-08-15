@@ -19,22 +19,17 @@
  */
 
 /**
- * @file shake_gpu.t.cc
- * End-to-end correctness test for CUDA_Shake (PLAN.md §10 step 15,
- * constraints) -- runs the real CPU algorithm::Shake and the real
- * algorithm::CUDA_Shake on aladip's unperturbed topology/configuration
- * (NTC=1: solvent-only constraints, exactly CUDA_Shake's v1 scope) and
- * compares the resulting positions, velocities, constraint forces, and
- * virial tensor.
- *
- * aladip_unperturbed.in's own starting configuration already satisfies
- * every solvent constraint almost exactly (SHAKE would converge in 0-1
- * iterations, barely exercising the algorithm), so this test displaces
- * conf.current().pos for solvent atoms by a small deterministic offset
- * before shaking -- conf.old().pos (the reference geometry SHAKE
- * corrects back towards) is left untouched, exactly the shape of a real
- * MD step's post-integration, pre-constraint state. Only USE_CUDA
- * builds run this.
+ * @file solute_shake_gpu.t.cc
+ * End-to-end correctness test for CUDA_Shake's solute constraint path
+ * (PLAN.md §10 step 17 -- the Jacobi-style parallel solve, see
+ * shake_kernels.h's doc comment) -- runs the real CPU algorithm::Shake
+ * and the real algorithm::CUDA_Shake on aladip's unperturbed topology,
+ * with a synthetic solute distance-constraint list built from a few of
+ * its existing solute bonds (aladip.topo has no real H-constraints;
+ * NTC=1 in its own input, exercising solvent-only SHAKE -- see
+ * shake_gpu.t.cc). Compares the resulting positions, velocities,
+ * constraint forces, and virial tensor after both solute *and* solvent
+ * constraints run. Only USE_CUDA builds run this.
  */
 
 #include "../stdheader.h"
@@ -73,11 +68,49 @@ namespace {
     return sev >= io::message::error;
   }
 
-  // Small deterministic per-component displacement, distinct per atom
-  // so different constraints within a molecule are perturbed
-  // differently -- large enough to force several SHAKE iterations
-  // (aladip's solvent is SPC water, O-H/H-H bond lengths ~0.1-0.16 nm),
-  // small enough to stay well inside SHAKE's basin of convergence.
+  // Builds a synthetic solute distance-constraint list out of the
+  // first 3 existing solute bonds (reusing their quartic-bond
+  // equilibrium length as the constraint length, via a new harmonic
+  // bond type) and switches on solute SHAKE (NTC=3: "all" solute
+  // bonds constrained). Deliberately leaves the quartic bond force
+  // term itself untouched -- this test drives Shake/CUDA_Shake in
+  // isolation, not a full forcefield, so a redundant force+constraint
+  // on the same bonds is harmless here (constrained bonds would
+  // normally be dropped from the force list in a real run).
+  void setup_synthetic_solute_constraints(util::simulation_struct & s) {
+    const std::vector<topology::two_body_term_struct> & bonds = s.topo.solute().bonds();
+    const std::vector<interaction::bond_type_struct> & quart_types = s.topo.bond_types_quart();
+
+    const unsigned num_constraints = 3;
+    std::vector<interaction::bond_type_struct> & harm_types = s.topo.bond_types_harm();
+    std::vector<topology::two_body_term_struct> & dc = s.topo.solute().distance_constraints();
+    dc.clear();
+    for (unsigned k = 0; k < num_constraints; ++k) {
+      const double r0 = quart_types[bonds[k].type].r0;
+      const unsigned harm_type = static_cast<unsigned>(harm_types.size());
+      harm_types.push_back(interaction::bond_type_struct(0.0, r0));
+      dc.push_back(topology::two_body_term_struct(bonds[k].i, bonds[k].j, harm_type));
+    }
+
+    s.sim.param().constraint.ntc = 3;
+    s.sim.param().constraint.solute.algorithm = simulation::constr_shake;
+    s.sim.param().constraint.solvent.algorithm = simulation::constr_shake;
+  }
+
+  // Same rationale as shake_gpu.t.cc's displace_solvent(): nudge the
+  // free (unconstrained) positions of the atoms involved in the
+  // synthetic constraints so SHAKE actually has work to do, without
+  // touching conf.old().pos (the reference geometry it corrects back
+  // towards).
+  void displace_solute_constrained_atoms(util::simulation_struct & s) {
+    const std::vector<topology::two_body_term_struct> & dc = s.topo.solute().distance_constraints();
+    for (unsigned k = 0; k < dc.size(); ++k) {
+      const double d = 0.004 * std::sin(1.3 * k + 0.5);
+      s.conf.current().pos(dc[k].i) += math::Vec(d, -0.5 * d, 0.3 * d);
+      s.conf.current().pos(dc[k].j) += math::Vec(-0.5 * d, d, -0.2 * d);
+    }
+  }
+
   void displace_solvent(util::simulation_struct & s) {
     const unsigned num_atoms = static_cast<unsigned>(s.topo.num_atoms());
     for (unsigned i = static_cast<unsigned>(s.topo.num_solute_atoms()); i < num_atoms; ++i) {
@@ -103,20 +136,16 @@ namespace {
     io::messages.display(std::cout);
     io::messages.clear();
 
-    if (cpu_s.sim.param().constraint.ntc != 1) {
-      std::cerr << label << ": expected NTC == 1 (solvent-only constraints) "
-                << "for this topology/input" << std::endl;
-      return 1;
-    }
+    setup_synthetic_solute_constraints(cpu_s);
+    setup_synthetic_solute_constraints(gpu_s);
 
     // util::create_simulation() doesn't populate conf.old() from the
-    // configuration file (only conf.current() has real data) -- set
-    // old() = current() first, matching a real MD step's starting
-    // point, then displace only current() (the "free", unconstrained
-    // positions SHAKE corrects back towards old()).
+    // configuration file -- see shake_gpu.t.cc's comment.
     cpu_s.conf.old() = cpu_s.conf.current();
     gpu_s.conf.old() = gpu_s.conf.current();
 
+    displace_solute_constrained_atoms(cpu_s);
+    displace_solute_constrained_atoms(gpu_s);
     displace_solvent(cpu_s);
     displace_solvent(gpu_s);
 
@@ -143,12 +172,34 @@ namespace {
       return 1;
     }
 
-    const double tol = 1e-6;
+    // Verify SHAKE actually did something (constraints were violated
+    // and got corrected) -- otherwise a no-op bug could pass silently.
+    const std::vector<topology::two_body_term_struct> & dc = cpu_s.topo.solute().distance_constraints();
+    const std::vector<interaction::bond_type_struct> & harm_types = cpu_s.topo.bond_types_harm();
+    for (unsigned k = 0; k < dc.size(); ++k) {
+      math::Vec r;
+      math::Periodicity<math::vacuum> periodicity(cpu_s.conf.current().box);
+      periodicity.nearest_image(cpu_s.conf.current().pos(dc[k].i),
+                                  cpu_s.conf.current().pos(dc[k].j), r);
+      const double r0 = harm_types[dc[k].type].r0;
+      const double dist = math::abs(r);
+      if (std::abs(dist - r0) > 1e-4 * r0) {
+        std::cerr << label << ": CPU constraint " << k << " not satisfied after apply(): "
+                  << "dist=" << dist << " r0=" << r0 << std::endl;
+        return 1;
+      }
+    }
+
+    // Jacobi (GPU) vs Gauss-Seidel (CPU) converge to the same
+    // constrained manifold but via different iteration paths (see
+    // shake_kernels.h's doc comment) -- not bit-comparable, so use a
+    // looser tolerance than shake_gpu.t.cc's solvent-only 1e-6 (that
+    // path *is* bit-comparable, one CPU-equivalent thread per molecule).
+    const double tol = 1e-4;
     int errors = 0;
 
     const unsigned num_atoms = static_cast<unsigned>(cpu_s.topo.num_atoms());
-    const unsigned first_solvent = static_cast<unsigned>(cpu_s.topo.num_solute_atoms());
-    for (unsigned i = first_solvent; i < num_atoms; ++i) {
+    for (unsigned i = 0; i < num_atoms; ++i) {
       const math::Vec pos_diff = cpu_s.conf.current().pos(i) - gpu_s.conf.current().pos(i);
       if (math::abs(pos_diff) > tol) {
         std::cerr << label << ": pos mismatch at atom " << i
@@ -219,5 +270,5 @@ int main(int argc, char* argv[]) {
   GETFILEPATH(sconf, "aladip.conf", "src/check/data/");
   GETFILEPATH(sinput, "aladip_unperturbed.in", "src/check/data/");
 
-  return run_case(stopo, sconf, sinput, "shake_gpu", quiet);
+  return run_case(stopo, sconf, sinput, "solute_shake_gpu", quiet);
 }

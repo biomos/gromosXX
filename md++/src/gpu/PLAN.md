@@ -757,8 +757,39 @@ Rough dependency order; each step should land as its own reviewable unit.
     would barely exercise the iteration at all) and zero
     `compute-sanitizer` errors.
 
-    Still CPU-only: solute SHAKE (see above), SETTLE/LINCS,
-    `NoseHoover_Thermostat`.
+    **Update -- solute SHAKE now ported too** (step 17, own branch
+    `cuda_claude_solute_shake`, on top of the pressure/barostat review):
+    `launch_shake_solute_round`/`launch_shake_solute_apply`
+    (`shake_kernels.{h,cu}`) implement a **Jacobi-style** parallel
+    constraint solve instead of the CPU's Gauss-Seidel sweep -- one
+    thread per constraint reads a fixed position snapshot for the whole
+    round and atomicAdd's its correction into a per-atom delta buffer;
+    a second kernel then applies every atom's accumulated delta in one
+    pass, so atoms shared by multiple constraints (e.g. a constrained
+    chain) still get every constraint's contribution, just computed
+    against the same starting point instead of sequentially-updated
+    ones. This converges to the same constrained manifold as the CPU
+    (both are standard iterative constraint solvers) but is **not**
+    bit-comparable to its specific iteration path -- unlike solvent
+    SHAKE's per-molecule port, which is. `CUDA_Shake::apply()` runs
+    solute constraints first, then solvent, matching
+    `algorithm::Shake::apply()`'s own ordering (and its early-return-on-
+    solute-error semantics, `E_SHAKE_FAILURE_SOLUTE` vs `_SOLVENT`).
+    `create_constraints.cc`'s `cuda_shake_covers_run()` fallback
+    condition was narrowed accordingly -- it now only excludes angle/
+    dihedral restraint constraints (a different, unported data
+    structure/solve), MPI, and `start.shake_pos`, not solute distance
+    constraints in general. Verified against the CPU reference
+    (`solute_shake_gpu.t.cc`, a synthetic solute constraint list built
+    from a few of aladip's own bonds, since aladip's real input is
+    solvent-only NTC=1 -- positions/velocities/constraint forces/
+    virial, `1e-4` tolerance, looser than solvent SHAKE's `1e-6` since
+    Jacobi and Gauss-Seidel take different floating-point paths to the
+    same manifold) plus an explicit "did SHAKE actually converge the
+    constraint to its target length" check (so a silent no-op couldn't
+    pass by coincidence), and zero `compute-sanitizer` errors.
+
+    Still CPU-only: SETTLE/LINCS, `NoseHoover_Thermostat`.
 
 15. **`Pressure_Calculation`/`Berendsen_Barostat`: reviewed, no kernel
     needed.** `Pressure_Calculation::apply()` is nine multiply-adds on
