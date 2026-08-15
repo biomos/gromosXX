@@ -69,6 +69,11 @@ namespace interaction {
     gpu::cuvector<double>   m_virial;
     unsigned m_num_bonds = 0;
     bool m_initialized = false;
+
+    // Sorted, de-duplicated atom indices this bond list references --
+    // see sparse_force_accumulate.h's doc comment for why the force
+    // download loop uses this instead of [0, num_atoms).
+    std::vector<unsigned> m_touched_atoms;
   };
 
 } // namespace interaction

@@ -39,6 +39,7 @@
 #include "../../util/error.h"
 #include "../../util/debug.h"
 
+#include "gpu/cuda/memory/vec3_convert.h"
 #include "cuda_shake.h"
 
 #undef MODULE
@@ -182,23 +183,19 @@ int algorithm::CUDA_Shake::apply(
   const unsigned num_atoms = static_cast<unsigned>(topo.num_atoms());
   const unsigned num_solute_atoms = static_cast<unsigned>(topo.num_solute_atoms());
 
-  for (unsigned i = 0; i < num_atoms; ++i) {
-    m_pos[i] = double3{conf.current().pos(i)(0),
-                        conf.current().pos(i)(1),
-                        conf.current().pos(i)(2)};
-    m_old_pos[i] = double3{conf.old().pos(i)(0),
-                            conf.old().pos(i)(1),
-                            conf.old().pos(i)(2)};
-    m_constraint_force[i] = double3{0.0, 0.0, 0.0};
-  }
-  for (unsigned k = 0; k < 9; ++k) m_virial[k] = 0.0;
+  // Bulk memcpy, not a per-atom struct-rebuild loop -- math::Vec and
+  // double3 are layout-identical (gpu/cuda/memory/vec3_convert.h).
+  gpu::vec3_upload(m_pos.data(), &conf.current().pos(0), num_atoms);
+  gpu::vec3_upload(m_old_pos.data(), &conf.old().pos(0), num_atoms);
+  cudaMemset(m_constraint_force.data(), 0, num_atoms * sizeof(double3));
+  cudaMemset(m_virial.data(), 0, 9 * sizeof(double));
   m_error_flag[0] = 0;
 
   const double dt = sim.time_step_size();
   const double dt2 = dt * dt;
 
   if (m_solute_active) {
-    for (unsigned a = 0; a < num_solute_atoms; ++a) m_solute_delta[a] = double3{0.0, 0.0, 0.0};
+    cudaMemset(m_solute_delta.data(), 0, num_solute_atoms * sizeof(double3));
 
     unsigned iterations = 0;
     bool converged = false;
@@ -264,8 +261,14 @@ int algorithm::CUDA_Shake::apply(
     return E_SHAKE_FAILURE_SOLVENT;
   }
 
-  for (unsigned i = 0; i < num_atoms; ++i) {
-    conf.current().pos(i) = math::Vec(m_pos[i].x, m_pos[i].y, m_pos[i].z);
+  gpu::vec3_download(&conf.current().pos(0), m_pos.data(), num_atoms);
+  // Accumulation (+=), not a plain copy -- stays a per-atom loop, but
+  // only over constrained_atoms() (already exactly the atoms this
+  // class's term lists reference), not every atom in the system --
+  // same rationale as sparse_force_accumulate.h for the bonded terms.
+  // The CPU's own convention (dividing by dt2 once, after the raw
+  // lambda*ref_r sum) is preserved here.
+  for (unsigned int i : constrained_atoms()) {
     conf.old().constraint_force(i) +=
         math::Vec(m_constraint_force[i].x, m_constraint_force[i].y,
                    m_constraint_force[i].z) / dt2;

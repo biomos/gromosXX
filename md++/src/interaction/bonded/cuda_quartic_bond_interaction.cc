@@ -28,6 +28,8 @@
 
 #include "../../stdheader.h"
 
+#include <array>
+
 #include "../../algorithm/algorithm.h"
 #include "../../topology/topology.h"
 #include "../../simulation/simulation.h"
@@ -37,6 +39,7 @@
 
 #include "../../gpu/cuda/manager/cuda_manager.h"
 #include "gpu/cuda/interaction/bonded/quartic_bond_kernels.h"
+#include "gpu/cuda/interaction/bonded/sparse_force_accumulate.h"
 
 #include "cuda_quartic_bond_interaction.h"
 
@@ -96,6 +99,11 @@ int interaction::CUDA_Quartic_Bond_Interaction::init(
   m_bond_energy.resize(num_energy_groups);
   m_virial.resize(9);
 
+  m_touched_atoms = gpu::build_touched_atoms(bonds,
+      [](const topology::two_body_term_struct & b) {
+        return std::array<unsigned, 2>{b.i, b.j};
+      });
+
   m_initialized = true;
 
   if (!quiet)
@@ -140,10 +148,10 @@ int interaction::CUDA_Quartic_Bond_Interaction::calculate_interactions(
   // Forcefield::calculate_interactions() zeroes conf.current().force/
   // energies once before every Interaction in the sequence runs --
   // accumulate (+=), don't overwrite (same convention as
-  // CUDA_Nonbonded_Interaction/CUDA_Pairlist_Algorithm_Impl).
-  for (unsigned i = 0; i < num_atoms; ++i) {
-    conf.current().force(i) += math::Vec(force[i].x, force[i].y, force[i].z);
-  }
+  // CUDA_Nonbonded_Interaction/CUDA_Pairlist_Algorithm_Impl). Only the
+  // atoms this bond list actually references, not every atom in the
+  // system (see sparse_force_accumulate.h).
+  gpu::accumulate_sparse_forces(conf, force.data(), m_touched_atoms);
 
   for (unsigned g = 0; g < num_energy_groups; ++g) {
     conf.current().energies.bond_energy[g] += m_bond_energy[g];

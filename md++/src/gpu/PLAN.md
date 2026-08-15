@@ -904,6 +904,52 @@ Rough dependency order; each step should land as its own reviewable unit.
     identical CPU-only sequence) and passes with zero
     `compute-sanitizer` errors.
 
+19. **Cleanliness/performance review pass** (own branch
+    `cuda_claude_review`, on top of NoseHoover), across every kernel
+    and `Interaction`/`Algorithm` class landed in steps 14-18. Checked
+    specifically for the thing most worth checking in a from-scratch
+    CUDA port: every kernel launch is genuinely grid-parallel (element
+    count / threads-per-block, ceiling-divided) -- none of the new
+    kernels do single-thread or single-block work "for correctness"
+    that should have been parallelized. Two real changes came out of
+    it, not just comments:
+    - **Bulk `memcpy` instead of per-atom struct-rebuild loops**
+      (`gpu/cuda/memory/vec3_convert.h`) in the double-precision
+      constraint algorithms (SHAKE/SETTLE/LINCS): `math::Vec`
+      (`GenericVec<double>`, a plain `double[3]`) and CUDA's `double3`
+      are layout-identical (`static_assert`ed), so uploading/
+      downloading the whole position array can be one `memcpy` instead
+      of a host loop reconstructing each element field-by-field via
+      three bounds-checked accessor calls.
+    - **Sparse force accumulation** (`gpu/cuda/interaction/bonded/
+      sparse_force_accumulate.h`) in the four bonded-term
+      `Interaction`s: the force-download loop was iterating
+      `[0, num_atoms)` every call, even though a bonded term list only
+      ever references a small, fixed set of atoms (bulk solvent, in
+      particular, is never referenced by any bonded term) -- now
+      builds that atom set once in `init()` and only visits it in
+      `calculate_interactions()`. `CUDA_Shake`'s constraint-force
+      download had the identical issue (fixed the same way, reusing
+      its own pre-existing `constrained_atoms()` set).
+
+    Also de-duplicated real repeated logic rather than just repeated
+    comments: `AtomBathArrays`/`atom_bath_arrays()`
+    (`atom_bath_arrays.h`) and the whole reduce-then-scale sequence
+    (`apply_thermostat_velocity_scale()`, `thermostat_velocity_scale.h`)
+    were copy-pasted between `berendsen_thermostat_gpu.cc` and
+    `nosehoover_thermostat_gpu.cc`; both thermostats' `apply()` now
+    just call their own scalar `calc_scaling()`/`calc_chain_scaling()`
+    followed by the one shared GPU helper. `CUDA_Lincs::init()`'s
+    `fill_group()` helper had three unused parameters (dead leftovers
+    from an earlier draft) -- removed; its `run_group()`'s two
+    identical round-loops (initial solve, rotational-lengthening
+    correction) are now one `run_rounds()` lambda called twice.
+
+    Re-verified after every change: full `ctest` on both presets (only
+    the pre-existing documented `aladip_cuda` failure) and zero
+    `compute-sanitizer --tool memcheck` errors across every GPU test in
+    the suite, not just the ones touched.
+
 ## 11. Open questions (revisit later, not blocking the plan above)
 
 - Multi-GPU load balancing / domain decomposition — out of scope for v1

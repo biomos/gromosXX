@@ -39,6 +39,7 @@
 #include "../../util/error.h"
 #include "../../util/debug.h"
 
+#include "gpu/cuda/memory/vec3_convert.h"
 #include "cuda_settle.h"
 
 #undef MODULE
@@ -138,15 +139,15 @@ int algorithm::CUDA_Settle::apply(
   }
 
   const unsigned num_atoms = static_cast<unsigned>(topo.num_atoms());
-  for (unsigned i = m_first_atom; i < num_atoms; ++i) {
-    m_pos[i] = double3{conf.current().pos(i)(0), conf.current().pos(i)(1),
-                        conf.current().pos(i)(2)};
-    m_old_pos[i] = double3{conf.old().pos(i)(0), conf.old().pos(i)(1),
-                            conf.old().pos(i)(2)};
-    m_vel[i] = double3{conf.current().vel(i)(0), conf.current().vel(i)(1),
-                        conf.current().vel(i)(2)};
-  }
-  for (unsigned k = 0; k < 9; ++k) m_virial[k] = 0.0;
+  const unsigned num_solvent_atoms = num_atoms - m_first_atom;
+
+  // Bulk memcpy over the solvent range, not a per-atom struct-rebuild
+  // loop -- math::Vec and double3 are layout-identical
+  // (gpu/cuda/memory/vec3_convert.h).
+  gpu::vec3_upload(m_pos.data() + m_first_atom, &conf.current().pos(m_first_atom), num_solvent_atoms);
+  gpu::vec3_upload(m_old_pos.data() + m_first_atom, &conf.old().pos(m_first_atom), num_solvent_atoms);
+  gpu::vec3_upload(m_vel.data() + m_first_atom, &conf.current().vel(m_first_atom), num_solvent_atoms);
+  cudaMemset(m_virial.data(), 0, 9 * sizeof(double));
   m_error_flag[0] = 0;
 
   const bool do_velocity = !sim.param().stochastic.sd && !sim.param().minimise.ntem &&
@@ -167,14 +168,11 @@ int algorithm::CUDA_Settle::apply(
     return 1;
   }
 
-  for (unsigned i = m_first_atom; i < num_atoms; ++i) {
-    conf.current().pos(i) = math::Vec(m_pos[i].x, m_pos[i].y, m_pos[i].z);
-    conf.old().constraint_force(i) = math::Vec(m_constraint_force[i].x,
-                                                 m_constraint_force[i].y,
-                                                 m_constraint_force[i].z);
-    if (do_velocity)
-      conf.current().vel(i) = math::Vec(m_vel[i].x, m_vel[i].y, m_vel[i].z);
-  }
+  gpu::vec3_download(&conf.current().pos(m_first_atom), m_pos.data() + m_first_atom, num_solvent_atoms);
+  gpu::vec3_download(&conf.old().constraint_force(m_first_atom),
+                      m_constraint_force.data() + m_first_atom, num_solvent_atoms);
+  if (do_velocity)
+    gpu::vec3_download(&conf.current().vel(m_first_atom), m_vel.data() + m_first_atom, num_solvent_atoms);
 
   if (sim.param().pcouple.virial == math::atomic_virial) {
     for (unsigned b = 0; b < 3; ++b) {

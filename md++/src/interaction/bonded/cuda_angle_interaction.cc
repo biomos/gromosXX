@@ -28,6 +28,8 @@
 
 #include "../../stdheader.h"
 
+#include <array>
+
 #include "../../algorithm/algorithm.h"
 #include "../../topology/topology.h"
 #include "../../simulation/simulation.h"
@@ -37,6 +39,7 @@
 
 #include "../../gpu/cuda/manager/cuda_manager.h"
 #include "gpu/cuda/interaction/bonded/angle_kernels.h"
+#include "gpu/cuda/interaction/bonded/sparse_force_accumulate.h"
 
 #include "cuda_angle_interaction.h"
 
@@ -98,6 +101,11 @@ int interaction::CUDA_Angle_Interaction::init(
   m_angle_energy.resize(num_energy_groups);
   m_virial.resize(9);
 
+  m_touched_atoms = gpu::build_touched_atoms(angles,
+      [](const topology::three_body_term_struct & a) {
+        return std::array<unsigned, 3>{a.i, a.j, a.k};
+      });
+
   m_initialized = true;
 
   if (!quiet)
@@ -139,9 +147,7 @@ int interaction::CUDA_Angle_Interaction::calculate_interactions(
 
   cudaDeviceSynchronize();
 
-  for (unsigned i = 0; i < num_atoms; ++i) {
-    conf.current().force(i) += math::Vec(force[i].x, force[i].y, force[i].z);
-  }
+  gpu::accumulate_sparse_forces(conf, force.data(), m_touched_atoms);
 
   for (unsigned g = 0; g < num_energy_groups; ++g) {
     conf.current().energies.angle_energy[g] += m_angle_energy[g];
