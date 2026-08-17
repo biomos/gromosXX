@@ -83,7 +83,7 @@ set(GROMOS_LIBS
 
 # executables
 #set(EXEC_NAMES aladip aladip_unperturbed aladip_special aladip_atomic aladip_ls c16_cg lambdas)
-set(EXEC_NAMES aladip aladip_unperturbed aladip_special aladip_atomic c16_cg lambdas)
+set(EXEC_NAMES aladip aladip_unperturbed aladip_special aladip_atomic c16_cg lambdas feature_checker_gpu)
 
 
 add_executable(aladip ${ALADIP_CC})
@@ -93,6 +93,11 @@ add_executable(aladip_atomic ${ALADIP_ATOMIC_CC})
 #add_executable(aladip_ls ${ALADIP_LS_CC})
 add_executable(c16_cg ${C16_CG_CC})
 add_executable(lambdas ${LAMBDAS_CC})
+# Parameter-level "gpu" feature-compatibility check -- no CUDA runtime
+# needed (io::check_features() is pure parameter bookkeeping), so this
+# runs on every build, guarding the matrix in check_parameter.cc even
+# on CPU-only builds.
+add_executable(feature_checker_gpu feature_checker_gpu.t.cc)
 
 if(USE_CUDA)
     list(APPEND EXEC_NAMES aladip_cuda)

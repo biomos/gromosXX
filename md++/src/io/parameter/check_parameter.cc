@@ -4973,6 +4973,18 @@ int io::check_features(simulation::Simulation  &sim)
   //fc.unlock("gamd", "shifted_crf");
   
   // GPU Acceleration
+  //
+  // This matrix predates (and was never updated to match) the real CUDA
+  // implementation landed across PLAN.md §10 steps 8-20 -- it was still
+  // reflecting the old gpu_legacy feature set. Every `unlock` added below
+  // corresponds to a GPU code path that's actually implemented *and*
+  // covered by a dedicated CPU-vs-GPU correctness test (see the file/test
+  // cited in each comment); every lock left in place (still `//`-commented)
+  // is either genuinely unimplemented on GPU or would silently compute the
+  // wrong physics if allowed through (e.g. shifted-RF, RF-for-excluded-
+  // pairs) -- don't unlock those without first adding the real kernel
+  // support and a test, per this codebase's "no silent wrong result"
+  // convention (PAIRLIST_PLAN.md §5(A)).
   fc.unlock("gpu", "solute");
   fc.unlock("gpu", "solvent");
   fc.unlock("gpu", "solvent_only");
@@ -4980,12 +4992,16 @@ int io::check_features(simulation::Simulation  &sim)
   fc.unlock("gpu", "conjugate_gradient");
   fc.unlock("gpu", "solute_constraint_off");
   fc.unlock("gpu", "solute_shake");
-  // fc.unlock("gpu", "solute_lincs");
+  // CUDA_Lincs covers both solute and solvent LINCS (cuda_lincs.cc,
+  // lincs_gpu.t.cc) -- see cuda_shake_covers_run()-style dispatch in
+  // create_constraints.cc.
+  fc.unlock("gpu", "solute_lincs");
   // fc.unlock("gpu", "solute_flexshake");
   fc.unlock("gpu", "solvent_constraint_off");
   fc.unlock("gpu", "solvent_shake");
-  // fc.unlock("gpu", "solvent_lincs");
-  // fc.unlock("gpu", "solvent_settle");
+  fc.unlock("gpu", "solvent_lincs");
+  // CUDA_Settle (cuda_settle.cc, settle_gpu.t.cc).
+  fc.unlock("gpu", "solvent_settle");
   fc.unlock("gpu", "pressure_calculation");
   fc.unlock("gpu", "pressure_scale_berendsen");
   fc.unlock("gpu", "virial_off");
@@ -4993,6 +5009,9 @@ int io::check_features(simulation::Simulation  &sim)
   fc.unlock("gpu", "virial_molecular");
   fc.unlock("gpu", "vacuum");
   fc.unlock("gpu", "pbc_r");
+  // CUDA_Pairlist_Algorithm::init() hard-errors outside vacuum/rectangular
+  // boundary (TILE_PAIRLIST_DESIGN.md §4.1) -- triclinic/truncated-
+  // octahedral genuinely aren't supported yet, not just untested.
   // fc.unlock("gpu", "pbc_c");
   // fc.unlock("gpu", "pbc_t");
   // fc.unlock("gpu", "perturbation");
@@ -5001,20 +5020,46 @@ int io::check_features(simulation::Simulation  &sim)
   // fc.unlock("gpu", "individual_lambdas");
   // fc.unlock("gpu", "precalculate_lambdas");
   // fc.unlock("gpu", "gamd");
-  // fc.unlock("gpu", "bond");
-  // fc.unlock("gpu", "angle");
-  // fc.unlock("gpu", "dihedral");
-  // fc.unlock("gpu", "improper");
-  // fc.unlock("gpu", "crf");
-  // fc.unlock("gpu", "lj");
+  // CUDA_Quartic_Bond_Interaction/CUDA_Angle_Interaction/
+  // CUDA_Dihedral_Interaction/CUDA_Improper_Dihedral_Interaction
+  // (quartic_bond_gpu.t.cc/angle_gpu.t.cc/dihedral_gpu.t.cc/
+  // improper_dihedral_gpu.t.cc) -- create_bonded.cc dispatches to these
+  // whenever accelerator==gpu_cuda and perturbation is off.
+  fc.unlock("gpu", "bond");
+  fc.unlock("gpu", "angle");
+  fc.unlock("gpu", "dihedral");
+  fc.unlock("gpu", "improper");
+  // CUDA_Nonbonded_Interaction computes the standard (non-shifted,
+  // eps=0) LJ + reaction-field formula every call (lj_crf_tiles.cu) --
+  // exactly the nonbonded_crf==1/nonbonded_vdw==1 default case these two
+  // features represent (cuda_nonbonded_interaction.t.cc).
+  fc.unlock("gpu", "crf");
+  fc.unlock("gpu", "lj");
+  // Shifted reaction-field correction (use_shift) is a different formula
+  // the tile kernel never implemented -- stays unsupported.
   // fc.unlock("gpu", "shifted_crf");
-  // fc.unlock("gpu", "com_removal");
+  // Remove_COM_Motion<gpuBackend> (remove_com_motion_gpu.t.cc).
+  fc.unlock("gpu", "com_removal");
+  // The RF correction term for *excluded* pairs (rf_excluded) is a
+  // separate computation from the tile pairlist's exclusion masking --
+  // never implemented on GPU; allowing it through would silently drop a
+  // real energy/force contribution rather than error.
   // fc.unlock("gpu", "rf_excluded");
-  // fc.unlock("gpu", "pairlist_standard");
-  // fc.unlock("gpu", "pairlist_grid");
-  // fc.unlock("gpu", "pairlist_gridcell");
-  // fc.unlock("gpu", "cutoff_atomic");
-  // fc.unlock("gpu", "cutoff_cg");
+  // accelerator==gpu_cuda always selects CUDA_Pairlist_Algorithm before
+  // ever consulting param.pairlist.grid (create_nonbonded.cc) -- the
+  // setting is inert under GPU, not incompatible with it, for all three
+  // pairlist-algorithm choices.
+  fc.unlock("gpu", "pairlist_standard");
+  fc.unlock("gpu", "pairlist_grid");
+  fc.unlock("gpu", "pairlist_gridcell");
+  // Both toggles of atomic_cutoff are implemented and covered
+  // (cuda_atomic_cutoff_toggle.t.cc; the OOB-write bug this test caught,
+  // fixed and recorded in KNOWN_ISSUES.md, was the last thing blocking
+  // this).
+  fc.unlock("gpu", "cutoff_atomic");
+  fc.unlock("gpu", "cutoff_cg");
+  // Coarse-grained LJ/CRF (a different Nonbonded_Term::init() parameter
+  // case, eps != 0) was never ported to the tile kernel.
   // fc.unlock("gpu", "cg_martini");
   // fc.unlock("gpu", "cg_gromos");
   // fc.unlock("gpu", "mixed_grain");
@@ -5034,13 +5079,17 @@ int io::check_features(simulation::Simulation  &sim)
   fc.unlock("gpu", "rdc_rest");
   // fc.unlock("gpu", "perscale");
   fc.unlock("gpu", "rottrans");
-  // fc.unlock("gpu", "innerloop_method_off");
-  // fc.unlock("gpu", "innerloop_method_generic");
-  // fc.unlock("gpu", "innerloop_method_hardcode");
-  // fc.unlock("gpu", "innerloop_method_table");
-  // fc.unlock("gpu", "innerloop_method_cuda");
-  // fc.unlock("gpu", "innerloop_solvent_topology");
-  // fc.unlock("gpu", "innerloop_solvent_spc");
+  // param.innerloop.* selects between the CPU nonbonded inner-loop
+  // implementations (generic/hardcode/table/legacy-cuda) -- irrelevant
+  // under accelerator==gpu_cuda, which always builds CUDA_Nonbonded_
+  // Interaction instead and never reads this parameter at all.
+  fc.unlock("gpu", "innerloop_method_off");
+  fc.unlock("gpu", "innerloop_method_generic");
+  fc.unlock("gpu", "innerloop_method_hardcode");
+  fc.unlock("gpu", "innerloop_method_table");
+  fc.unlock("gpu", "innerloop_method_cuda");
+  fc.unlock("gpu", "innerloop_solvent_topology");
+  fc.unlock("gpu", "innerloop_solvent_spc");
   // fc.unlock("gpu", "repex_temp");
   // fc.unlock("gpu", "repex_lambda");
   // fc.unlock("gpu", "multicell");
@@ -5063,7 +5112,12 @@ int io::check_features(simulation::Simulation  &sim)
   // fc.unlock("gpu", "amber");
   // fc.unlock("gpu", "parallel_mpi");
   fc.unlock("gpu", "parallel_omp");
-  // fc.unlock("gpu", "mult_energy_groups");
+  // Multi-energy-group bucketing is implemented throughout: the tile
+  // kernel buckets LJ/CRF energy by [gi][gj] (lj_crf_tiles.cu), and every
+  // bonded-term kernel buckets by atom_energy_group -- verified against
+  // aladip's real 2-energy-group topology (cuda_nonbonded_interaction.t.cc)
+  // rather than a synthetic single-group override.
+  fc.unlock("gpu", "mult_energy_groups");
   // fc.unlock("gpu", "ewald");
   // fc.unlock("gpu", "p3m");
   // fc.unlock("gpu", "leus");
