@@ -156,6 +156,9 @@ if(USE_CUDA)
 
     list(APPEND EXEC_NAMES nosehoover_gpu)
     add_executable(nosehoover_gpu nosehoover_gpu.t.cc)
+
+    list(APPEND EXEC_NAMES rf_excluded_gpu)
+    add_executable(rf_excluded_gpu rf_excluded_gpu.t.cc)
 endif()
 
 foreach(LOOP_VAR ${EXEC_NAMES})

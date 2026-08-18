@@ -5042,9 +5042,10 @@ int io::check_features(simulation::Simulation  &sim)
   fc.unlock("gpu", "com_removal");
   // The RF correction term for *excluded* pairs (rf_excluded) is a
   // separate computation from the tile pairlist's exclusion masking --
-  // never implemented on GPU; allowing it through would silently drop a
-  // real energy/force contribution rather than error.
-  // fc.unlock("gpu", "rf_excluded");
+  // now implemented via gpu::launch_rf_excluded (rf_excluded_kernels.cu),
+  // called from CUDA_Pairlist_Algorithm_Impl::compute_forces_energies()
+  // whenever param.nonbonded.rf_excluded is set (rf_excluded_gpu.t.cc).
+  fc.unlock("gpu", "rf_excluded");
   // accelerator==gpu_cuda always selects CUDA_Pairlist_Algorithm before
   // ever consulting param.pairlist.grid (create_nonbonded.cc) -- the
   // setting is inert under GPU, not incompatible with it, for all three

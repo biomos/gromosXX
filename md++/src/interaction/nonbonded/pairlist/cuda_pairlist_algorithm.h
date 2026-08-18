@@ -144,8 +144,9 @@ namespace interaction
                                   simulation::Simulation & sim,
                                   gpu::LJParamView lj,
                                   gpu::NbSimParams nb,
-                                  bool recompute_long) {
-      m_impl.compute_forces_energies(conf, topo, sim, lj, nb, recompute_long);
+                                  bool recompute_long,
+                                  bool rf_excluded) {
+      m_impl.compute_forces_energies(conf, topo, sim, lj, nb, recompute_long, rf_excluded);
     }
 
     /**

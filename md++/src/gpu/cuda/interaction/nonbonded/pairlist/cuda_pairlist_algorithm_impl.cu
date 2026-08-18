@@ -26,6 +26,7 @@
 #include "gpu/cuda/memory/configuration_struct.h"
 #include "gpu/cuda/kernels/periodicity.h"
 #include "gpu/cuda/interaction/nonbonded/kernels/lj_crf_tiles.h"
+#include "gpu/cuda/interaction/nonbonded/kernels/rf_excluded_kernels.h"
 #include "gpu/cuda/interaction/nonbonded/kernels/displacement.h"
 #include "block_pairlist.h"
 
@@ -86,6 +87,41 @@ int interaction::CUDA_Pairlist_Algorithm_Impl::init(topology::Topology &topo,
 
     m_candidate_ref_pos.resize(num_atoms);
     m_candidates_built = false;
+
+    // Plain-exclusion CSR for the RF-excluded-pairs kernel
+    // (gpu::launch_rf_excluded): built from topo.exclusion(i), NOT
+    // topo.all_exclusion(i) (which gpu::Topology's excl_ptr/excl_list
+    // uses for tile-classification masking) -- all_exclusion is
+    // exclusion() UNION one_four_pair() (topology.cc's
+    // update_all_exclusion()), and 1-4 pairs get their own separate
+    // lj_exception treatment, never the RF correction. Reusing the
+    // tile-classification CSR here silently applied the RF correction to
+    // 1-4 pairs too -- caught by rf_excluded_gpu.t.cc's very first run
+    // (3x too-negative crf energy, garbled per-atom forces).
+    const unsigned num_solute_atoms = topo.num_solute_atoms();
+    {
+        std::vector<int> h_rf_excl_ptr(num_solute_atoms + 1);
+        std::vector<int> h_rf_excl_list;
+        h_rf_excl_list.reserve(num_solute_atoms * 3);
+        for (unsigned i = 0; i < num_solute_atoms; ++i) {
+            h_rf_excl_ptr[i] = static_cast<int>(h_rf_excl_list.size());
+            for (topology::excl_cont_t::value_type::const_iterator
+                     it = topo.exclusion(i).begin(), to = topo.exclusion(i).end();
+                 it != to; ++it) {
+                h_rf_excl_list.push_back(static_cast<int>(*it));
+            }
+        }
+        h_rf_excl_ptr[num_solute_atoms] = static_cast<int>(h_rf_excl_list.size());
+
+        m_rf_excl_ptr.resize(num_solute_atoms + 1);
+        cudaMemcpy(m_rf_excl_ptr.data(), h_rf_excl_ptr.data(),
+                   sizeof(int) * (num_solute_atoms + 1), cudaMemcpyHostToDevice);
+        m_rf_excl_list.resize(h_rf_excl_list.size() > 0 ? h_rf_excl_list.size() : 1);
+        if (!h_rf_excl_list.empty()) {
+            cudaMemcpy(m_rf_excl_list.data(), h_rf_excl_list.data(),
+                       sizeof(int) * h_rf_excl_list.size(), cudaMemcpyHostToDevice);
+        }
+    }
 
     return 0;
 };
@@ -618,7 +654,8 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::compute_forces_energies(
                 simulation::Simulation & sim,
                 gpu::LJParamView lj,
                 gpu::NbSimParams nb,
-                bool recompute_long)
+                bool recompute_long,
+                bool rf_excluded)
 {
     const unsigned num_atoms   = static_cast<unsigned>(m_force.size());
     const unsigned num_buckets = m_num_energy_groups * m_num_energy_groups;
@@ -659,6 +696,22 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::compute_forces_energies(
         nullptr, 0u,
         pos, m_iac.data(), m_charge.data(), m_atom_energy_group.data(), lj, nb, boundary, box,
         m_force.data(), m_e_lj.data(), m_e_crf.data(), m_virial.data());
+
+    // RF for excluded pairs (param.nonbonded.rf_excluded): independent of
+    // the pairlist/twin-range cadence entirely -- walks the exclusion
+    // list and solvent chargegroups directly, same as
+    // nonbonded_set.cc's unconditional RF_excluded_outerloop call.
+    // Accumulates into the same m_force/m_e_crf/m_virial buffers as the
+    // short-range tile kernel above, so it's covered by the same
+    // conf.current() add-in below.
+    if (rf_excluded) {
+        const gpu::Topology::View topo_view = sim.cuda().topology_view(topo);
+        gpu::launch_rf_excluded(
+            m_rf_excl_ptr.data(), m_rf_excl_list.data(), num_solute_atoms,
+            topo_view.chargegroup, topo_view.num_solute_chargegroups, topo_view.num_chargegroups,
+            pos, m_charge.data(), m_atom_energy_group.data(), nb, boundary, box,
+            m_force.data(), m_e_crf.data(), m_virial.data());
+    }
 
     // Long-range: only recomputed on a classification/rebuild step
     // (recompute_long == true) -- otherwise m_longrange_force/

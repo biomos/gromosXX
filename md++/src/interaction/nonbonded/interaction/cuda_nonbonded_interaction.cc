@@ -155,7 +155,8 @@ int interaction::CUDA_Nonbonded_Interaction::calculate_interactions(
   // Writes directly into conf.current().energies.lj_energy/crf_energy's
   // per-[gi][gj] matrix (same accumulation style as
   // nonbonded_innerloop.cc's CPU inner loop) -- no scalar out-params.
-  pa->compute_forces_energies(topo, conf, sim, m_gpu_lj.view(), m_nb, pairlist_update);
+  pa->compute_forces_energies(topo, conf, sim, m_gpu_lj.view(), m_nb, pairlist_update,
+                               sim.param().nonbonded.rf_excluded);
 
   return 0;
 }

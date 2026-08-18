@@ -215,12 +215,24 @@ namespace interaction {
        * m_force/m_e_lj/m_e_crf/m_virial/m_longrange_force/m_e_lj_long/
        * m_e_crf_long/m_virial_long (sized once in init()) back this.
        */
+      /**
+       * `rf_excluded`: also launches `gpu::launch_rf_excluded` (self-term
+       * + excluded-pair RF energy/force/virial, plus rigid-solvent
+       * excluded-pair RF energy -- see rf_excluded_kernels.h) into the
+       * same m_force/m_e_crf/m_virial buffers as the short-range tile
+       * kernel, every call, matching nonbonded_set.cc's unconditional
+       * (non-twin-range) `RF_excluded_outerloop` call. False when
+       * `sim.param().nonbonded.rf_excluded` is off -- the common case,
+       * skips the extra kernel launches entirely rather than launching
+       * and contributing zero.
+       */
       void compute_forces_energies(configuration::Configuration & conf,
                                     topology::Topology & topo,
                                     simulation::Simulation & sim,
                                     gpu::LJParamView lj,
                                     gpu::NbSimParams nb,
-                                    bool recompute_long);
+                                    bool recompute_long,
+                                    bool rf_excluded);
 
     protected:
       /**
@@ -304,6 +316,16 @@ namespace interaction {
       gpu::cuvector<int> m_iac;
       gpu::cuvector<FPL_TYPE> m_charge;
       gpu::cuvector<unsigned> m_atom_energy_group;
+      /**
+       * Plain-exclusion CSR (topo.exclusion(i), NOT topo.all_exclusion(i))
+       * for gpu::launch_rf_excluded -- see that function's doc comment
+       * for why this must be a separate array from gpu::Topology's own
+       * exclusion CSR (which additionally includes 1-4 pairs, wrong for
+       * the RF correction). Built once in init(), same lifetime as
+       * m_iac/m_charge/m_atom_energy_group above.
+       */
+      gpu::cuvector<int> m_rf_excl_ptr;
+      gpu::cuvector<int> m_rf_excl_list;
       /**
        * topo.energy_groups().size(), set once in init(). The energy
        * accumulators below are sized num_energy_groups^2 (flattened

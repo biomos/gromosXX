@@ -19,26 +19,23 @@
  */
 
 /**
- * @file cuda_nonbonded_interaction.t.cc
- * End-to-end correctness test for CUDA_Nonbonded_Interaction (PLAN.md
- * §10 step 9, TILE_PAIRLIST_DESIGN.md §8/§9) -- unlike
- * pairlist_cuda_equivalence.t.cc (pairlist only) and
- * lj_crf_tile_kernel.t.cc (kernel only, hand-built tile), this drives
- * the real CUDA_Pairlist_Algorithm + CUDA_Nonbonded_Interaction pair
- * exactly as create_nonbonded.cc wires them for accelerator = cuda, and
- * compares the resulting per-atom forces and per-energy-group-pair
- * LJ/CRF energy matrix against a direct CPU reference built from
- * Standard_Pairlist_Algorithm's real pairlist (all four buckets:
- * solute/solvent x short/long) summed through
- * interaction::Nonbonded_Term::lj_crf_interaction -- the same primitive
- * the CPU innerloop uses.
+ * @file rf_excluded_gpu.t.cc
+ * Correctness test for `gpu::launch_rf_excluded` (rf_excluded_kernels.cu),
+ * wired into CUDA_Pairlist_Algorithm_Impl::compute_forces_energies()
+ * whenever `param.nonbonded.rf_excluded` is set. Structured the same way
+ * as cuda_nonbonded_interaction.t.cc (real CUDA_Pairlist_Algorithm +
+ * CUDA_Nonbonded_Interaction pair, compared against a direct CPU
+ * reference), but the CPU reference here is built from
+ * Nonbonded_Term::rf_interaction over topo.exclusion(i) (solute
+ * self-term + excluded pairs) plus the rigid-solvent excluded-pair energy
+ * formula, exactly mirroring RF_excluded_outerloop's two innerloops
+ * (nonbonded_innerloop.cc) rather than the regular pairlist-driven
+ * LJ/CRF path cuda_nonbonded_interaction.t.cc already covers.
  *
- * aladip's own test input defines 2 energy groups (NEGR = 2), used as-is
- * here (no override) -- both sides read topo.atom_energy_group() for
- * their energy-group-pair bucketing (CUDA_Nonbonded_Interaction's tile
- * kernel now buckets by [eg_i][eg_j] instead of a single flat total), so
- * this is a real multi-energy-group correctness test, not a
- * single-group-forced one. Only USE_CUDA builds run this.
+ * aladip's own solute has real bonded exclusions (1-2/1-3/1-4) and its
+ * solvent is SPC water (3-atom chargegroups) -- both branches of
+ * gpu::launch_rf_excluded are genuinely exercised without needing a
+ * synthetic topology.
  */
 
 #include "../stdheader.h"
@@ -63,7 +60,6 @@
 #include "../interaction/nonbonded/interaction/nonbonded_term.h"
 #include "../interaction/nonbonded/pairlist/pairlist.h"
 #include "../interaction/nonbonded/pairlist/pairlist_algorithm.h"
-#include "../interaction/nonbonded/pairlist/standard_pairlist_algorithm.h"
 #include "../interaction/nonbonded/pairlist/cuda_pairlist_algorithm.h"
 #include "../interaction/nonbonded/interaction/cuda_nonbonded_interaction.h"
 
@@ -83,65 +79,71 @@ namespace {
 
   struct Reference {
     std::vector<math::Vec> force;
-    // Per-energy-group-pair matrices, matching
-    // configuration::Energy::lj_energy/crf_energy's [gi][gj] shape.
-    std::vector<std::vector<double> > lj_energy;
     std::vector<std::vector<double> > crf_energy;
   };
 
   /**
-   * Real CPU pairlist (Standard_Pairlist_Algorithm, all four buckets) +
-   * direct Nonbonded_Term::lj_crf_interaction summation, bucketed by
-   * energy-group pair exactly like nonbonded_innerloop.cc's CPU inner
-   * loop (storage.energies.lj_energy[eg_i][eg_j] += e_lj) -- the CPU-side
-   * ground truth this test compares CUDA_Nonbonded_Interaction against.
+   * Direct CPU reference for the RF-excluded contribution only, built
+   * exactly like RF_excluded_outerloop's two innerloops
+   * (nonbonded_innerloop.cc): solute self-term + topo.exclusion(i) pairs
+   * via Nonbonded_Term::rf_interaction, and solvent chargegroups' rigid
+   * internal-pair energy (no force, no self-term -- see that innerloop's
+   * comment on why the distance-independent part is left out).
    */
   template <math::boundary_enum B>
   Reference compute_reference(topology::Topology & topo,
                                configuration::Configuration & conf,
-                               simulation::Simulation & sim,
-                               interaction::Nonbonded_Parameter & param) {
-    interaction::Standard_Pairlist_Algorithm cpu_pa;
-    cpu_pa.init(topo, conf, sim, std::cout, true);
-    cpu_pa.prepare(topo, conf, sim);
-    interaction::PairlistContainer pl;
-    pl.resize(static_cast<unsigned>(topo.num_atoms()));
-    cpu_pa.update(topo, conf, sim, pl, 0, static_cast<unsigned>(topo.num_atoms()), 1);
-
+                               simulation::Simulation & sim) {
     interaction::Nonbonded_Term term;
     term.init(sim);
     math::Periodicity<B> periodicity(conf.current().box);
 
     const unsigned num_groups = static_cast<unsigned>(topo.energy_groups().size());
+    const unsigned num_solute_atoms = topo.num_solute_atoms();
 
     Reference ref;
     ref.force.resize(topo.num_atoms(), math::Vec(0.0, 0.0, 0.0));
-    ref.lj_energy.assign(num_groups, std::vector<double>(num_groups, 0.0));
     ref.crf_energy.assign(num_groups, std::vector<double>(num_groups, 0.0));
 
-    auto accumulate = [&](interaction::Pairlist & bucket) {
-      for (unsigned i = 0; i < bucket.size(); ++i) {
-        for (unsigned int j : bucket[i]) {
+    // Solute: self-term + excluded pairs.
+    for (unsigned i = 0; i < num_solute_atoms; ++i) {
+      const double qi = topo.charge(i);
+      math::Vec r(0.0, 0.0, 0.0), f;
+      double e_crf = 0.0;
+      term.rf_interaction(r, qi * qi, f, e_crf);
+      const unsigned eg_i = topo.atom_energy_group(i);
+      ref.crf_energy[eg_i][eg_i] += 0.5 * e_crf;
+
+      for (topology::excl_cont_t::value_type::const_iterator
+               it = topo.exclusion(i).begin(), to = topo.exclusion(i).end();
+           it != to; ++it) {
+        const unsigned j = *it;
+        periodicity.nearest_image(conf.current().pos(i), conf.current().pos(j), r);
+        term.rf_interaction(r, qi * topo.charge(j), f, e_crf);
+        ref.force[i] += f;
+        ref.force[j] -= f;
+        const unsigned eg_j = topo.atom_energy_group(j);
+        ref.crf_energy[eg_i][eg_j] += e_crf;
+      }
+    }
+
+    // Solvent: rigid intramolecular pairs, energy only, no self-term.
+    for (topology::Chargegroup_Iterator cg_it = topo.chargegroup_it(topo.num_solute_chargegroups()),
+                                         cg_to = topo.chargegroup_end();
+         cg_it != cg_to; ++cg_it) {
+      for (topology::Atom_Iterator at_it = cg_it.begin(), at_end = cg_it.end();
+           at_it != at_end; ++at_it) {
+        for (topology::Atom_Iterator at2_it = at_it + 1; at2_it != at_end; ++at2_it) {
           math::Vec r;
-          periodicity.nearest_image(conf.current().pos(i), conf.current().pos(j), r);
-          const interaction::lj_parameter_struct & lj =
-              param.lj_parameter(topo.iac(i), topo.iac(j));
-          const double q = topo.charge(i) * topo.charge(j);
-          double f = 0.0, e_lj = 0.0, e_crf = 0.0;
-          term.lj_crf_interaction(r, lj.c6, lj.c12, q, f, e_lj, e_crf);
-          ref.force[i] += f * r;
-          ref.force[j] -= f * r;
-          const unsigned eg_i = topo.atom_energy_group(i);
-          const unsigned eg_j = topo.atom_energy_group(j);
-          ref.lj_energy[eg_i][eg_j]  += e_lj;
-          ref.crf_energy[eg_i][eg_j] += e_crf;
+          periodicity.nearest_image(conf.current().pos(*at_it), conf.current().pos(*at2_it), r);
+          const double e_crf = -(topo.charge(*at_it) * topo.charge(*at2_it)) *
+                                math::four_pi_eps_i * term.crf_2cut3i() * abs2(r);
+          const unsigned eg1 = topo.atom_energy_group(*at_it);
+          const unsigned eg2 = topo.atom_energy_group(*at2_it);
+          ref.crf_energy[eg1][eg2] += e_crf;
         }
       }
-    };
-    accumulate(pl.solute_short);
-    accumulate(pl.solute_long);
-    accumulate(pl.solvent_short);
-    accumulate(pl.solvent_long);
+    }
 
     return ref;
   }
@@ -161,16 +163,8 @@ namespace {
     io::messages.display(std::cout);
     io::messages.clear();
 
-    // Exact match required, same as pairlist_cuda_equivalence.t.cc.
     s.sim.param().pairlist.skin = 0.0;
-
-    // rf_excluded defaults to true (parameter.h's "new standard") and is
-    // now genuinely implemented on GPU (gpu::launch_rf_excluded) -- this
-    // test's CPU reference is deliberately just the regular pairlist-
-    // driven LJ/CRF sum, not that separate contribution, so disable it
-    // here to keep comparing like for like. rf_excluded_gpu.t.cc is the
-    // dedicated test for that term.
-    s.sim.param().nonbonded.rf_excluded = false;
+    s.sim.param().nonbonded.rf_excluded = true;
 
     s.conf.boundary_type = force_boundary;
     s.sim.param().boundary.boundary = force_boundary;
@@ -182,7 +176,6 @@ namespace {
 
     const unsigned num_atoms = static_cast<unsigned>(s.topo.num_atoms());
 
-    // v1 scope: no virial (CUDA_Nonbonded_Interaction::init() gate).
     s.sim.param().pcouple.virial = math::no_virial;
 
     interaction::Nonbonded_Parameter param;
@@ -194,13 +187,11 @@ namespace {
 
     Reference ref;
     if (force_boundary == math::vacuum) {
-      ref = compute_reference<math::vacuum>(s.topo, s.conf, s.sim, param);
+      ref = compute_reference<math::vacuum>(s.topo, s.conf, s.sim);
     } else {
-      ref = compute_reference<math::rectangular>(s.topo, s.conf, s.sim, param);
+      ref = compute_reference<math::rectangular>(s.topo, s.conf, s.sim);
     }
 
-    // GPU side: exactly the pairing create_nonbonded.cc uses for
-    // accelerator = cuda.
     interaction::Pairlist_Algorithm * pa = new interaction::CUDA_Pairlist_Algorithm();
     interaction::CUDA_Nonbonded_Interaction * ni =
         new interaction::CUDA_Nonbonded_Interaction(pa);
@@ -234,23 +225,69 @@ namespace {
       return 1;
     }
 
+    // Isolate the RF-excluded contribution: subtract out the regular
+    // pairlist-driven LJ/CRF result (computed the same way
+    // cuda_nonbonded_interaction.t.cc does, rf_excluded left off) so this
+    // test only checks the new kernel's contribution, not the whole
+    // nonbonded force/energy (already covered elsewhere).
+    {
+      util::simulation_struct s2;
+      if (util::create_simulation(stopo, "", sconf, sinput, s2, in_topo,
+                                   "", "", "", "", "", "", "", "", true) != 0) {
+        std::cerr << label << ": creating baseline simulation failed" << std::endl;
+        delete ni;
+        return 1;
+      }
+      io::messages.clear();
+      s2.sim.param().pairlist.skin = 0.0;
+      // rf_excluded defaults to true (parameter.h's "new standard") --
+      // explicitly off here so this baseline run is genuinely the
+      // "everything except the new contribution" run being subtracted.
+      s2.sim.param().nonbonded.rf_excluded = false;
+      s2.conf.boundary_type = force_boundary;
+      s2.sim.param().boundary.boundary = force_boundary;
+      if (force_boundary == math::rectangular) {
+        s2.conf.current().box = s.conf.current().box;
+      }
+      s2.sim.param().pcouple.virial = math::no_virial;
+
+      interaction::Pairlist_Algorithm * pa2 = new interaction::CUDA_Pairlist_Algorithm();
+      interaction::CUDA_Nonbonded_Interaction * ni2 =
+          new interaction::CUDA_Nonbonded_Interaction(pa2);
+      in_topo.read_lj_parameter(ni2->parameter().lj_parameter(), std::cout);
+      io::messages.clear();
+      if (ni2->init(s2.topo, s2.conf, s2.sim, std::cout, true) != 0 ||
+          ni2->calculate_interactions(s2.topo, s2.conf, s2.sim) != 0) {
+        std::cerr << label << ": baseline (rf_excluded=off) GPU run failed" << std::endl;
+        io::messages.clear();
+        delete ni2;
+        delete ni;
+        return 1;
+      }
+      io::messages.clear();
+
+      for (unsigned i = 0; i < num_atoms; ++i) {
+        s.conf.current().force(i) -= s2.conf.current().force(i);
+      }
+      const unsigned num_groups = static_cast<unsigned>(s.topo.energy_groups().size());
+      for (unsigned gi = 0; gi < num_groups; ++gi) {
+        for (unsigned gj = 0; gj < num_groups; ++gj) {
+          s.conf.current().energies.crf_energy[gi][gj] -=
+              s2.conf.current().energies.crf_energy[gi][gj];
+        }
+      }
+      delete ni2;
+    }
+
     const unsigned num_groups = static_cast<unsigned>(s.topo.energy_groups().size());
 
     int errors = 0;
-    // FPL_TYPE is float in the default (mixed-precision) build.
     const double tol = 1e-4;
 
     for (unsigned gi = 0; gi < num_groups; ++gi) {
       for (unsigned gj = 0; gj < num_groups; ++gj) {
-        const double gpu_e_lj  = s.conf.current().energies.lj_energy[gi][gj];
         const double gpu_e_crf = s.conf.current().energies.crf_energy[gi][gj];
-        const double ref_e_lj  = ref.lj_energy[gi][gj];
         const double ref_e_crf = ref.crf_energy[gi][gj];
-        if (std::abs(gpu_e_lj - ref_e_lj) > tol * std::max(1.0, std::abs(ref_e_lj))) {
-          std::cerr << label << ": e_lj mismatch at group (" << gi << "," << gj
-                    << "): gpu=" << gpu_e_lj << " cpu=" << ref_e_lj << std::endl;
-          ++errors;
-        }
         if (std::abs(gpu_e_crf - ref_e_crf) > tol * std::max(1.0, std::abs(ref_e_crf))) {
           std::cerr << label << ": e_crf mismatch at group (" << gi << "," << gj
                     << "): gpu=" << gpu_e_crf << " cpu=" << ref_e_crf << std::endl;
@@ -276,7 +313,7 @@ namespace {
                 << " energy group(s))" << std::endl;
     }
 
-    delete ni; // cascades: ~Nonbonded_Interaction deletes m_pairlist_algorithm (pa)
+    delete ni;
     return errors;
   }
 

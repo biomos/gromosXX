@@ -35,6 +35,7 @@ set(GPU_HEADERS
     cuda/interaction/nonbonded/cuda_lj_params.h
     cuda/interaction/nonbonded/cuda_nb_sim_params.h
     cuda/interaction/nonbonded/kernels/lj_crf_tiles.h
+    cuda/interaction/nonbonded/kernels/rf_excluded_kernels.h
     cuda/interaction/nonbonded/kernels/displacement.h
     cuda/algorithm/integration/leap_frog_kernels.h
     cuda/algorithm/constraints/remove_com_motion_kernels.h
@@ -73,6 +74,7 @@ if(USE_CUDA)
         cuda/memory/pairlist/tile.cu
         cuda/interaction/nonbonded/cuda_lj_params.cu
         cuda/interaction/nonbonded/kernels/lj_crf_tiles.cu
+        cuda/interaction/nonbonded/kernels/rf_excluded_kernels.cu
         cuda/interaction/nonbonded/kernels/displacement.cu
         cuda/algorithm/integration/leap_frog_kernels.cu
         cuda/algorithm/constraints/remove_com_motion_kernels.cu
