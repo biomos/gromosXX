@@ -42,7 +42,8 @@ namespace interaction
      */
     Nonbonded_Parameter(Nonbonded_Parameter const & nbp)
       : m_lj_parameter(nbp.m_lj_parameter),
-	m_cg_parameter(nbp.m_cg_parameter)
+	m_cg_parameter(nbp.m_cg_parameter),
+	m_coulomb_scaling(nbp.m_coulomb_scaling)
     {
     }
 
@@ -172,8 +173,20 @@ namespace interaction
     /**
     * scaling factor for electrostatic 1,4-interactions
     * e.g. used with Amber Forcefield
+    *
+    * Defaults to 1.0 (the standard, non-AMBER case, matching
+    * create_nonbonded.cc's `else` branch) -- previously had no default
+    * member initializer at all, so any Nonbonded_Parameter constructed
+    * without an explicit set_coulomb_scaling() call (as every non-AMBER
+    * production run's own create_nonbonded.cc call *does* provide, but
+    * several GPU check tests that construct CUDA_Nonbonded_Interaction
+    * directly, bypassing create_nonbonded.cc, do not) read uninitialized
+    * memory here. Found via cuda_nonbonded_interaction.t.cc's newly
+    * added 1,4-pair ("LJ exception") CPU reference term producing a
+    * boundary-type-dependent (i.e. memory-layout-dependent, not
+    * physics-dependent) mismatch against gpu::launch_one_four.
     */
-    double m_coulomb_scaling;
+    double m_coulomb_scaling = 1.0;
 
   };
   

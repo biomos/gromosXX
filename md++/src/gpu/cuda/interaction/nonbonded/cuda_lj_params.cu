@@ -18,12 +18,16 @@ void gpu::LJParams::init(interaction::Nonbonded_Parameter& params) {
     const unsigned total = num_types * num_types;
     c6.resize(total);
     c12.resize(total);
+    cs6.resize(total);
+    cs12.resize(total);
 
     for (unsigned i = 0; i < num_types; ++i) {
         for (unsigned j = 0; j < num_types; ++j) {
             const unsigned idx = i * num_types + j;
-            c6 [idx] = static_cast<FPL_TYPE>(matrix[i][j].c6);
-            c12[idx] = static_cast<FPL_TYPE>(matrix[i][j].c12);
+            c6  [idx] = static_cast<FPL_TYPE>(matrix[i][j].c6);
+            c12 [idx] = static_cast<FPL_TYPE>(matrix[i][j].c12);
+            cs6 [idx] = static_cast<FPL_TYPE>(matrix[i][j].cs6);
+            cs12[idx] = static_cast<FPL_TYPE>(matrix[i][j].cs12);
         }
     }
 }

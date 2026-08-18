@@ -33,6 +33,11 @@ struct NbSimParams {
      * eg_j], matching configuration::Energy::lj_energy/crf_energy's
      * [num_groups][num_groups] shape. */
     unsigned num_energy_groups;
+    /** 1,4-pair Coulomb scaling factor (Nonbonded_Parameter::
+     * get_coulomb_scaling(), gpu::launch_one_four) -- 1.0 unless
+     * param.amber.amber, matching create_nonbonded.cc's
+     * set_coulomb_scaling call. */
+    FPL_TYPE coulomb_scaling;
 };
 
 } // namespace gpu

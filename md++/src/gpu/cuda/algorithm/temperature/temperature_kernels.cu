@@ -43,38 +43,34 @@ __global__ void group_velocity_reduce_kernel(
     const float* __restrict__ mass,
     const unsigned* __restrict__ group_index,
     unsigned num_atoms,
-    unsigned num_groups,
     double* sums) {
 
-    // Dynamic shared memory, sized (by the launch below) to
-    // 5 * num_groups doubles: [5g+0]=mass, [5g+1..3]=momentum,
-    // [5g+4]=self-energy, per temperature group g.
-    extern __shared__ double s_sums[];
-    const unsigned num_buckets = 5u * num_groups;
-    const unsigned tid = threadIdx.x;
-    for (unsigned k = tid; k < num_buckets; k += blockDim.x) {
-        s_sums[k] = 0;
-    }
-    __syncthreads();
-
+    // Direct global atomics into sums[5g+0..4] per temperature group g
+    // ([5g+0]=mass, [5g+1..3]=momentum, [5g+4]=self-energy) -- no
+    // shared-memory staging. A per-block shared-memory bucket array
+    // (the earlier version of this kernel) needed 5*num_groups doubles
+    // of *dynamic* shared memory, which is fine for the handful of
+    // temperature groups every existing small test topology has, but a
+    // real system has one temperature group per (typically rigid,
+    // few-atom) solvent molecule -- extended_test/ubiquitin's ~7045
+    // groups needs 275KB, blowing well past the ~48KB default dynamic
+    // shared memory limit and failing the kernel launch itself
+    // (cudaErrorInvalidValue) before a single thread ever runs. Direct
+    // atomics have no such ceiling, and contention per group is
+    // naturally low precisely because each group is few atoms.
     for (unsigned i = blockIdx.x * blockDim.x + threadIdx.x; i < num_atoms;
          i += blockDim.x * gridDim.x) {
         const double m = static_cast<double>(mass[i]);
         const FPL3_TYPE v = vel(i);
         const unsigned g = group_index[i];
         const unsigned base = 5u * g;
-        atomicAdd(&s_sums[base + 0], m);
-        atomicAdd(&s_sums[base + 1], m * static_cast<double>(v.x));
-        atomicAdd(&s_sums[base + 2], m * static_cast<double>(v.y));
-        atomicAdd(&s_sums[base + 3], m * static_cast<double>(v.z));
-        atomicAdd(&s_sums[base + 4], m * (static_cast<double>(v.x) * v.x +
-                                           static_cast<double>(v.y) * v.y +
-                                           static_cast<double>(v.z) * v.z));
-    }
-    __syncthreads();
-
-    for (unsigned k = tid; k < num_buckets; k += blockDim.x) {
-        atomicAdd(&sums[k], s_sums[k]);
+        atomicAdd(&sums[base + 0], m);
+        atomicAdd(&sums[base + 1], m * static_cast<double>(v.x));
+        atomicAdd(&sums[base + 2], m * static_cast<double>(v.y));
+        atomicAdd(&sums[base + 3], m * static_cast<double>(v.z));
+        atomicAdd(&sums[base + 4], m * (static_cast<double>(v.x) * v.x +
+                                         static_cast<double>(v.y) * v.y +
+                                         static_cast<double>(v.z) * v.z));
     }
 }
 
@@ -116,11 +112,11 @@ void gpu::launch_group_velocity_reduce(math::CuVArray::View vel,
                                         unsigned num_atoms,
                                         unsigned num_groups,
                                         double* sums) {
-    const size_t shmem_bytes = 5ull * num_groups * sizeof(double);
-    cudaMemset(sums, 0, shmem_bytes);
+    const size_t sums_bytes = 5ull * num_groups * sizeof(double);
+    cudaMemset(sums, 0, sums_bytes);
     const unsigned blocks = num_blocks_for(num_atoms);
-    group_velocity_reduce_kernel<<<blocks, kThreadsPerBlock, shmem_bytes>>>(
-        vel, mass, group_index, num_atoms, num_groups, sums);
+    group_velocity_reduce_kernel<<<blocks, kThreadsPerBlock>>>(
+        vel, mass, group_index, num_atoms, sums);
 }
 
 void gpu::launch_thermostat_scale_apply(math::CuVArray::View vel,

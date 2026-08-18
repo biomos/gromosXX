@@ -25,6 +25,8 @@
 
 #include "gpu/cuda/cuheader.h"
 
+#include <climits>
+
 #include "gpu/cuda/memory/types.h"
 #include "gpu/cuda/memory/precision.h"
 #include "gpu/cuda/memory/cuvector.h"
@@ -134,6 +136,114 @@ __global__ void gpu::atom_sort_key_kernel(
         const unsigned cg = gpu::atom_to_chargegroup(chargegroup_offsets, num_chargegroups, a);
         atom_sort_key[a] = cg_sort_key[cg];
     }
+}
+
+__global__ void gpu::sequence_kernel(unsigned* out, unsigned n, unsigned offset) {
+    const unsigned idx = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned stride = blockDim.x * gridDim.x;
+    for (unsigned i = idx; i < n; i += stride) {
+        out[i] = offset + i;
+    }
+}
+
+__global__ void gpu::bitonic_step_kernel(unsigned long long* keys, unsigned* values,
+                                          unsigned n, unsigned j, unsigned k) {
+    const unsigned i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i >= n) return;
+
+    const unsigned ixj = i ^ j;
+    if (ixj > i) {
+        const bool ascending = (i & k) == 0;
+        const bool swap = ascending ? (keys[i] > keys[ixj]) : (keys[i] < keys[ixj]);
+        if (swap) {
+            const unsigned long long tk = keys[i];
+            keys[i] = keys[ixj];
+            keys[ixj] = tk;
+            const unsigned tv = values[i];
+            values[i] = values[ixj];
+            values[ixj] = tv;
+        }
+    }
+}
+
+namespace {
+    // composite[i] = (key_in[i] << 32) | i -- ties broken by original
+    // position, making the bitonic-sort-network below stable (see
+    // bitonic_step_kernel's doc comment, block_pairlist.h).
+    __global__ void build_composite_key_kernel(const unsigned* key_in,
+                                                unsigned long long* composite_out,
+                                                unsigned n) {
+        const unsigned idx = blockIdx.x * blockDim.x + threadIdx.x;
+        if (idx < n) {
+            composite_out[idx] = (static_cast<unsigned long long>(key_in[idx]) << 32) | idx;
+        }
+    }
+
+    __global__ void fill_sentinel_kernel(unsigned long long* keys, unsigned* values,
+                                          unsigned from, unsigned to) {
+        const unsigned idx = from + blockIdx.x * blockDim.x + threadIdx.x;
+        if (idx < to) {
+            keys[idx] = ULLONG_MAX;
+            values[idx] = 0u;
+        }
+    }
+
+    __global__ void copy_values_kernel(const unsigned* src, unsigned* dst, unsigned n) {
+        const unsigned idx = blockIdx.x * blockDim.x + threadIdx.x;
+        if (idx < n) dst[idx] = src[idx];
+    }
+
+    // Recovers the real 32-bit key from a sorted composite entry's high
+    // bits.
+    __global__ void extract_key_kernel(const unsigned long long* composite_in,
+                                        unsigned* key_out, unsigned n) {
+        const unsigned idx = blockIdx.x * blockDim.x + threadIdx.x;
+        if (idx < n) {
+            key_out[idx] = static_cast<unsigned>(composite_in[idx] >> 32);
+        }
+    }
+}
+
+void gpu::bitonic_sort_by_key(unsigned* keys_inout, unsigned* values_inout, unsigned n,
+                               gpu::cuvector<unsigned long long>& scratch_keys,
+                               gpu::cuvector<unsigned>& scratch_values,
+                               cudaStream_t stream) {
+    if (n == 0) return;
+
+    unsigned n_padded = 1;
+    while (n_padded < n) n_padded <<= 1;
+
+    // See bitonic_sort_by_key's doc comment (block_pairlist.h) for why
+    // this sync is needed before letting either scratch buffer's
+    // std::vector potentially reallocate.
+    if (n_padded > scratch_keys.capacity() || n_padded > scratch_values.capacity()) {
+        cudaStreamSynchronize(stream);
+    }
+    scratch_keys.resize(n_padded);
+    scratch_values.resize(n_padded);
+
+    constexpr unsigned kThreads = 256;
+    const unsigned blocks_n = (n + kThreads - 1) / kThreads;
+    build_composite_key_kernel<<<blocks_n, kThreads, 0, stream>>>(keys_inout, scratch_keys.data(), n);
+    copy_values_kernel<<<blocks_n, kThreads, 0, stream>>>(values_inout, scratch_values.data(), n);
+
+    if (n_padded > n) {
+        const unsigned pad_count = n_padded - n;
+        const unsigned blocks_pad = (pad_count + kThreads - 1) / kThreads;
+        fill_sentinel_kernel<<<blocks_pad, kThreads, 0, stream>>>(
+            scratch_keys.data(), scratch_values.data(), n, n_padded);
+    }
+
+    const unsigned blocks_padded = (n_padded + kThreads - 1) / kThreads;
+    for (unsigned k = 2; k <= n_padded; k <<= 1) {
+        for (unsigned j = k >> 1; j > 0; j >>= 1) {
+            gpu::bitonic_step_kernel<<<blocks_padded, kThreads, 0, stream>>>(
+                scratch_keys.data(), scratch_values.data(), n_padded, j, k);
+        }
+    }
+
+    extract_key_kernel<<<blocks_n, kThreads, 0, stream>>>(scratch_keys.data(), keys_inout, n);
+    copy_values_kernel<<<blocks_n, kThreads, 0, stream>>>(scratch_values.data(), values_inout, n);
 }
 
 template <bool ATOMIC_CUTOFF, math::boundary_enum BOUNDARY>

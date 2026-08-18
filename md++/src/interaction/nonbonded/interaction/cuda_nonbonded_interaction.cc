@@ -112,6 +112,7 @@ int interaction::CUDA_Nonbonded_Interaction::init(
   m_nb.cutoff_long_sq  = static_cast<FPL_TYPE>(sim.param().pairlist.cutoff_long *
                                                 sim.param().pairlist.cutoff_long);
   m_nb.num_energy_groups = static_cast<unsigned>(topo.energy_groups().size());
+  m_nb.coulomb_scaling = static_cast<FPL_TYPE>(parameter().get_coulomb_scaling());
 
   m_initialized = true;
 

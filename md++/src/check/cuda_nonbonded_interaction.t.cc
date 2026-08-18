@@ -143,6 +143,32 @@ namespace {
     accumulate(pl.solvent_short);
     accumulate(pl.solvent_long);
 
+    // 1,4 pairs ("LJ exceptions"): excluded from the regular pairlist
+    // above (all_exclusion = exclusion UNION one_four_pair), added back
+    // in with their own scaled cs6/cs12 LJ parameters and Coulomb-scaled
+    // CRF -- matches Nonbonded_Outerloop::one_four_outerloop's
+    // unconditional call (nonbonded_set.cc) exactly, now that
+    // gpu::launch_one_four (cuda_pairlist_algorithm_impl.cu) implements
+    // this on the GPU side too.
+    for (unsigned i = 0; i < topo.num_solute_atoms(); ++i) {
+      for (unsigned int j : topo.one_four_pair(i)) {
+        math::Vec r;
+        periodicity.nearest_image(conf.current().pos(i), conf.current().pos(j), r);
+        const interaction::lj_parameter_struct & lj =
+            param.lj_parameter(topo.iac(i), topo.iac(j));
+        const double q = topo.charge(i) * topo.charge(j);
+        double f = 0.0, e_lj = 0.0, e_crf = 0.0;
+        term.lj_crf_interaction(r, lj.cs6, lj.cs12, q, f, e_lj, e_crf, 0,
+                                 param.get_coulomb_scaling());
+        ref.force[i] += f * r;
+        ref.force[j] -= f * r;
+        const unsigned eg_i = topo.atom_energy_group(i);
+        const unsigned eg_j = topo.atom_energy_group(j);
+        ref.lj_energy[eg_i][eg_j]  += e_lj;
+        ref.crf_energy[eg_i][eg_j] += e_crf;
+      }
+    }
+
     return ref;
   }
 

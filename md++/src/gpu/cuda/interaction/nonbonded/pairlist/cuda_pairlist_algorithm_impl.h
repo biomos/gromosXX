@@ -277,11 +277,20 @@ namespace interaction {
       /**
        * flat copy of m_cg_sort_key indexed by ATOM (atom_sort_key[a] =
        * cg_sort_key[owning_chargegroup(a)]), one entry per atom. This is
-       * what actually gets thrust::sort_by_key'd in reorder() -- blocks
-       * are atom-indexed (TILE_PAIRLIST_DESIGN.md §3's "second
+       * what actually gets gpu::bitonic_sort_by_key'd in reorder() --
+       * blocks are atom-indexed (TILE_PAIRLIST_DESIGN.md §3's "second
        * correction"), so the sort key needs atom granularity too.
        */
       gpu::cuvector<unsigned> m_atom_sort_key;
+
+      /**
+       * Scratch buffers for gpu::bitonic_sort_by_key(), reused across
+       * reorder() calls (resized to next_pow2(n) inside that function as
+       * needed) so repeated candidate rebuilds don't reallocate every
+       * time.
+       */
+      gpu::cuvector<unsigned long long> m_sort_scratch_keys;
+      gpu::cuvector<unsigned> m_sort_scratch_values;
 
       /**
        * Block-sorted permutations: solute/solvent block-sorted position ->
@@ -326,6 +335,13 @@ namespace interaction {
        */
       gpu::cuvector<int> m_rf_excl_ptr;
       gpu::cuvector<int> m_rf_excl_list;
+      /**
+       * 1,4-pair CSR (topo.one_four_pair(i)) for gpu::launch_one_four --
+       * built once in init(), same lifetime/shape as m_rf_excl_ptr/list
+       * above (both are solute-only, j > i, sorted).
+       */
+      gpu::cuvector<int> m_one_four_ptr;
+      gpu::cuvector<int> m_one_four_list;
       /**
        * topo.energy_groups().size(), set once in init(). The energy
        * accumulators below are sized num_energy_groups^2 (flattened

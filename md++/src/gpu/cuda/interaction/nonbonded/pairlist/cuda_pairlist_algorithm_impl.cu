@@ -27,6 +27,7 @@
 #include "gpu/cuda/kernels/periodicity.h"
 #include "gpu/cuda/interaction/nonbonded/kernels/lj_crf_tiles.h"
 #include "gpu/cuda/interaction/nonbonded/kernels/rf_excluded_kernels.h"
+#include "gpu/cuda/interaction/nonbonded/kernels/one_four_kernels.h"
 #include "gpu/cuda/interaction/nonbonded/kernels/displacement.h"
 #include "block_pairlist.h"
 
@@ -34,9 +35,6 @@
 
 #include "gpu/cuda/utils.h"
 
-#include <thrust/sequence.h>
-#include <thrust/sort.h>
-#include <thrust/execution_policy.h>
 
 #define NUM_THREADS_PER_BLOCK 256
 
@@ -120,6 +118,33 @@ int interaction::CUDA_Pairlist_Algorithm_Impl::init(topology::Topology &topo,
         if (!h_rf_excl_list.empty()) {
             cudaMemcpy(m_rf_excl_list.data(), h_rf_excl_list.data(),
                        sizeof(int) * h_rf_excl_list.size(), cudaMemcpyHostToDevice);
+        }
+    }
+
+    // 1,4-pair CSR for gpu::launch_one_four -- see cuda_pairlist_algorithm_impl.h's
+    // m_one_four_ptr/list doc comment. Same construction as m_rf_excl_ptr/list
+    // just above, from topo.one_four_pair(i) instead of topo.exclusion(i).
+    {
+        std::vector<int> h_one_four_ptr(num_solute_atoms + 1);
+        std::vector<int> h_one_four_list;
+        h_one_four_list.reserve(num_solute_atoms * 3);
+        for (unsigned i = 0; i < num_solute_atoms; ++i) {
+            h_one_four_ptr[i] = static_cast<int>(h_one_four_list.size());
+            for (topology::excl_cont_t::value_type::const_iterator
+                     it = topo.one_four_pair(i).begin(), to = topo.one_four_pair(i).end();
+                 it != to; ++it) {
+                h_one_four_list.push_back(static_cast<int>(*it));
+            }
+        }
+        h_one_four_ptr[num_solute_atoms] = static_cast<int>(h_one_four_list.size());
+
+        m_one_four_ptr.resize(num_solute_atoms + 1);
+        cudaMemcpy(m_one_four_ptr.data(), h_one_four_ptr.data(),
+                   sizeof(int) * (num_solute_atoms + 1), cudaMemcpyHostToDevice);
+        m_one_four_list.resize(h_one_four_list.size() > 0 ? h_one_four_list.size() : 1);
+        if (!h_one_four_list.empty()) {
+            cudaMemcpy(m_one_four_list.data(), h_one_four_list.data(),
+                       sizeof(int) * h_one_four_list.size(), cudaMemcpyHostToDevice);
         }
     }
 
@@ -244,25 +269,29 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::reorder(
 
     // Identity permutation, in global atom numbering (solute first, then
     // solvent -- matching m_atom_sort_key and conf's atom position array).
+    // Hand-written kernel, not thrust::sequence -- see sequence_kernel's
+    // doc comment (block_pairlist.h) for why.
     if (num_solute_atoms > 0) {
-        thrust::sequence(thrust::device, m_solute_atom_order.data(), m_solute_atom_order.data() + num_solute_atoms, 0u);
+        const unsigned blocks = (num_solute_atoms + NUM_THREADS_PER_BLOCK - 1) / NUM_THREADS_PER_BLOCK;
+        gpu::sequence_kernel<<<blocks, NUM_THREADS_PER_BLOCK>>>(m_solute_atom_order.data(), num_solute_atoms, 0u);
     }
     if (num_solvent_atoms > 0) {
-        thrust::sequence(thrust::device, m_solvent_atom_order.data(), m_solvent_atom_order.data() + num_solvent_atoms, num_solute_atoms);
+        const unsigned blocks = (num_solvent_atoms + NUM_THREADS_PER_BLOCK - 1) / NUM_THREADS_PER_BLOCK;
+        gpu::sequence_kernel<<<blocks, NUM_THREADS_PER_BLOCK>>>(m_solvent_atom_order.data(), num_solvent_atoms, num_solute_atoms);
     }
 
     // Sort each group's identity permutation by its (inherited) Morton
     // cell key. m_atom_sort_key is mutated in place -- safe, it's
-    // recomputed fresh above every call.
+    // recomputed fresh above every call. Hand-written bitonic sort, not
+    // thrust::sort_by_key -- see sequence_kernel's doc comment
+    // (block_pairlist.h) for why.
     if (num_solute_atoms > 0) {
-        thrust::sort_by_key(thrust::device,
-            m_atom_sort_key.data(), m_atom_sort_key.data() + num_solute_atoms,
-            m_solute_atom_order.data());
+        gpu::bitonic_sort_by_key(m_atom_sort_key.data(), m_solute_atom_order.data(),
+                                  num_solute_atoms, m_sort_scratch_keys, m_sort_scratch_values);
     }
     if (num_solvent_atoms > 0) {
-        thrust::sort_by_key(thrust::device,
-            m_atom_sort_key.data() + num_solute_atoms, m_atom_sort_key.data() + num_atoms,
-            m_solvent_atom_order.data());
+        gpu::bitonic_sort_by_key(m_atom_sort_key.data() + num_solute_atoms, m_solvent_atom_order.data(),
+                                  num_solvent_atoms, m_sort_scratch_keys, m_sort_scratch_values);
     }
 
     const unsigned num_solute_blocks  = (num_solute_atoms  + gpu::BLOCK_SIZE - 1) / gpu::BLOCK_SIZE;
@@ -362,17 +391,9 @@ namespace {
     return std::min(capacity, worst_case);
   }
 
-  void check_candidate_overflow(gpu::TileVecT<gpu::Interaction_Tile> const & tiles,
-                                 const char * which) {
+  bool candidate_overflowed(gpu::TileVecT<gpu::Interaction_Tile> const & tiles) {
     cudaDeviceSynchronize();
-    if (tiles.was_overflown()) {
-      io::messages.add(
-        std::string("CUDA pairlist candidate build overflowed its ") + which +
-        " capacity estimate -- candidates were dropped, the pairlist is "
-        "wrong. This is a sizing-heuristic bug, not a real memory limit; "
-        "increase estimate_candidate_capacity's margin.",
-        "CUDA_Pairlist_Algorithm", io::message::error);
-    }
+    return tiles.was_overflown();
   }
 }
 
@@ -400,49 +421,92 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::_build_candidates(
     // reserve() deallocates-and-reallocates when growing, which would
     // silently discard the first pass's results if called again in
     // between; call it exactly once here, before either pass runs.
+    auto run_solute_candidates = [&]() {
+        if (num_solute_blocks > 0) {
+            // solute - solute (self-pairs, bi <= bj only)
+            dim3 dimGrid((num_solute_blocks + 15) / 16, (num_solute_blocks + 15) / 16);
+            gpu::find_block_candidates_kernel<B><<<dimGrid, dimBlock2D>>>(
+                num_solute_blocks, num_solute_blocks,
+                m_solute_block_center.data(), m_solute_block_radius.data(),
+                m_solute_block_center.data(), m_solute_block_radius.data(),
+                true, periodicity, cutoff, m_tiles.solute_candidates.view());
+        }
+        if (num_solute_blocks > 0 && num_solvent_blocks > 0) {
+            // solute - solvent (every pair; column side is solvent-order)
+            dim3 dimGrid((num_solute_blocks + 15) / 16, (num_solvent_blocks + 15) / 16);
+            gpu::find_block_candidates_kernel<B><<<dimGrid, dimBlock2D>>>(
+                num_solute_blocks, num_solvent_blocks,
+                m_solute_block_center.data(), m_solute_block_radius.data(),
+                m_solvent_block_center.data(), m_solvent_block_radius.data(),
+                false, periodicity, cutoff, m_tiles.solute_candidates.view());
+        }
+    };
+
     if (num_solute_blocks > 0) {
         const unsigned cap_ss = estimate_candidate_capacity(num_solute_blocks, num_solute_blocks, cutoff_d, vol, true);
         const unsigned cap_sv = num_solvent_blocks > 0
             ? estimate_candidate_capacity(num_solute_blocks, num_solvent_blocks, cutoff_d, vol, false)
             : 0;
         m_tiles.solute_candidates.reserve(cap_ss + cap_sv);
-    }
+        run_solute_candidates();
 
-    if (num_solute_blocks > 0) {
-        // solute - solute (self-pairs, bi <= bj only)
-        dim3 dimGrid((num_solute_blocks + 15) / 16, (num_solute_blocks + 15) / 16);
-        gpu::find_block_candidates_kernel<B><<<dimGrid, dimBlock2D>>>(
-            num_solute_blocks, num_solute_blocks,
-            m_solute_block_center.data(), m_solute_block_radius.data(),
-            m_solute_block_center.data(), m_solute_block_radius.data(),
-            true, periodicity, cutoff, m_tiles.solute_candidates.view());
-    }
-
-    if (num_solute_blocks > 0 && num_solvent_blocks > 0) {
-        // solute - solvent (every pair; column side is solvent-order)
-        dim3 dimGrid((num_solute_blocks + 15) / 16, (num_solvent_blocks + 15) / 16);
-        gpu::find_block_candidates_kernel<B><<<dimGrid, dimBlock2D>>>(
-            num_solute_blocks, num_solvent_blocks,
-            m_solute_block_center.data(), m_solute_block_radius.data(),
-            m_solvent_block_center.data(), m_solvent_block_radius.data(),
-            false, periodicity, cutoff, m_tiles.solute_candidates.view());
-    }
-
-    if (num_solute_blocks > 0) {
-        check_candidate_overflow(m_tiles.solute_candidates, "solute_candidates");
+        // The density estimate above is just a sizing heuristic (see its
+        // doc comment) -- a real system (extended_test/ubiquitin) can and
+        // does exceed it, since block bounding spheres don't have a
+        // uniform radius the way the estimate assumes. Retry once at the
+        // true worst-case capacity (every possible block pair -- always
+        // mathematically sufficient, no further retry can ever be
+        // needed) rather than silently dropping candidates and running
+        // with a wrong pairlist. Still cheap in the common (no overflow)
+        // case: this branch only runs at all when was_overflown() is
+        // actually set.
+        if (candidate_overflowed(m_tiles.solute_candidates)) {
+            const unsigned worst_case =
+                (num_solute_blocks * (num_solute_blocks + 1)) / 2 +
+                num_solute_blocks * num_solvent_blocks;
+            m_tiles.solute_candidates.reserve(worst_case);
+            run_solute_candidates();
+            if (candidate_overflowed(m_tiles.solute_candidates)) {
+                // Unreachable in practice -- worst_case is a hard upper
+                // bound on how many block pairs can possibly exist.
+                // Reaching this means TileVecT itself is broken, not the
+                // sizing heuristic.
+                io::messages.add(
+                    "CUDA pairlist candidate build overflowed solute_candidates "
+                    "even at worst-case capacity -- this indicates a bug in "
+                    "TileVecT, not the sizing heuristic.",
+                    "CUDA_Pairlist_Algorithm", io::message::error);
+            }
+        }
     }
 
     if (num_solvent_blocks > 0) {
-        // solvent - solvent (self-pairs, bi <= bj only)
+        auto run_solvent_candidates = [&]() {
+            // solvent - solvent (self-pairs, bi <= bj only)
+            dim3 dimGrid((num_solvent_blocks + 15) / 16, (num_solvent_blocks + 15) / 16);
+            gpu::find_block_candidates_kernel<B><<<dimGrid, dimBlock2D>>>(
+                num_solvent_blocks, num_solvent_blocks,
+                m_solvent_block_center.data(), m_solvent_block_radius.data(),
+                m_solvent_block_center.data(), m_solvent_block_radius.data(),
+                true, periodicity, cutoff, m_tiles.solvent_candidates.view());
+        };
+
         m_tiles.solvent_candidates.reserve(
             estimate_candidate_capacity(num_solvent_blocks, num_solvent_blocks, cutoff_d, vol, true));
-        dim3 dimGrid((num_solvent_blocks + 15) / 16, (num_solvent_blocks + 15) / 16);
-        gpu::find_block_candidates_kernel<B><<<dimGrid, dimBlock2D>>>(
-            num_solvent_blocks, num_solvent_blocks,
-            m_solvent_block_center.data(), m_solvent_block_radius.data(),
-            m_solvent_block_center.data(), m_solvent_block_radius.data(),
-            true, periodicity, cutoff, m_tiles.solvent_candidates.view());
-        check_candidate_overflow(m_tiles.solvent_candidates, "solvent_candidates");
+        run_solvent_candidates();
+
+        if (candidate_overflowed(m_tiles.solvent_candidates)) {
+            const unsigned worst_case = (num_solvent_blocks * (num_solvent_blocks + 1)) / 2;
+            m_tiles.solvent_candidates.reserve(worst_case);
+            run_solvent_candidates();
+            if (candidate_overflowed(m_tiles.solvent_candidates)) {
+                io::messages.add(
+                    "CUDA pairlist candidate build overflowed solvent_candidates "
+                    "even at worst-case capacity -- this indicates a bug in "
+                    "TileVecT, not the sizing heuristic.",
+                    "CUDA_Pairlist_Algorithm", io::message::error);
+            }
+        }
     }
 };
 
@@ -712,6 +776,18 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::compute_forces_energies(
             pos, m_charge.data(), m_atom_energy_group.data(), nb, boundary, box,
             m_force.data(), m_e_crf.data(), m_virial.data());
     }
+
+    // 1,4-pair ("LJ exception") interactions: unconditional, matching
+    // nonbonded_set.cc's unconditional one_four_outerloop call -- these
+    // pairs are excluded from the tile kernels above (all_exclusion =
+    // exclusion UNION one_four_pair) and only ever computed here, with
+    // their own scaled cs6/cs12 LJ parameters and Coulomb-scaled CRF.
+    // Accumulates into the same m_force/m_e_lj/m_e_crf/m_virial buffers.
+    gpu::launch_one_four(
+        m_one_four_ptr.data(), m_one_four_list.data(), num_solute_atoms,
+        pos, m_iac.data(), m_charge.data(), m_atom_energy_group.data(), lj, nb,
+        nb.coulomb_scaling, boundary, box,
+        m_force.data(), m_e_lj.data(), m_e_crf.data(), m_virial.data());
 
     // Long-range: only recomputed on a classification/rebuild step
     // (recompute_long == true) -- otherwise m_longrange_force/

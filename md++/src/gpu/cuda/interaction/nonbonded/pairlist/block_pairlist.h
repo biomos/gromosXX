@@ -27,6 +27,7 @@
 #pragma once
 
 #include "gpu/cuda/memory/topology_struct.h"
+#include "gpu/cuda/memory/cuvector.h"
 
 namespace gpu {
 
@@ -77,6 +78,94 @@ namespace gpu {
       unsigned num_atoms,
       const unsigned* cg_sort_key,
       unsigned* atom_sort_key);
+
+  /**
+   * @brief out[i] = offset + i for i in [0, n) -- the identity
+   * permutation reorder() seeds before sorting it by Morton key.
+   * Hand-written instead of thrust::sequence(thrust::device, ...):
+   * on this codebase's largest real-world input (extended_test/
+   * ubiquitin, ~22.7k atoms) thrust/cub's internal PtxVersion() device
+   * query (cub/util_device.cuh, called from thrust::sequence's
+   * "large problem size" dispatch path) fails with cudaErrorInvalidValue
+   * from a plain cudaGetDevice() call, immediately poisoning the CUDA
+   * context for everything after -- reproduced consistently on this
+   * environment's GPU/CUDA-13.3 combination, confirmed via
+   * compute-sanitizer and CUDA_LAUNCH_BLOCKING=1 to be the first CUDA
+   * failure of the run (not a leaked earlier error), and confirmed
+   * absent for small topologies (aladip, 72 atoms) that never reach
+   * that thrust dispatch path at all. See KNOWN_ISSUES.md. A one-line
+   * grid-stride kernel needs none of cub's dispatch machinery.
+   */
+  __global__ void sequence_kernel(unsigned* out, unsigned n, unsigned offset);
+
+  /**
+   * @brief One compare-exchange stage of an in-place bitonic sort over
+   * `keys`/`values` (ascending by key, `values` carried along), `n` a
+   * power of two. Standard textbook bitonic-sort-network kernel: thread
+   * `i` compares against `i ^ j`, only acting when `i < i^j` (so each
+   * pair is only handled once), direction (ascending/descending)
+   * determined by whether bit `k` of `i` is set. The host loop below
+   * calls this O(log2(n)^2) times with `k` doubling 2..n and `j`
+   * halving `k`/2..1 for each `k` -- see bitonic_sort_by_key()'s body.
+   *
+   * `keys` are 64-bit composite keys (real 32-bit Morton key in the
+   * high bits, original position in the low bits, see
+   * build_composite_key_kernel in the .cu) rather than the caller's
+   * plain 32-bit keys -- makes the compare-exchange network stable
+   * (ties broken by original position, matching thrust::sort_by_key's
+   * radix sort, which is stable too) without a separate pass. Not just
+   * cosmetic: an unstable tie-break here was observed to occasionally
+   * (~1-in-15 runs) reclassify a borderline atom pair differently than
+   * the CPU reference between otherwise-identical runs.
+   */
+  __global__ void bitonic_step_kernel(unsigned long long* keys, unsigned* values,
+                                       unsigned n, unsigned j, unsigned k);
+
+  /**
+   * @brief Ascending sort of `keys_inout[0,n)` by value, with
+   * `values_inout[0,n)` permuted identically (stable: ties broken by
+   * original position, see bitonic_step_kernel's doc comment) -- a
+   * thrust::sort_by_key replacement backed entirely by hand-written
+   * kernels (see sequence_kernel's doc comment above for why:
+   * thrust/cub's internal device-capability query breaks for any
+   * sufficiently large cub dispatch on this codebase's real-world-scale
+   * input, on this environment's GPU/CUDA-13.3 combination, and *every*
+   * cub-based sort primitive hits the exact same shared utility
+   * function, so swapping `thrust::sort_by_key` for a direct
+   * `cub::DeviceRadixSort` call would not have helped -- confirmed by
+   * moving the failure from thrust::sequence's dispatch to
+   * thrust::sort_by_key's radix-sort dispatch, at the exact same line,
+   * when only sequence_kernel had been substituted).
+   *
+   * Bitonic sort needs a power-of-two length; `scratch_keys`/
+   * `scratch_values` are resized here to `next_pow2(n)` and reused
+   * across calls (the caller owns them so repeated candidate rebuilds
+   * don't reallocate every time). Padding slots get composite key
+   * `UINT64_MAX` so they sort to the end and are never copied back --
+   * safe because `keys_inout` holds Morton cell indices (bounded by
+   * grid extent), whose composite form is never genuinely `UINT64_MAX`.
+   *
+   * If either scratch buffer needs to grow past its current capacity,
+   * `stream` is explicitly synchronized first: the underlying
+   * std::vector reallocation copies old contents over on the *host*
+   * side, which races against any of this same function's own prior
+   * call's kernels (queued on `stream`) still reading/writing that old
+   * buffer -- caught the hard way via an intermittent one-atom force
+   * mismatch in rf_excluded_gpu.t.cc. Only actually costs anything the
+   * first time either buffer grows past current capacity (capacity
+   * never shrinks), cheap given this only runs at candidate-rebuild
+   * cadence.
+   *
+   * O(n log^2 n) compare-exchanges, i.e. more kernel launches than a
+   * radix sort for the same n -- acceptable here since this only runs
+   * at candidate-rebuild cadence (TILE_PAIRLIST_DESIGN.md §10 part 2),
+   * not every step, and correctness/independence from cub trumps
+   * shaving kernel-launch count for this call site.
+   */
+  void bitonic_sort_by_key(unsigned* keys_inout, unsigned* values_inout, unsigned n,
+                            gpu::cuvector<unsigned long long>& scratch_keys,
+                            gpu::cuvector<unsigned>& scratch_values,
+                            cudaStream_t stream = nullptr);
 
   /**
    * @brief Compute a bounding sphere (center + radius) for each fixed-size

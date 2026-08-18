@@ -201,7 +201,12 @@ namespace gpu {
              * changes needed. Declared unconditionally (like
              * invalidate_gpu_mirror() below) since
              * Algorithm_Sequence::run() compiles in CPU-only builds
-             * too; the non-CUDA .cc gives it a DISABLED_VOID() no-op.
+             * too; the non-CUDA .cc gives it a genuine empty-body
+             * no-op (not DISABLED_VOID() -- this is called on *every*
+             * algorithm on *every* step regardless of accelerator, by
+             * design, so logging a critical message here would fire
+             * thousands of times over an ordinary CPU-only run; found
+             * the hard way via a real end-to-end run, extended_test/).
              * No-op if `conf` has no mirror yet, or nothing in
              * `fields` is currently dirty.
              */
@@ -226,9 +231,10 @@ namespace gpu {
              * be dirty by the time this runs. Declared unconditionally
              * (unlike configuration_view()/mark_gpu_dirty() below)
              * because Algorithm_Sequence::run() compiles in CPU-only
-             * builds too; the non-CUDA .cc gives it a DISABLED_VOID()
-             * no-op. No-op if `conf` has no mirror yet (nothing to
-             * invalidate).
+             * builds too; the non-CUDA .cc gives it a genuine
+             * empty-body no-op (see flush_gpu_dirty()'s comment above
+             * for why not DISABLED_VOID()). No-op if `conf` has no
+             * mirror yet (nothing to invalidate).
              */
             void invalidate_gpu_mirror(configuration::Configuration & conf,
                                         unsigned fields = gpu::MIRROR_ALL);

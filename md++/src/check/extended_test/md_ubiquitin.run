@@ -1,0 +1,30 @@
+#!/bin/sh
+
+# first we set some variables
+NAME=`whoami`
+PROGRAM=md
+SIMULDIR=$(pwd)
+
+# set the input files
+TOPO=${SIMULDIR}/ubiquitin_54a8.top
+IUNIT=${SIMULDIR}/md_ubiquitin.imd
+INPUTCRD=${SIMULDIR}/ubiquitin.cnf
+
+#set the output files
+OUNIT=md_ubiquitin.omd
+OUTPUTCRD=md_ubiquitin.cnf
+OUTPUTTRX=md_ubiquitin.trc
+OUTPUTTRE=md_ubiquitin.tre
+
+
+MDOK=1
+
+${PROGRAM} \
+	@topo        ${TOPO} \
+	@conf        ${INPUTCRD} \
+	@input       ${IUNIT} \
+	@fin         ${OUTPUTCRD} \
+	@trc         ${OUTPUTTRX} \
+	@tre         ${OUTPUTTRE}\
+	>            ${OUNIT}
+grep "finished successfully" ${OUNIT} > /dev/null || MDOK=0

@@ -56,9 +56,19 @@ namespace gpu {
    * ekin`; both reduce to the same per-group sums this kernel already
    * computes, no separate "averaged" kernel needed).
    *
-   * Same shared-memory-bucket-then-flush pattern as the multi-energy-
-   * group tile kernel (lj_crf_tiles.cu): one global atomicAdd per
-   * bucket at the end, not per atom.
+   * Direct global atomicAdd per atom into `sums[5g..5g+4]`, not a
+   * per-block shared-memory bucket-then-flush -- unlike the multi-
+   * energy-group tile kernel (lj_crf_tiles.cu), the group count here is
+   * one per (typically rigid, few-atom) *temperature group*, i.e.
+   * essentially one per solvent molecule for a real system, not a
+   * handful of user-chosen energy groups. A shared-memory version needs
+   * `5*num_groups` doubles of *dynamic* shared memory per block, which
+   * blows past the default ~48KB limit already for a few-thousand-atom
+   * real system and fails the kernel launch outright
+   * (cudaErrorInvalidValue) -- found via extended_test/ubiquitin
+   * (~7045 groups needs 275KB). Direct atomics have no such ceiling,
+   * and since each group is only a few atoms, per-group atomic
+   * contention stays low regardless of `num_groups`.
    */
   void launch_group_velocity_reduce(math::CuVArray::View vel,
                                      const float* mass,

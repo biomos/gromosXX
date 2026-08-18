@@ -133,7 +133,25 @@ namespace gpu
           /// Add from device using atomicAdd. Sets overflow flag if exceeded.
           __device__ bool push_back(const TileT& tile);
 
-          __device__ __host__ unsigned size() const { return *m_size; }
+          /**
+           * Clamped to `m_capacity`: `push_back()`'s atomicAdd on
+           * `*m_size` happens *before* the capacity check, so on
+           * overflow `*m_size` ends up larger than `m_capacity` --
+           * only the first `m_capacity` pushes actually wrote into
+           * `m_data` (push_back() correctly refuses to write past
+           * that), but a caller trusting the raw counter as "how many
+           * entries are safe to read" would then index past the real
+           * buffer. Found via a real out-of-bounds read in
+           * classify_tiles_kernel (block_pairlist.cu) at
+           * extended_test/ubiquitin's scale, where the candidate
+           * buffer's density-based capacity estimate is exceeded.
+           * was_overflown() still reports the raw (pre-clamp) overflow
+           * condition, so callers that need to know "were tiles
+           * silently dropped" (check_candidate_overflow(),
+           * cuda_pairlist_algorithm_impl.cu) aren't affected by this
+           * clamp.
+           */
+          __device__ __host__ unsigned size() const { return *m_size < m_capacity ? *m_size : m_capacity; }
           __device__ __host__ unsigned capacity() const { return m_capacity; }
           __device__ __host__ TileT* data() { return m_data; }
           __device__ __host__ const TileT* data() const { return m_data; }
@@ -214,8 +232,9 @@ namespace gpu
       /// Add from device using atomicAdd. Sets overflow flag if exceeded.
       __device__ bool push_back(const TileT& tile);
 
+      /// Clamped to m_capacity -- see View::size()'s doc comment above.
       __device__ __host__ unsigned size() const {
-          return *m_size;
+          return *m_size < m_capacity ? *m_size : m_capacity;
       }
 
       __device__ __host__ unsigned capacity() const {

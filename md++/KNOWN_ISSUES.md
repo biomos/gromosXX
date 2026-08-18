@@ -134,3 +134,126 @@
   nothing looks broken, since undefined-behaviour memory bugs like this
   one don't reliably announce themselves via `cudaGetLastError()` or a
   visibly wrong result.
+
+## FIXED: real-scale (extended_test/ubiquitin) GPU run was silently wrong -- a cascade of five bugs, none caught by any small-topology test
+
+Adding `extended_test/`'s real ubiquitin-in-water simulation (~22.7k
+atoms, 775 solute + 7044 SPC solvent molecules, real multi-atom
+chargegroups) as a GPU-vs-CPU regression test surfaced five distinct,
+previously-undetected bugs -- every existing GPU test topology (aladip:
+12 solute atoms, 60 solvent atoms) was too small to trigger any of them.
+All fixed; `ubiquitin_cpu`/`ubiquitin_gpu` (see below) are now permanent
+regression tests guarding against a repeat.
+
+1. **thrust/cub crash at real scale.** `CUDA_Pairlist_Algorithm_Impl::
+   reorder()`'s `thrust::sequence`/`thrust::sort_by_key` calls crashed
+   with `cudaErrorInvalidDevice`/`cudaErrorInvalidValue` originating
+   inside cub's internal `PtxVersion()`/`CurrentDevice()` device query
+   (`cub/util_device.cuh`), reproducible on this environment's GPU
+   (very recent architecture) + CUDA 13.3 combination, but *only* for
+   large `n` (never triggered by any small topology). A minimal
+   standalone repro (same flags, same problem size, even with
+   `-rdc=true`) never reproduced it -- root cause not fully isolated,
+   suspected to be an RDC multi-translation-unit device-link interaction.
+   Fixed by replacing both calls with hand-written kernels: a trivial
+   `sequence_kernel` and a stable bitonic sort (`bitonic_sort_by_key`,
+   `block_pairlist.h`/`.cu`) -- eliminates the thrust/cub dependency
+   from this call path entirely, sidestepping the issue regardless of
+   its exact cause.
+2. **`TileVecT::size()` returned an unsafe, unclamped count.**
+   `push_back()`'s `atomicAdd` on the size counter happens *before* the
+   capacity check, so on overflow the counter ends up larger than the
+   actual buffer -- `size()` returned that raw counter, and a caller
+   trusting it as "safe to index up to this" (exactly what
+   `classify_tiles()`'s kernel-launch grid dimension does) read past
+   the real allocation. Fixed by clamping both `size()` accessors
+   (`TileVecT` and `TileVecT::View`) to `min(*m_size, m_capacity)`
+   (`tile.h`). `was_overflown()` still reports the raw condition
+   unaffected.
+3. **Candidate-tile capacity silently underestimated, dropping real
+   pairs.** `estimate_candidate_capacity()`'s density heuristic (a
+   sizing *estimate*, not a correctness mechanism -- `was_overflown()`
+   is the real safeguard) underestimated badly enough at ubiquitin's
+   scale to trigger real, repeated overflow -- candidates silently
+   dropped, the pairlist genuinely wrong. The overflow *was* being
+   detected and reported via `io::messages`, but nothing had displayed
+   the message queue yet when the run diverged, so it looked like
+   silent corruption. Fixed with a retry: on detected overflow,
+   re-reserve at the true worst-case capacity (every possible block
+   pair -- always mathematically sufficient, so at most one retry is
+   ever needed) and re-run the candidate search
+   (`_build_candidates()`, `cuda_pairlist_algorithm_impl.cu`).
+4. **`Temperature_Calculation<gpuBackend>`'s reduction kernel used
+   O(num_groups) *dynamic shared memory*.** Fine for a handful of
+   user-chosen energy groups, but "temperature groups" are ~one per
+   solvent molecule for a real system -- ubiquitin's ~7045 groups needs
+   275KB, blowing past the ~48KB default dynamic shared memory limit
+   and failing the kernel launch itself (`cudaErrorInvalidValue`)
+   before a single thread ran. Fixed by switching
+   `group_velocity_reduce_kernel` to direct global atomics (no
+   per-block shared bucket) -- no ceiling, and per-group contention
+   stays low regardless of `num_groups` since each group is only a few
+   atoms (`temperature_kernels.cu`).
+5. **1,4-pair ("LJ exception") interactions were never implemented on
+   GPU at all.** `topo.all_exclusion(i)` (used for tile-classification
+   masking) is `exclusion(i)` UNION `one_four_pair(i)` -- so 1,4 pairs
+   were correctly *excluded* from the regular tile-driven LJ/CRF sum on
+   both CPU and GPU, but the CPU path adds them back in with their own
+   scaled `cs6`/`cs12` parameters and Coulomb-scaled CRF
+   (`Nonbonded_Outerloop::one_four_outerloop`, called unconditionally)
+   -- nothing on the GPU side ever did this. Aladip's tiny test
+   molecule has few/no 1,4 pairs contributing meaningfully; ubiquitin's
+   real backbone has many, producing a large (~2.6x), previously
+   unexplained solute-solute CRF mismatch that survived ruling out the
+   pairlist (a dedicated CPU-vs-GPU pair-set comparison found zero
+   mismatches), floating-point precision (bit-identical wrong answer
+   at `FP_PRECISION=1` and a full-double `=3` rebuild), long-range
+   caching, and the shared RF constants. Fixed by adding
+   `gpu::launch_one_four` (`one_four_kernels.h`/`.cu`, same CSR-based
+   pattern as `launch_rf_excluded`) and extending `gpu::LJParams`/
+   `LJParamView` to carry `cs6`/`cs12` alongside `c6`/`c12`
+   (`cuda_lj_params.h`/`.cu`).
+   - **A sixth, genuinely separate bug found while validating #5:**
+     `interaction::Nonbonded_Parameter::m_coulomb_scaling` had *no*
+     default member initializer and was silently dropped by the copy
+     constructor -- any `Nonbonded_Parameter` constructed without an
+     explicit `set_coulomb_scaling()` call (production always calls it
+     via `create_nonbonded.cc`; several GPU check tests that construct
+     `CUDA_Nonbonded_Interaction` directly do not) read uninitialized
+     memory. This produced two extremely confusing, build/memory-
+     layout-dependent test failures after adding the 1,4-pair kernel
+     (`cuda_nonbonded_interaction` failing for `rectangular` but not
+     `vacuum`; `cuda_skin_drift` failing for `vacuum` but not
+     `rectangular` -- exactly backwards from each other, and not
+     reproducible via a clean rebuild, which ruled out stale build
+     artifacts). Fixed with a `= 1.0` default (the standard, non-AMBER
+     case) and a corrected copy constructor (`nonbonded_parameter.h`).
+
+**Verified:** full `ctest` green on both presets except the unrelated,
+documented `aladip_cuda` perturbation gate above (plus `rf_excluded_gpu`'s
+pre-existing intermittent flake, next section -- confirmed via
+`git stash` on an unmodified checkout that it predates all of this).
+`compute-sanitizer --tool memcheck`: zero errors on the affected tests.
+The real 100-step ubiquitin GPU run that originally motivated this
+investigation now completes successfully with matching (within
+tolerance) step-0 energies against the CPU reference.
+
+## Known, unresolved: `rf_excluded_gpu` intermittent (~1-in-10) flake
+
+- **Symptom:** a single-atom force/energy mismatch, small in magnitude,
+  appearing nondeterministically (~1 run in 10-15) when
+  `rf_excluded_gpu` is run repeatedly back-to-back; never reproduces
+  twice with the same input in a row otherwise, and `compute-sanitizer
+  --tool memcheck` reports zero errors on this test.
+- **Confirmed pre-existing, not introduced by any change in this
+  session:** reproduced identically via `git stash` on a checkout from
+  *before* the thrust/cub-crash and bitonic-sort work (see the section
+  above) -- same failure rate, same character, on the original
+  `thrust::sort_by_key`-based code.
+- **Not yet root-caused.** A plausible but unconfirmed hypothesis: some
+  genuine GPU-side floating-point non-associativity (atomic accumulation
+  order) sensitive to scheduling jitter between runs, though this
+  wouldn't fully explain why it's specifically this test and not others
+  of similar shape. Low priority given the magnitude is small and no
+  other test has ever shown a similar pattern, but worth investigating
+  properly before it's mistaken for noise on some future, larger change.

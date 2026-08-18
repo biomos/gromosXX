@@ -99,6 +99,23 @@ add_executable(lambdas ${LAMBDAS_CC})
 # on CPU-only builds.
 add_executable(feature_checker_gpu feature_checker_gpu.t.cc)
 
+# extended_test/ubiquitin: real ~22.7k-atom protein+water simulation,
+# run via the actual Algorithm_Sequence (not a narrower test harness) --
+# see extended_test/ubiquitin_runner.h. ubiquitin_cpu is CPU-only, no
+# CUDA needed, so it's built/run unconditionally like feature_checker_gpu
+# above; ubiquitin_gpu (below, under USE_CUDA) and
+# ubiquitin_generate_reference (not a ctest test -- see its own doc
+# comment) both need the same shared runner.
+set(UBIQUITIN_RUNNER_CC extended_test/ubiquitin_runner.cc)
+list(APPEND EXEC_NAMES ubiquitin_cpu)
+add_executable(ubiquitin_cpu extended_test/ubiquitin_cpu.t.cc ${UBIQUITIN_RUNNER_CC})
+add_executable(ubiquitin_generate_reference
+    extended_test/ubiquitin_generate_reference.t.cc ${UBIQUITIN_RUNNER_CC})
+target_include_directories(ubiquitin_generate_reference PRIVATE ${TEST_PROGRAM_INCLUDES}
+    ${EXTERNAL_INCLUDES} ${PROJECT_SOURCE_DIR}/src)
+target_link_libraries(ubiquitin_generate_reference PRIVATE ${GROMOS_OBJECTS} ${GROMOS_LIBS}
+    ${EXTERNAL_LIBRARIES})
+
 if(USE_CUDA)
     list(APPEND EXEC_NAMES aladip_cuda)
     add_executable(aladip_cuda ${ALADIP_CUDA_CC})
@@ -159,6 +176,9 @@ if(USE_CUDA)
 
     list(APPEND EXEC_NAMES rf_excluded_gpu)
     add_executable(rf_excluded_gpu rf_excluded_gpu.t.cc)
+
+    list(APPEND EXEC_NAMES ubiquitin_gpu)
+    add_executable(ubiquitin_gpu extended_test/ubiquitin_gpu.t.cc ${UBIQUITIN_RUNNER_CC})
 endif()
 
 foreach(LOOP_VAR ${EXEC_NAMES})

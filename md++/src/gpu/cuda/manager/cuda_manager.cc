@@ -50,10 +50,20 @@ void gpu::CudaManager::validate_device_id(int device_id) const {
     DISABLED_VOID();
 }
 
+// Genuine no-ops, not DISABLED_VOID() -- these two are called
+// unconditionally, on every algorithm, every step, by
+// Algorithm_Sequence::run() regardless of accelerator or whether this
+// build even has CUDA compiled in (see the doc comments in
+// cuda_manager.h). Matches the CUDA-enabled implementation's own
+// runtime behavior when a Configuration has no GPU mirror registered
+// (cuda_manager.cu: "if (!mirror) return;") -- there's simply nothing
+// to flush/invalidate in a CPU-only build, not an attempted use of
+// unavailable CUDA functionality. Using DISABLED_VOID() here used to
+// log a "CUDA is disabled" critical message on every single call --
+// thousands of them over an ordinary CPU-only run -- found via a real
+// end-to-end run (extended_test/).
 void gpu::CudaManager::flush_gpu_dirty(configuration::Configuration & conf, unsigned fields) {
-    DISABLED_VOID();
 }
 
 void gpu::CudaManager::invalidate_gpu_mirror(configuration::Configuration & conf, unsigned fields) {
-    DISABLED_VOID();
 }
