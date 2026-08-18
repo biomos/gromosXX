@@ -20,7 +20,9 @@
 
 #include "../../stdheader.h"
 
+#include <cstdlib>
 #include <fstream>
+#include <memory>
 #include <sys/stat.h>
 
 #include "../../algorithm/algorithm.h"
@@ -31,6 +33,7 @@
 #include "../../io/argument.h"
 #include "../../io/message.h"
 #include "../../io/read_input.h"
+#include "../../io/configuration/out_configuration.h"
 
 #include "ubiquitin_runner.h"
 
@@ -49,7 +52,8 @@ namespace {
 
 int check_ubiquitin::run_ubiquitin(const std::string & imd_path, unsigned num_steps,
                                     std::vector<check_ubiquitin::StepResult> & out,
-                                    std::ostream & err) {
+                                    std::ostream & err,
+                                    const check_ubiquitin::OutputPaths * out_paths) {
   std::string stopo, sconf;
   {
     struct stat buffer;
@@ -65,6 +69,11 @@ int check_ubiquitin::run_ubiquitin(const std::string & imd_path, unsigned num_st
   args.insert(std::make_pair(std::string("topo"), stopo));
   args.insert(std::make_pair(std::string("conf"), sconf));
   args.insert(std::make_pair(std::string("input"), imd_path));
+  if (out_paths) {
+    args.insert(std::make_pair(std::string("fin"), out_paths->fin));
+    args.insert(std::make_pair(std::string("trc"), out_paths->trc));
+    args.insert(std::make_pair(std::string("tre"), out_paths->tre));
+  }
 
   topology::Topology topo;
   configuration::Configuration conf;
@@ -79,6 +88,19 @@ int check_ubiquitin::run_ubiquitin(const std::string & imd_path, unsigned num_st
   }
   if (flush_messages(err, "read_input")) return 1;
 
+  // Real io::Out_Configuration, driven exactly like program/md.cc's own
+  // main loop (traj.write() before each run(), traj.print() after,
+  // traj.write(..., io::final)/traj.print_final() once at the end) --
+  // see ubiquitin_runner.h's doc comment for why this matters as its
+  // own, independently-checked code path.
+  std::unique_ptr<io::Out_Configuration> traj;
+  if (out_paths) {
+    traj.reset(new io::Out_Configuration(GROMOSXX "\n"));
+    traj->title(GROMOSXX "\n" + sim.param().title);
+    traj->init(args, sim.param());
+    if (flush_messages(err, "Out_Configuration::init")) return 1;
+  }
+
   if (md_seq.init(topo, conf, sim, discard, true)) {
     flush_messages(err, "Algorithm_Sequence::init");
     err << "ubiquitin runner: Algorithm_Sequence::init failed" << std::endl;
@@ -89,33 +111,9 @@ int check_ubiquitin::run_ubiquitin(const std::string & imd_path, unsigned num_st
   out.clear();
   out.reserve(num_steps);
 
-  // The very first Algorithm_Sequence::run() call after init() leaves
-  // conf.current().energies still all-zero -- confirmed empirically
-  // (not just inferred): the *second* run() call's energies are what
-  // exactly match a real program/md .tre trajectory's TIMESTEP 0/
-  // ENERGY03 block, and every subsequent call tracks the trajectory
-  // one real step at a time from there. Root cause not fully chased
-  // down (plausibly some one-time pairlist/twin-range warm-up that
-  // program/md's own main loop structure happens to absorb
-  // differently), but the fix is simple and doesn't depend on knowing
-  // why: run once and discard before the real, collected loop. Found
-  // by inspecting a freshly generated reference file and noticing
-  // every field of row 0 was exactly zero while row 1 matched a known
-  // real trajectory's step 0 energies exactly.
-  if (md_seq.run(topo, conf, sim)) {
-    flush_messages(err, "Algorithm_Sequence::run (warm-up)");
-    err << "ubiquitin runner: warm-up run failed" << std::endl;
-    return 1;
-  }
-  if (flush_messages(err, "Algorithm_Sequence::run (warm-up)")) return 1;
-  sim.steps() = sim.steps() + sim.param().analyze.stride;
-  sim.time() = sim.param().step.t0 + sim.steps() * sim.time_step_size();
-
-  // Forcefield::calculate_interactions writes into conf.current() (see
-  // e.g. cuda_pairlist_algorithm_impl.cu's conf.current().energies.
-  // lj_energy[...] += ... accumulation) -- read the just-computed
-  // step's energies from there.
   for (unsigned step = 0; step < num_steps; ++step) {
+    if (traj) traj->write(conf, topo, sim, io::reduced);
+
     if (md_seq.run(topo, conf, sim)) {
       flush_messages(err, "Algorithm_Sequence::run");
       err << "ubiquitin runner: run failed at step " << step << std::endl;
@@ -123,9 +121,23 @@ int check_ubiquitin::run_ubiquitin(const std::string & imd_path, unsigned num_st
     }
     if (flush_messages(err, "Algorithm_Sequence::run")) return 1;
 
+    if (traj) traj->print(topo, conf, sim);
+
+    // Forcefield::calculate_interactions writes into conf.current()
+    // (see e.g. cuda_pairlist_algorithm_impl.cu's conf.current().
+    // energies.lj_energy[...] += ... accumulation), but some algorithm
+    // in the sequence (leap-frog's own old/current rotation) has
+    // already moved that into conf.old() by the time this step's
+    // run() call returns -- confirmed directly against
+    // io::Out_Configuration::print(), which reads conf.old().energies
+    // (out_configuration.cc), not conf.current(). Reading
+    // conf.current() here instead left every in-memory StepResult
+    // silently all-zero, invisible until this same value was cross-
+    // checked against a real .tre file's contents (see this file's
+    // own doc comment for why that cross-check exists at all).
     StepResult r;
     r.step = step;
-    const configuration::Energy & e = conf.current().energies;
+    const configuration::Energy & e = conf.old().energies;
     r.total             = e.total;
     r.kinetic_total      = e.kinetic_total;
     r.potential_total    = e.potential_total;
@@ -145,6 +157,11 @@ int check_ubiquitin::run_ubiquitin(const std::string & imd_path, unsigned num_st
 
     sim.steps() = sim.steps() + sim.param().analyze.stride;
     sim.time() = sim.param().step.t0 + sim.steps() * sim.time_step_size();
+  }
+
+  if (traj) {
+    traj->write(conf, topo, sim, io::final);
+    traj->print_final(topo, conf, sim);
   }
 
   return 0;
@@ -189,4 +206,15 @@ bool check_ubiquitin::read_reference(const std::string & path,
     return false;
   }
   return true;
+}
+
+std::string check_ubiquitin::make_temp_dir(std::ostream & err) {
+  std::string tmpl = "/tmp/ubiquitin_test_XXXXXX";
+  std::vector<char> buf(tmpl.begin(), tmpl.end());
+  buf.push_back('\0');
+  if (mkdtemp(buf.data()) == nullptr) {
+    err << "ubiquitin runner: mkdtemp failed" << std::endl;
+    return "";
+  }
+  return std::string(buf.data());
 }

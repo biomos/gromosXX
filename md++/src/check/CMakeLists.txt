@@ -106,7 +106,7 @@ add_executable(feature_checker_gpu feature_checker_gpu.t.cc)
 # above; ubiquitin_gpu (below, under USE_CUDA) and
 # ubiquitin_generate_reference (not a ctest test -- see its own doc
 # comment) both need the same shared runner.
-set(UBIQUITIN_RUNNER_CC extended_test/ubiquitin_runner.cc)
+set(UBIQUITIN_RUNNER_CC extended_test/ubiquitin_runner.cc extended_test/tre_parser.cc)
 list(APPEND EXEC_NAMES ubiquitin_cpu)
 add_executable(ubiquitin_cpu extended_test/ubiquitin_cpu.t.cc ${UBIQUITIN_RUNNER_CC})
 add_executable(ubiquitin_generate_reference

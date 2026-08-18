@@ -238,6 +238,32 @@ The real 100-step ubiquitin GPU run that originally motivated this
 investigation now completes successfully with matching (within
 tolerance) step-0 energies against the CPU reference.
 
+**A seventh bug found immediately after, the hard way:** the initial
+version of `ubiquitin_cpu.t.cc`/`ubiquitin_gpu.t.cc` only ever compared
+energies read directly from `configuration::Configuration` in memory --
+never the actual `.tre`/`.trc` bytes a real run writes to disk. Prompted
+to check those too, a manual diff of real `program/md` output initially
+looked fine, but wiring an equivalent check directly into the test
+(`extended_test/tre_parser.h`/`.cc`, driving a real
+`io::Out_Configuration` exactly like `program/md`'s own main loop) found
+that `ubiquitin_runner.cc`'s in-memory collection was reading
+`conf.current().energies`, which is all-zero by the time a step's
+`Algorithm_Sequence::run()` returns -- `io::Out_Configuration::print()`
+itself reads `conf.old().energies` (confirmed directly in
+`out_configuration.cc`), since leap-frog's own old/current rotation has
+already moved the just-computed values there. A now-abandoned earlier
+workaround (run once and discard before the real loop) happened to
+paper over this by accident, for reasons never fully explained, and
+would have kept doing so silently forever had the file contents not
+been cross-checked against memory. Fixed by reading `conf.old()`
+instead (`ubiquitin_runner.cc`); `ubiquitin_cpu.t.cc`/
+`ubiquitin_gpu.t.cc` now also parse the real `.tre` file and require
+every written step to match the in-memory values exactly, plus scan the
+`.trc` file's positions for NaN/Inf/gross corruption -- so a future
+regression in `Out_Configuration`'s own formatting/precision, or in
+which configuration object anything reads from, can't hide from this
+test the way it hid from the original, memory-only version.
+
 ## Known, unresolved: `rf_excluded_gpu` intermittent (~1-in-10) flake
 
 - **Symptom:** a single-atom force/energy mismatch, small in magnitude,

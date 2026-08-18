@@ -26,7 +26,7 @@
  * floating-point summation order (atomics) and mixed precision than
  * CPU's; it is *expected* to diverge from the CPU trajectory well
  * before 100 steps, no matter how correct the GPU code is. This test
- * therefore checks two different things, each appropriately:
+ * therefore checks several different things, each appropriately:
  *
  *  - Step 0 (the initial force/energy evaluation, before any
  *    integration): CPU and GPU see the *identical* starting
@@ -35,10 +35,17 @@
  *    chaos-diverged. Checked with a moderate (not bit-for-bit)
  *    tolerance, since even this one comparison involves mixed-
  *    precision (float) accumulation over thousands of pairwise terms
- *    that CPU sums in double.
+ *    that CPU sums in double. Checked against both the in-memory
+ *    energies *and* the actual .tre file contents (see below).
  *  - The rest of the trajectory: only a physical-sanity check (no
  *    NaN/Inf, every bath's kinetic energy stays in a believable,
  *    bounded range) -- not compared against the CPU trajectory at all.
+ *  - The actual .tre/.trc file contents (io::Out_Configuration, driven
+ *    exactly like program/md's own main loop) are cross-checked
+ *    against the in-memory values above, and .trc positions are
+ *    scanned for NaN/Inf/gross corruption -- catches a bug in the
+ *    file-writing path itself, which is invisible to a test that only
+ *    inspects memory directly.
  *
  * Only registered under USE_CUDA (see CMakeLists.txt) -- there is no
  * GPU accelerator to select otherwise.
@@ -46,11 +53,26 @@
 
 #include "../../stdheader.h"
 #include "ubiquitin_runner.h"
+#include "tre_parser.h"
+
+namespace {
+  bool nearly_equal(double got, double ref, double rtol, double atol) {
+    return std::abs(got - ref) <= atol + rtol * std::abs(ref);
+  }
+}
 
 int main(int, char**) {
+  const std::string workdir = check_ubiquitin::make_temp_dir(std::cerr);
+  if (workdir.empty()) return 1;
+  check_ubiquitin::OutputPaths out_paths;
+  out_paths.fin = workdir + "/ubiquitin.fin.cnf";
+  out_paths.trc = workdir + "/ubiquitin.trc";
+  out_paths.tre = workdir + "/ubiquitin.tre";
+
   std::vector<check_ubiquitin::StepResult> steps;
   const int rc = check_ubiquitin::run_ubiquitin(
-      TOP_SOURCE_DIR "/src/check/extended_test/md_ubiquitin_gpu.imd", 100, steps, std::cerr);
+      TOP_SOURCE_DIR "/src/check/extended_test/md_ubiquitin_gpu.imd", 100, steps,
+      std::cerr, &out_paths);
   if (rc != 0) {
     std::cerr << "ubiquitin_gpu: run failed" << std::endl;
     return 1;
@@ -129,7 +151,65 @@ int main(int, char**) {
     std::cerr << "ubiquitin_gpu: FAILED (" << errors << " issue(s))" << std::endl;
     return 1;
   }
+
+  // The actual .tre file, produced by the same real
+  // io::Out_Configuration path program/md uses -- must agree with the
+  // in-memory values above at every step that got written, and step 0
+  // (the one point directly comparable to CPU) must still be within
+  // the same moderate tolerance against the CPU reference when read
+  // back from disk, not just in memory.
+  std::vector<check_ubiquitin::TreStep> tre_steps;
+  if (!check_ubiquitin::parse_tre(out_paths.tre, tre_steps, std::cerr)) {
+    std::cerr << "ubiquitin_gpu: FAILED -- could not parse " << out_paths.tre
+              << std::endl;
+    return 1;
+  }
+
+  const double file_rtol = 1e-6, file_atol = 1e-3;
+  int file_errors = 0;
+  for (const check_ubiquitin::TreStep & ts : tre_steps) {
+    if (ts.step >= steps.size()) {
+      std::cerr << "ubiquitin_gpu: .tre has step " << ts.step
+                << " beyond the " << steps.size() << " steps run" << std::endl;
+      ++file_errors;
+      continue;
+    }
+    const check_ubiquitin::StepResult & mem = steps[ts.step];
+    const std::pair<const char *, std::pair<double, double> > fields[] = {
+      {"total",            {ts.totals[check_ubiquitin::TOTALS_TOTAL],            mem.total}},
+      {"kinetic_total",    {ts.totals[check_ubiquitin::TOTALS_KINETIC_TOTAL],    mem.kinetic_total}},
+      {"potential_total",  {ts.totals[check_ubiquitin::TOTALS_POTENTIAL_TOTAL],  mem.potential_total}},
+      {"bonded_total",     {ts.totals[check_ubiquitin::TOTALS_BONDED_TOTAL],     mem.bonded_total}},
+      {"nonbonded_total",  {ts.totals[check_ubiquitin::TOTALS_NONBONDED_TOTAL],  mem.nonbonded_total}},
+      {"lj_total",         {ts.totals[check_ubiquitin::TOTALS_LJ_TOTAL],         mem.lj_total}},
+      {"crf_total",        {ts.totals[check_ubiquitin::TOTALS_CRF_TOTAL],        mem.crf_total}},
+      {"constraints_total",{ts.totals[check_ubiquitin::TOTALS_CONSTRAINTS_TOTAL],mem.constraints_total}},
+    };
+    for (const auto & f : fields) {
+      if (!nearly_equal(f.second.first, f.second.second, file_rtol, file_atol)) {
+        std::cerr << "ubiquitin_gpu: .tre step " << ts.step << ": " << f.first
+                  << " disagrees with in-memory value: file=" << f.second.first
+                  << " memory=" << f.second.second << std::endl;
+        ++file_errors;
+      }
+    }
+  }
+
+  if (!check_ubiquitin::scan_trc_positions(out_paths.trc, std::cerr)) {
+    std::cerr << "ubiquitin_gpu: FAILED -- .trc position sanity check failed"
+              << std::endl;
+    return 1;
+  }
+
+  if (file_errors) {
+    std::cerr << "ubiquitin_gpu: FAILED (" << file_errors
+              << " .tre/in-memory mismatch(es))" << std::endl;
+    return 1;
+  }
+
   std::cout << "ubiquitin_gpu: OK (step 0 matches CPU reference, " << steps.size()
-            << " step(s) stable, no NaN/Inf)" << std::endl;
+            << " step(s) stable, no NaN/Inf, " << tre_steps.size()
+            << " .tre step(s) match in-memory values, .trc positions sane)"
+            << std::endl;
   return 0;
 }
