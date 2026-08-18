@@ -128,17 +128,32 @@ int interaction::CUDA_Nonbonded_Interaction::calculate_interactions(
 {
   DEBUG(7, "CUDA_Nonbonded_Interaction::calculate_interactions");
 
+  // Base Nonbonded_Interaction's m_timer (inherited, name "NonBonded")
+  // was previously never start()/stop()-ed on this GPU path at all --
+  // its entire cost (pairlist rebuild/classification + force/energy
+  // kernels) was invisible in the .omd TIMING report, silently folded
+  // into the top-level "unaccounted" gap between the printed algorithm
+  // totals and the wall-clock simulation time. Instrumented the same
+  // way the CPU path (nonbonded_interaction.cc) already is, so this
+  // shows up as its own line, with subtimers mirroring the three real
+  // phases below (each pa-> call syncs the device before returning, so
+  // the host-side timer captures true GPU-inclusive elapsed time).
+  m_timer.start(sim);
+
   if (!m_initialized) {
     // init() hard-errored (out-of-v1-scope configuration) -- see this
     // method's doc comment. No GPU state to touch safely; leave the
     // force/energy contribution at zero.
+    m_timer.stop();
     return 1;
   }
 
   CUDA_Pairlist_Algorithm * pa =
       static_cast<CUDA_Pairlist_Algorithm *>(m_pairlist_algorithm);
 
+  m_timer.start_subtimer("prepare");
   pa->prepare(topo, conf, sim); // every step: box-wrap + cog + GPU pos mirror refresh
+  m_timer.stop_subtimer("prepare");
 
   // Exact structural mirror of nonbonded_set.cc's pairlist_update check
   // (same operator, same operand order) -- real GROMOS twin-range: the
@@ -148,16 +163,22 @@ int interaction::CUDA_Nonbonded_Interaction::calculate_interactions(
   const bool pairlist_update = !(sim.steps() % sim.param().pairlist.skip_step);
 
   if (pairlist_update) {
+    m_timer.start_subtimer("pairlist");
     interaction::PairlistContainer dummy;
     dummy.resize(static_cast<unsigned>(topo.num_atoms()));
     pa->update(topo, conf, sim, dummy, 0, static_cast<unsigned>(topo.num_atoms()), 1);
+    m_timer.stop_subtimer("pairlist");
   }
 
   // Writes directly into conf.current().energies.lj_energy/crf_energy's
   // per-[gi][gj] matrix (same accumulation style as
   // nonbonded_innerloop.cc's CPU inner loop) -- no scalar out-params.
+  m_timer.start_subtimer("compute forces energies");
   pa->compute_forces_energies(topo, conf, sim, m_gpu_lj.view(), m_nb, pairlist_update,
                                sim.param().nonbonded.rf_excluded);
+  m_timer.stop_subtimer("compute forces energies");
+
+  m_timer.stop();
 
   return 0;
 }
