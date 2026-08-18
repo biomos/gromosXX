@@ -215,7 +215,7 @@ __global__ void cukernel::interaction::find_pairs_neighbour(
     }
   }
   tb.sync();
-  //assert(!pairlist.overflown());
+  //assert(!pairlist.overflowed());
   for (unsigned si = 0; si < N; ++si) {
     for (unsigned sj = 0; sj < N; ++sj) {
       if (target[si][sj] != nullptr) {
@@ -223,7 +223,7 @@ __global__ void cukernel::interaction::find_pairs_neighbour(
         const int *const sptr = sizes_ptr[si][sj];
         unsigned* tar = target[si][sj];
         const unsigned ai = aidx[si][sj];
-        if (sptr[ai] != -1) { // if not overflown
+        if (sptr[ai] != -1) { // if not overflowed
             tar += sptr[ai];
             *(tar) = value[si][sj];
         }

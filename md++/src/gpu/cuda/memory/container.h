@@ -168,7 +168,7 @@ namespace gpu {
           /**
            * access the overflow value
            */
-          __device__ __host__ bool overflown() const;
+          __device__ __host__ bool overflowed() const;
 
           /**
            * print the container content 

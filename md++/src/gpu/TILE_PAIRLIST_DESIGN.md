@@ -273,7 +273,7 @@ Before any force/energy number from this pairlist is trusted:
      num_blocks_a)` truncated instead of rounding up, silently
      underestimating capacity by up to 1 whenever the fractional part
      was large (e.g. 0.93 truncates to 0). The resulting overflow was
-     real and correctly detected by `TileVecT::was_overflown()`/
+     real and correctly detected by `TileVecT::was_overflowed()`/
      `check_candidate_overflow`'s `io::messages.add(..., error)` call --
      but `io::messages.add` only queues a message, and the equivalence
      test wasn't calling `io::messages.display()` after running the

@@ -360,7 +360,7 @@ namespace {
    * Nonbonded_Set::init's per-atom pairlist.reserve() density estimate
    * (nonbonded_set.cc) but in terms of blocks. This is a sizing heuristic
    * only, not a correctness mechanism -- the real safeguard is the
-   * was_overflown() check after the kernel runs (see below). Falls back
+   * was_overflowed() check after the kernel runs (see below). Falls back
    * to the exact worst case (every block pair) for vacuum / degenerate
    * volumes, where no density estimate is meaningful, and never exceeds
    * that worst case otherwise either.
@@ -384,7 +384,7 @@ namespace {
     // to 1 per block -- found via the pairlist-equivalence test
     // (TILE_PAIRLIST_DESIGN.md §5/§6): a real, reproducible overflow (not
     // just an off-by-one on paper) that TileVecT correctly detected and
-    // reported via was_overflown(), but the report went to io::messages
+    // reported via was_overflowed(), but the report went to io::messages
     // and nothing had displayed it yet, so it looked like silent data
     // corruption instead of the flagged error it actually was.
     const unsigned capacity = static_cast<unsigned>(std::ceil(per_block * num_blocks_a)) + num_blocks_a;
@@ -393,7 +393,7 @@ namespace {
 
   bool candidate_overflowed(gpu::TileVecT<gpu::Interaction_Tile> const & tiles) {
     cudaDeviceSynchronize();
-    return tiles.was_overflown();
+    return tiles.was_overflowed();
   }
 }
 
@@ -458,7 +458,7 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::_build_candidates(
         // mathematically sufficient, no further retry can ever be
         // needed) rather than silently dropping candidates and running
         // with a wrong pairlist. Still cheap in the common (no overflow)
-        // case: this branch only runs at all when was_overflown() is
+        // case: this branch only runs at all when was_overflowed() is
         // actually set.
         if (candidate_overflowed(m_tiles.solute_candidates)) {
             const unsigned worst_case =
@@ -643,8 +643,8 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::_classify_tiles(
     }
 
     cudaDeviceSynchronize();
-    if (m_tiles.solute_short.was_overflown()  || m_tiles.solute_long.was_overflown() ||
-        m_tiles.solvent_short.was_overflown() || m_tiles.solvent_long.was_overflown()) {
+    if (m_tiles.solute_short.was_overflowed()  || m_tiles.solute_long.was_overflowed() ||
+        m_tiles.solvent_short.was_overflowed() || m_tiles.solvent_long.was_overflowed()) {
         io::messages.add(
           "CUDA pairlist classification overflowed a short/long tile "
           "capacity -- this should be impossible (reserved capacity was "

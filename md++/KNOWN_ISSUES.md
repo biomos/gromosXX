@@ -168,11 +168,11 @@ regression tests guarding against a repeat.
    `classify_tiles()`'s kernel-launch grid dimension does) read past
    the real allocation. Fixed by clamping both `size()` accessors
    (`TileVecT` and `TileVecT::View`) to `min(*m_size, m_capacity)`
-   (`tile.h`). `was_overflown()` still reports the raw condition
+   (`tile.h`). `was_overflowed()` still reports the raw condition
    unaffected.
 3. **Candidate-tile capacity silently underestimated, dropping real
    pairs.** `estimate_candidate_capacity()`'s density heuristic (a
-   sizing *estimate*, not a correctness mechanism -- `was_overflown()`
+   sizing *estimate*, not a correctness mechanism -- `was_overflowed()`
    is the real safeguard) underestimated badly enough at ubiquitin's
    scale to trigger real, repeated overflow -- candidates silently
    dropped, the pairlist genuinely wrong. The overflow *was* being

@@ -145,7 +145,7 @@ namespace gpu
            * classify_tiles_kernel (block_pairlist.cu) at
            * extended_test/ubiquitin's scale, where the candidate
            * buffer's density-based capacity estimate is exceeded.
-           * was_overflown() still reports the raw (pre-clamp) overflow
+           * was_overflowed() still reports the raw (pre-clamp) overflow
            * condition, so callers that need to know "were tiles
            * silently dropped" (check_candidate_overflow(),
            * cuda_pairlist_algorithm_impl.cu) aren't affected by this
@@ -155,7 +155,7 @@ namespace gpu
           __device__ __host__ unsigned capacity() const { return m_capacity; }
           __device__ __host__ TileT* data() { return m_data; }
           __device__ __host__ const TileT* data() const { return m_data; }
-          __host__ bool was_overflown() const { return *m_overflow; }
+          __host__ bool was_overflowed() const { return *m_overflow; }
 
       private:
           TileT *m_data;
@@ -249,7 +249,7 @@ namespace gpu
           return m_data;
       }
 
-      __host__ bool was_overflown() const {
+      __host__ bool was_overflowed() const {
           return *m_overflow;
       }
 

@@ -40,8 +40,8 @@ gpu::Container<T>::Container(size_t height, size_t width, bool persistent) :
 */
 template <typename T>
 void gpu::Container<T>::resize(size_t height, size_t width) {
-    // if increasing the size and is not overflown, copy
-    if (height >= this->m_height && width >= this->m_width && !this->overflown()) {
+    // if increasing the size and is not overflowed, copy
+    if (height >= this->m_height && width >= this->m_width && !this->overflowed()) {
         Container<T> newc(height, width);
         CUDA_CHECK(cudaMemcpy(newc.dev_sizes, this->dev_sizes, this->m_height*sizeof(unsigned), cudaMemcpyDeviceToDevice));
         CUDA_CHECK(cudaMemcpy2D(newc.dev_ptr, newc.dev_pitch, this->dev_ptr, this->dev_pitch, this->m_width*sizeof(T), this->m_height, cudaMemcpyDeviceToDevice));
@@ -233,7 +233,7 @@ __host__ std::vector< std::vector<T> > gpu::Container<T>::copy_to_host() const {
  * access the overflow value
  */
 template <typename T>
-__device__ __host__ bool gpu::Container<T>::overflown() const {
+__device__ __host__ bool gpu::Container<T>::overflowed() const {
 #ifdef __CUDA_ARCH__
     return *this->dev_overflow;
 #else

@@ -386,11 +386,11 @@ void cukernel::CUDA_Kernel::update_pairlist(topology::Topology &topo,
       cukernel::update_pairlist<<<grid,block>>>(m_pos.data(), pairlist);
     
       //std::cout << "cell_i: " << cell_i << std::endl;
-      overflow = pairlist.overflown();
+      overflow = pairlist.overflowed();
       
       if (overflow) {
           unsigned pair_size = 2*pairlist.width();
-          std::cout << "Pairlist overflown, new parlist width: " << pair_size*sizeof(Pairlist::num_type) << std::endl;
+          std::cout << "Pairlist overflowed, new parlist width: " << pair_size*sizeof(Pairlist::num_type) << std::endl;
           pairlist.resize(topo.num_atoms(), pair_size);
       }
   } while (overflow);
