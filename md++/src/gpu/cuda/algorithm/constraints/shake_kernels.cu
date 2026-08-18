@@ -66,6 +66,7 @@ __global__ void shake_solvent_kernel(
 
   unsigned iterations = 0;
   bool convergence = false;
+  double v_local[9] = {0,0,0,0,0,0,0,0,0};
 
   while (!convergence) {
     convergence = true;
@@ -103,15 +104,16 @@ __global__ void shake_solvent_kernel(
         constraint_force[ai] += cons_force;
         constraint_force[aj] -= cons_force;
 
-        atomicAdd(&virial[0], ref_r.x * ref_r.x * lambda / dt2); // (0,0)
-        atomicAdd(&virial[1], ref_r.x * ref_r.y * lambda / dt2); // (0,1)
-        atomicAdd(&virial[2], ref_r.x * ref_r.z * lambda / dt2); // (0,2)
-        atomicAdd(&virial[3], ref_r.y * ref_r.x * lambda / dt2); // (1,0)
-        atomicAdd(&virial[4], ref_r.y * ref_r.y * lambda / dt2); // (1,1)
-        atomicAdd(&virial[5], ref_r.y * ref_r.z * lambda / dt2); // (1,2)
-        atomicAdd(&virial[6], ref_r.z * ref_r.x * lambda / dt2); // (2,0)
-        atomicAdd(&virial[7], ref_r.z * ref_r.y * lambda / dt2); // (2,1)
-        atomicAdd(&virial[8], ref_r.z * ref_r.z * lambda / dt2); // (2,2)
+        const double inv_dt2 = lambda / dt2;
+        v_local[0] += ref_r.x * ref_r.x * inv_dt2; // (0,0)
+        v_local[1] += ref_r.x * ref_r.y * inv_dt2; // (0,1)
+        v_local[2] += ref_r.x * ref_r.z * inv_dt2; // (0,2)
+        v_local[3] += ref_r.y * ref_r.x * inv_dt2; // (1,0)
+        v_local[4] += ref_r.y * ref_r.y * inv_dt2; // (1,1)
+        v_local[5] += ref_r.y * ref_r.z * inv_dt2; // (1,2)
+        v_local[6] += ref_r.z * ref_r.x * inv_dt2; // (2,0)
+        v_local[7] += ref_r.z * ref_r.y * inv_dt2; // (2,1)
+        v_local[8] += ref_r.z * ref_r.z * inv_dt2; // (2,2)
 
         ref_r *= lambda;
         pos[ai] += ref_r * inv_mass_local[li];
@@ -133,6 +135,15 @@ __global__ void shake_solvent_kernel(
       skip_now[a] = skip_next[a];
       skip_next[a] = true;
     }
+  }
+
+  // Accumulated locally across every constraint/iteration this thread
+  // touched, then flushed with one atomicAdd per component instead of
+  // one per constraint update -- thousands of molecule-threads otherwise
+  // hammer the same 9 global addresses every iteration, serializing the
+  // whole kernel (measured: ~150ms/call before this change).
+  for (unsigned k = 0; k < 9; ++k) {
+    if (v_local[k] != 0.0) atomicAdd(&virial[k], v_local[k]);
   }
 }
 
