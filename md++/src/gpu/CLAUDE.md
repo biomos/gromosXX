@@ -240,10 +240,15 @@ If `ctest` fails:
 - Verify `nvcc --version` succeeds before building; if CUDA isn't found, do
   not silently drop `USE_CUDA`/`--with-cuda` — report it.
 - `CMAKE_CUDA_ARCHITECTURES` is set explicitly in `CMakeLists.txt`
-  (currently `80 86 89 90`) — do not rely on preset-level overrides for this;
-  the in-source `set()` runs before `enable_language(CUDA)` and takes effect
-  regardless of what a preset provides. If you need to target a different/
-  additional architecture, edit it there, not in a preset.
+  (currently `80 86 89 90 120` — `120` added for consumer Blackwell cards,
+  e.g. RTX 50-series, compute capability 12.0, after a real "PTX was
+  compiled with an unsupported toolchain" failure running the binary on a
+  driver that couldn't JIT-compile PTX for that architecture; baking in
+  native SASS avoids depending on the runtime driver's JIT compiler at
+  all) — do not rely on preset-level overrides for this; the in-source
+  `set()` runs before `enable_language(CUDA)` and takes effect regardless
+  of what a preset provides. If you need to target a different/additional
+  architecture, edit it there, not in a preset.
 
 ## Standard workflow
 1. Make code change

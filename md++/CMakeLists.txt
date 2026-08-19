@@ -15,7 +15,7 @@ option(USE_CUDA "Enable CUDA support" OFF)
 
 if(USE_CUDA)
     find_package(CUDAToolkit REQUIRED)
-    set(CMAKE_CUDA_ARCHITECTURES 80 86 89 90)
+    set(CMAKE_CUDA_ARCHITECTURES 80 86 89 90 120)
     enable_language(CUDA)
     set(CMAKE_CUDA_STANDARD 17)
     set(CMAKE_CUDA_STANDARD_REQUIRED ON)
