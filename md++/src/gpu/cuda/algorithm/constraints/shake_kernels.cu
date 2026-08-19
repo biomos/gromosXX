@@ -57,6 +57,22 @@ __global__ void shake_solvent_kernel(
 
   const unsigned base = first_atom + mol * num_atoms_per_molecule;
 
+  // Cache this molecule's atoms in registers/local memory for the whole
+  // Jacobi loop instead of re-reading pos[]/old_pos[] from global memory
+  // on every constraint check of every iteration (measured ~12 iterations
+  // per molecule -- each one previously re-fetched every atom involved).
+  // old_pos never changes within apply(), so it's loaded once and never
+  // written back; pos and the constraint-force accumulator are written
+  // back exactly once, after convergence, instead of per-update.
+  double3 local_pos[gpu::MAX_SHAKE_ATOMS_PER_MOLECULE];
+  double3 local_old_pos[gpu::MAX_SHAKE_ATOMS_PER_MOLECULE];
+  double3 local_cf[gpu::MAX_SHAKE_ATOMS_PER_MOLECULE];
+  for (unsigned a = 0; a < num_atoms_per_molecule; ++a) {
+    local_pos[a] = pos[base + a];
+    local_old_pos[a] = old_pos[base + a];
+    local_cf[a] = make_double3(0.0, 0.0, 0.0);
+  }
+
   bool skip_now[gpu::MAX_SHAKE_ATOMS_PER_MOLECULE];
   bool skip_next[gpu::MAX_SHAKE_ATOMS_PER_MOLECULE];
   for (unsigned a = 0; a < num_atoms_per_molecule; ++a) {
@@ -78,16 +94,13 @@ __global__ void shake_solvent_kernel(
       if (skip_now[li] && skip_now[lj]) continue;
       if (inv_mass_local[li] == 0.0 && inv_mass_local[lj] == 0.0) continue;
 
-      const unsigned ai = base + li;
-      const unsigned aj = base + lj;
-
-      const double3 r = periodicity.nearest_image(pos[ai], pos[aj]);
+      const double3 r = periodicity.nearest_image(local_pos[li], local_pos[lj]);
       const double dist2 = dot(r, r);
       const double r0sq = constraints[c].r0sq;
       const double diff = r0sq - dist2;
 
       if (fabs(diff) >= r0sq * tolerance * 2.0) {
-        double3 ref_r = periodicity.nearest_image(old_pos[ai], old_pos[aj]);
+        double3 ref_r = periodicity.nearest_image(local_old_pos[li], local_old_pos[lj]);
         const double sp = dot(ref_r, r);
 
         // 1e-12, matching math::epsilon (math/gmath.h) -- that constant
@@ -101,8 +114,8 @@ __global__ void shake_solvent_kernel(
         const double lambda = diff / (sp * 2.0 * (inv_mass_local[li] + inv_mass_local[lj]));
 
         const double3 cons_force = lambda * ref_r;
-        constraint_force[ai] += cons_force;
-        constraint_force[aj] -= cons_force;
+        local_cf[li] += cons_force;
+        local_cf[lj] -= cons_force;
 
         const double inv_dt2 = lambda / dt2;
         v_local[0] += ref_r.x * ref_r.x * inv_dt2; // (0,0)
@@ -116,8 +129,8 @@ __global__ void shake_solvent_kernel(
         v_local[8] += ref_r.z * ref_r.z * inv_dt2; // (2,2)
 
         ref_r *= lambda;
-        pos[ai] += ref_r * inv_mass_local[li];
-        pos[aj] -= ref_r * inv_mass_local[lj];
+        local_pos[li] += ref_r * inv_mass_local[li];
+        local_pos[lj] -= ref_r * inv_mass_local[lj];
 
         convergence = false;
         skip_next[li] = false;
@@ -135,6 +148,11 @@ __global__ void shake_solvent_kernel(
       skip_now[a] = skip_next[a];
       skip_next[a] = true;
     }
+  }
+
+  for (unsigned a = 0; a < num_atoms_per_molecule; ++a) {
+    pos[base + a] = local_pos[a];
+    constraint_force[base + a] += local_cf[a];
   }
 
   // Accumulated locally across every constraint/iteration this thread
