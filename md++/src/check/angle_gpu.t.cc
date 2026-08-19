@@ -107,6 +107,15 @@ namespace {
     }
     flush_messages("angle calculate_interactions");
 
+    // CUDA_Angle_Interaction writes force directly into the GPU mirror
+    // and mark_gpu_dirty()s it instead of syncing back every call
+    // (Algorithm_Sequence::run() does this publish automatically via
+    // flush_gpu_dirty() before the next algorithm that needs it; this
+    // standalone test calls calculate_interactions() directly, so it
+    // must do the same publish itself before reading conf.current().
+    // force() below).
+    gpu_s.sim.cuda().flush_gpu_dirty(gpu_s.conf, gpu::MIRROR_FORCE);
+
     // See quartic_bond_gpu.t.cc's tolerance comment: bonded terms'
     // cost - cos0 (or dist2 - r0^2) formulas are near-cancellations near
     // equilibrium, amplifying the default FP_PRECISION=1 float position

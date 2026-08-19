@@ -105,7 +105,15 @@ int interaction::Forcefield
   //m_timer.start(sim);
 
   conf.current().force = 0.0;
-  
+
+  // GPU-resident force accumulation: every GPU-native Interaction below
+  // (NonBonded, bonded terms) atomicAdd's into the mirror's shared
+  // force/virial buffers instead of keeping a private scratch buffer
+  // and syncing/reading it back individually -- zeroed once here,
+  // matching the CPU-side zero right above, not per-Interaction. No-op
+  // in CPU-only builds or if no GPU mirror exists yet.
+  sim.cuda().zero_mirror_force(conf);
+
   if (sim.param().force.force_groups) {
     for(unsigned int i = 0; i < conf.special().force_groups.size(); ++i) {
       for(unsigned int j = 0; j < conf.special().force_groups.size(); ++j) {
@@ -160,6 +168,15 @@ int interaction::Forcefield
       it != to;
       ++it){
     DEBUG(5, "interaction: " << (*it)->name);
+    // GPU-native force writers (CUDA_Angle_Interaction, CUDA_Nonbonded_
+    // Interaction, etc.) leave conf.current().force GPU-resident
+    // (mark_gpu_dirty(MIRROR_FORCE), no per-call sync back) -- publish
+    // it to the CPU array only when the next Interaction actually needs
+    // to read the accumulated total (Molecular_Virial_Interaction), not
+    // unconditionally every call.
+    if ((*it)->needs_fresh_cpu_force()) {
+      sim.cuda().flush_gpu_dirty(conf, gpu::MIRROR_FORCE);
+    }
     // !!! crash if error
     int error=(*it)->calculate_interactions(topo, conf, sim);
     if (error){

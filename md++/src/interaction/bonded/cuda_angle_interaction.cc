@@ -28,8 +28,6 @@
 
 #include "../../stdheader.h"
 
-#include <array>
-
 #include "../../algorithm/algorithm.h"
 #include "../../topology/topology.h"
 #include "../../simulation/simulation.h"
@@ -39,7 +37,6 @@
 
 #include "../../gpu/cuda/manager/cuda_manager.h"
 #include "gpu/cuda/interaction/bonded/angle_kernels.h"
-#include "gpu/cuda/interaction/bonded/sparse_force_accumulate.h"
 
 #include "cuda_angle_interaction.h"
 
@@ -101,10 +98,7 @@ int interaction::CUDA_Angle_Interaction::init(
   m_angle_energy.resize(num_energy_groups);
   m_virial.resize(9);
 
-  m_touched_atoms = gpu::build_touched_atoms(angles,
-      [](const topology::three_body_term_struct & a) {
-        return std::array<unsigned, 3>{a.i, a.j, a.k};
-      });
+  if (m_stream == 0) cudaStreamCreate(&m_stream);
 
   m_initialized = true;
 
@@ -113,6 +107,10 @@ int interaction::CUDA_Angle_Interaction::init(
        << "\tterms: " << m_num_angles << "\n"
        << "END\n";
   return 0;
+}
+
+interaction::CUDA_Angle_Interaction::~CUDA_Angle_Interaction() {
+  if (m_stream) cudaStreamDestroy(m_stream);
 }
 
 int interaction::CUDA_Angle_Interaction::calculate_interactions(
@@ -128,26 +126,32 @@ int interaction::CUDA_Angle_Interaction::calculate_interactions(
   }
 
   const unsigned num_energy_groups = static_cast<unsigned>(m_angle_energy.size());
-  cudaMemset(m_angle_energy.data(), 0, sizeof(double) * num_energy_groups);
-  cudaMemset(m_virial.data(), 0, sizeof(double) * 9);
+  cudaMemsetAsync(m_angle_energy.data(), 0, sizeof(double) * num_energy_groups, m_stream);
+  cudaMemsetAsync(m_virial.data(), 0, sizeof(double) * 9, m_stream);
 
-  const math::CuVArray::View pos =
-      sim.cuda().configuration_view(conf, gpu::MIRROR_POS).current().pos;
-
-  static gpu::cuvector<FPL3_TYPE> force;
-  const unsigned num_atoms = static_cast<unsigned>(topo.num_atoms());
-  if (force.size() < num_atoms) force.resize(num_atoms);
-  cudaMemset(force.data(), 0, sizeof(FPL3_TYPE) * num_atoms);
+  // Force written directly into the GPU-resident mirror (zeroed once
+  // per step by Forcefield::calculate_interactions()'s sim.cuda().
+  // zero_mirror_force(), not here) -- no private scratch buffer, no
+  // sync, no host readback. Only requesting MIRROR_POS as a read field
+  // (never MIRROR_FORCE) is what keeps this from triggering a coarse
+  // resync that would clobber the force NonBonded/other bonded terms
+  // may have already accumulated this step.
+  gpu::Configuration::View view = sim.cuda().configuration_view(conf, gpu::MIRROR_POS);
 
   gpu::launch_angle(
-      pos, m_angle_i.data(), m_angle_j.data(), m_angle_k.data(), m_angle_type.data(),
+      view.current().pos, m_angle_i.data(), m_angle_j.data(), m_angle_k.data(), m_angle_type.data(),
       m_K.data(), m_cos0.data(), m_atom_energy_group.data(), m_num_angles,
       conf.boundary_type, conf.current().box,
-      force.data(), m_angle_energy.data(), m_virial.data());
+      view.current().force.data(), m_angle_energy.data(), m_virial.data(), m_stream);
 
-  cudaDeviceSynchronize();
+  sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_FORCE);
 
-  gpu::accumulate_sparse_forces(conf, force.data(), m_touched_atoms);
+  // Energy/virial are small, private, double-precision buffers (not
+  // part of the mirror -- see cuda_angle_interaction.h) so still need
+  // a sync to read back, but only on this algorithm's own stream, not
+  // a device-wide barrier that would stall NonBonded/other bonded
+  // terms running concurrently.
+  cudaStreamSynchronize(m_stream);
 
   for (unsigned g = 0; g < num_energy_groups; ++g) {
     conf.current().energies.angle_energy[g] += m_angle_energy[g];

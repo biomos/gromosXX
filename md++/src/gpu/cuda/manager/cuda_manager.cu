@@ -173,10 +173,19 @@ void gpu::CudaManager::flush_gpu_dirty(configuration::Configuration & conf, unsi
         mirror->copy_constraint_data_from_device(conf);
         mirror->gpu_dirty_fields &= ~(gpu::MIRROR_CONSTRAINT_FORCE | gpu::MIRROR_VIRIAL);
     }
-    // FORCE/BOX: nothing ever marks these dirty today (mark_gpu_dirty()
-    // is only called for VEL and, now, CONSTRAINT_FORCE/VIRIAL), so
-    // there's no flush routine needed for them yet -- add one here if
-    // a future writer starts leaving them GPU-only too.
+    if (to_flush & gpu::MIRROR_FORCE) {
+        // NonBonded/bonded-term Interactions write force directly into
+        // the mirror and mark_gpu_dirty(MIRROR_FORCE) instead of each
+        // keeping a private buffer and syncing it back individually --
+        // publish once here, only when a downstream CPU-side algorithm
+        // (or a test reading conf.current().force directly) actually
+        // needs it.
+        mirror->copy_forces_from_device(conf);
+        mirror->gpu_dirty_fields &= ~gpu::MIRROR_FORCE;
+    }
+    // BOX: nothing ever marks this dirty today, so there's no flush
+    // routine needed for it yet -- add one here if a future writer
+    // starts leaving it GPU-only too.
 }
 
 void gpu::CudaManager::invalidate_gpu_mirror(configuration::Configuration & conf, unsigned fields) {
@@ -206,6 +215,27 @@ void gpu::CudaManager::sync_configuration_from_device(configuration::Configurati
     if (it != m_configurations.end()) {
         it->second->copy_pos_vel_from_device(conf);
         it->second->gpu_dirty_fields &= ~(gpu::MIRROR_POS | gpu::MIRROR_VEL);
+    }
+}
+
+void gpu::CudaManager::zero_mirror_force(configuration::Configuration & conf) {
+    gpu::Configuration * mirror = nullptr;
+    const std::size_t id = conf.id();
+
+    if (id == m_last_conf_id && m_last_conf_gpu) {
+        mirror = m_last_conf_gpu;
+    } else {
+        auto it = m_configurations.find(id);
+        if (it != m_configurations.end()) mirror = it->second.get();
+    }
+    if (!mirror) return; // no mirror yet -- first configuration_view() call will build one from the already-zeroed CPU force
+
+    if (mirror->current.force.size() > 0) {
+        cudaMemset(mirror->current.force.data(), 0,
+                   mirror->current.force.size() * sizeof(FPL3_TYPE));
+    }
+    if (mirror->current.virial_tensor) {
+        cudaMemset(mirror->current.virial_tensor, 0, sizeof(FPL9_TYPE));
     }
 }
 

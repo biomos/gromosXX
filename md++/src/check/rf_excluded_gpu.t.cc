@@ -225,6 +225,11 @@ namespace {
       return 1;
     }
 
+    // CUDA_Nonbonded_Interaction writes force directly into the GPU
+    // mirror and mark_gpu_dirty()s it (see angle_gpu.t.cc's comment for
+    // why this standalone test needs its own explicit publish).
+    s.sim.cuda().flush_gpu_dirty(s.conf, gpu::MIRROR_FORCE);
+
     // Isolate the RF-excluded contribution: subtract out the regular
     // pairlist-driven LJ/CRF result (computed the same way
     // cuda_nonbonded_interaction.t.cc does, rf_excluded left off) so this
@@ -265,6 +270,7 @@ namespace {
         return 1;
       }
       io::messages.clear();
+      s2.sim.cuda().flush_gpu_dirty(s2.conf, gpu::MIRROR_FORCE);
 
       for (unsigned i = 0; i < num_atoms; ++i) {
         s.conf.current().force(i) -= s2.conf.current().force(i);

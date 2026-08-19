@@ -27,6 +27,7 @@ namespace interaction {
   class CUDA_Pairlist_Algorithm_Impl {
     public:
       CUDA_Pairlist_Algorithm_Impl();
+      ~CUDA_Pairlist_Algorithm_Impl();
 
       int init(topology::Topology &topo,
         configuration::Configuration &conf,
@@ -350,12 +351,14 @@ namespace interaction {
        */
       unsigned m_num_energy_groups = 1;
       /**
-       * Per-atom force accumulator and per-energy-group-pair LJ/CRF
-       * energy accumulators (flattened [gi * m_num_energy_groups + gj]),
-       * sized once in init(), re-zeroed at the top of every
-       * compute_forces_energies() call.
+       * Short-range force is no longer a private buffer -- it's written
+       * directly into the GPU-resident mirror (view.current().force),
+       * zeroed once per step by Forcefield::calculate_interactions()'s
+       * sim.cuda().zero_mirror_force(). Only the per-energy-group-pair
+       * LJ/CRF energy accumulators (flattened [gi * m_num_energy_groups
+       * + gj]) remain private, sized once in init(), re-zeroed at the
+       * top of every compute_forces_energies() call.
        */
-      gpu::cuvector<FPL3_TYPE> m_force;
       gpu::cuvector<double> m_e_lj;
       gpu::cuvector<double> m_e_crf;
       /**
@@ -408,5 +411,23 @@ namespace interaction {
        */
       bool m_candidates_built = false;
       unsigned m_candidate_rebuild_count = 0;
+
+      /**
+       * Cached topo.num_atoms(), set once in init() -- used to size the
+       * long-range-into-mirror add kernel launch (num_atoms used to be
+       * read off m_force.size(), which no longer exists now that
+       * short-range force is written directly into the mirror).
+       */
+      unsigned m_num_atoms = 0;
+
+      /**
+       * Own stream: short-range/RF-excluded/one-four force is written
+       * directly into the GPU-resident mirror (no sync at all needed for
+       * that); energy/virial stay on small private buffers needing their
+       * own sync to read back, but only on this stream, so it doesn't
+       * block bonded terms or other algorithms running concurrently on
+       * their own streams.
+       */
+      cudaStream_t m_stream = 0;
   };
 }

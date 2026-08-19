@@ -65,6 +65,11 @@ namespace interaction
     virtual int calculate_interactions(topology::Topology & topo,
 				       configuration::Configuration & conf,
 				       simulation::Simulation & sim);
+
+    // Reads the full per-atom conf.current().force (atomic_to_molecular_
+    // virial()'s r(b)*force(a) correction, util/prepare_virial.cc) --
+    // see Interaction::needs_fresh_cpu_force()'s doc comment.
+    virtual bool needs_fresh_cpu_force() const override { return true; }
   };
   
 } // interaction

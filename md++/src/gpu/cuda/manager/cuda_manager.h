@@ -309,6 +309,26 @@ namespace gpu {
 #endif
 
             /**
+             * @brief Zero the GPU mirror's current().force (and
+             * current().virial_tensor), matching Forcefield::
+             * calculate_interactions()'s own CPU-side `conf.current().
+             * force = 0.0` zero, once per step, before any force-
+             * computing Interaction (NonBonded, bonded terms) runs.
+             * Every such Interaction then atomicAdd's into the mirror's
+             * shared force/virial buffers instead of keeping a private
+             * scratch buffer and syncing/reading it back individually --
+             * same "zero once centrally, then only ever accumulate"
+             * discipline as the constraint-error-flags buffer. Declared
+             * unconditionally (like flush_gpu_dirty()) since Forcefield::
+             * calculate_interactions() compiles in CPU-only builds too;
+             * genuine no-op there. No-op if `conf` has no mirror yet
+             * (nothing to zero -- the first real force-computing
+             * Interaction's own configuration_view() call builds it,
+             * already zeroed via cudaMalloc/resize).
+             */
+            void zero_mirror_force(configuration::Configuration & conf);
+
+            /**
              * @brief Zero the deferred constraint-error-flags buffer
              * (gpu/constraint_error_slots.h). Called once per step, at
              * the top of Algorithm_Sequence::run(), before any

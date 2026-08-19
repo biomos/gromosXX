@@ -102,7 +102,23 @@ namespace interaction
      * interaction accessor.
      */
     Interaction * interaction(std::string name);
-    
+
+    /**
+     * GPU-native Interactions (NonBonded, bonded terms) atomicAdd into
+     * the mirror's shared force/virial buffers and leave them resident
+     * (calculate_interactions() zeros them once via sim.cuda().
+     * zero_mirror_force(), not per-Interaction) -- exempting FORCE/
+     * VIRIAL here keeps Algorithm_Sequence::run()'s default post-
+     * apply() invalidation from immediately erasing that freshness,
+     * letting Leap_Frog_Velocity<gpuBackend> read the accumulated
+     * force with zero extra round trip. Everything else (POS/VEL/BOX)
+     * keeps the default MIRROR_ALL behaviour -- Forcefield never
+     * writes those itself.
+     */
+    virtual unsigned gpu_mirror_touches() const override {
+      return gpu::MIRROR_ALL & ~(gpu::MIRROR_FORCE | gpu::MIRROR_VIRIAL);
+    }
+
   protected:
 
   };

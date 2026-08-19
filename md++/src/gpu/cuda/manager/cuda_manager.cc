@@ -71,6 +71,9 @@ void gpu::CudaManager::invalidate_gpu_mirror(configuration::Configuration & conf
 // Same "genuine no-op, called unconditionally every step" reasoning as
 // flush_gpu_dirty()/invalidate_gpu_mirror() above -- Algorithm_Sequence
 // ::run() calls these regardless of accelerator.
+void gpu::CudaManager::zero_mirror_force(configuration::Configuration & conf) {
+}
+
 void gpu::CudaManager::zero_constraint_error_flags() {
 }
 

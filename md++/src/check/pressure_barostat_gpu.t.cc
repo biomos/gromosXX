@@ -177,6 +177,13 @@ namespace {
     }
     flush_messages("second force calc");
 
+    // gpu_ff's CUDA_Quartic_Bond_Interaction writes force directly into
+    // the GPU mirror and mark_gpu_dirty()s it -- gpu_force_seq.run()
+    // publishes it before the *next* algorithm in that same sequence
+    // (there isn't one here), so this standalone comparison needs its
+    // own explicit publish (see angle_gpu.t.cc's comment).
+    gpu_s.sim.cuda().flush_gpu_dirty(gpu_s.conf, gpu::MIRROR_FORCE);
+
     const double tol = 5e-3; // see quartic_bond_gpu.t.cc's tolerance comment
     int errors = 0;
 

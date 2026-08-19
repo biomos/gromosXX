@@ -29,8 +29,6 @@
 
 #include "../../stdheader.h"
 
-#include <array>
-
 #include "../../algorithm/algorithm.h"
 #include "../../topology/topology.h"
 #include "../../simulation/simulation.h"
@@ -40,7 +38,6 @@
 
 #include "../../gpu/cuda/manager/cuda_manager.h"
 #include "gpu/cuda/interaction/bonded/improper_dihedral_kernels.h"
-#include "gpu/cuda/interaction/bonded/sparse_force_accumulate.h"
 
 #include "cuda_improper_dihedral_interaction.h"
 
@@ -106,10 +103,7 @@ int interaction::CUDA_Improper_Dihedral_Interaction::init(
   m_improper_energy.resize(num_energy_groups);
   m_virial.resize(9);
 
-  m_touched_atoms = gpu::build_touched_atoms(dihedrals,
-      [](const topology::four_body_term_struct & d) {
-        return std::array<unsigned, 4>{d.i, d.j, d.k, d.l};
-      });
+  if (m_stream == 0) cudaStreamCreate(&m_stream);
 
   m_initialized = true;
 
@@ -118,6 +112,10 @@ int interaction::CUDA_Improper_Dihedral_Interaction::init(
        << "\tterms: " << m_num_dihedrals << "\n"
        << "END\n";
   return 0;
+}
+
+interaction::CUDA_Improper_Dihedral_Interaction::~CUDA_Improper_Dihedral_Interaction() {
+  if (m_stream) cudaStreamDestroy(m_stream);
 }
 
 int interaction::CUDA_Improper_Dihedral_Interaction::calculate_interactions(
@@ -133,27 +131,21 @@ int interaction::CUDA_Improper_Dihedral_Interaction::calculate_interactions(
   }
 
   const unsigned num_energy_groups = static_cast<unsigned>(m_improper_energy.size());
-  cudaMemset(m_improper_energy.data(), 0, sizeof(double) * num_energy_groups);
-  cudaMemset(m_virial.data(), 0, sizeof(double) * 9);
+  cudaMemsetAsync(m_improper_energy.data(), 0, sizeof(double) * num_energy_groups, m_stream);
+  cudaMemsetAsync(m_virial.data(), 0, sizeof(double) * 9, m_stream);
 
-  const math::CuVArray::View pos =
-      sim.cuda().configuration_view(conf, gpu::MIRROR_POS).current().pos;
-
-  static gpu::cuvector<FPL3_TYPE> force;
-  const unsigned num_atoms = static_cast<unsigned>(topo.num_atoms());
-  if (force.size() < num_atoms) force.resize(num_atoms);
-  cudaMemset(force.data(), 0, sizeof(FPL3_TYPE) * num_atoms);
+  gpu::Configuration::View view = sim.cuda().configuration_view(conf, gpu::MIRROR_POS);
 
   gpu::launch_improper_dihedral(
-      pos, m_dihedral_i.data(), m_dihedral_j.data(), m_dihedral_k.data(),
+      view.current().pos, m_dihedral_i.data(), m_dihedral_j.data(), m_dihedral_k.data(),
       m_dihedral_l.data(), m_dihedral_type.data(),
       m_K.data(), m_q0.data(), m_atom_energy_group.data(), m_num_dihedrals,
       conf.boundary_type, conf.current().box,
-      force.data(), m_improper_energy.data(), m_virial.data());
+      view.current().force.data(), m_improper_energy.data(), m_virial.data(), m_stream);
 
-  cudaDeviceSynchronize();
+  sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_FORCE);
 
-  gpu::accumulate_sparse_forces(conf, force.data(), m_touched_atoms);
+  cudaStreamSynchronize(m_stream);
 
   for (unsigned g = 0; g < num_energy_groups; ++g) {
     conf.current().energies.improper_energy[g] += m_improper_energy[g];

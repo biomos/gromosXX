@@ -41,7 +41,7 @@ namespace interaction {
   class CUDA_Angle_Interaction : public Interaction {
   public:
     CUDA_Angle_Interaction() : Interaction("Angle") {}
-    virtual ~CUDA_Angle_Interaction() {}
+    virtual ~CUDA_Angle_Interaction();
 
     virtual int init(topology::Topology & topo,
                       configuration::Configuration & conf,
@@ -66,10 +66,12 @@ namespace interaction {
     unsigned m_num_angles = 0;
     bool m_initialized = false;
 
-    // Sorted, de-duplicated atom indices this angle list references --
-    // see sparse_force_accumulate.h's doc comment for why the force
-    // download loop uses this instead of [0, num_atoms).
-    std::vector<unsigned> m_touched_atoms;
+    // Own stream: force is written directly into the GPU-resident
+    // mirror (no sync at all); energy/virial stay on a small private
+    // buffer needing their own sync to read back, but only on this
+    // stream, so it doesn't block NonBonded or the other bonded terms
+    // running concurrently on their own streams.
+    cudaStream_t m_stream = 0;
   };
 
 } // namespace interaction

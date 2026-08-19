@@ -260,6 +260,11 @@ namespace {
       return 1;
     }
 
+    // CUDA_Nonbonded_Interaction writes force directly into the GPU
+    // mirror and mark_gpu_dirty()s it (see angle_gpu.t.cc's comment for
+    // why this standalone test needs its own explicit publish).
+    s.sim.cuda().flush_gpu_dirty(s.conf, gpu::MIRROR_FORCE);
+
     const unsigned num_groups = static_cast<unsigned>(s.topo.energy_groups().size());
 
     int errors = 0;

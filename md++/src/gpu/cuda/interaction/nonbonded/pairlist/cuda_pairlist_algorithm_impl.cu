@@ -38,9 +38,36 @@
 
 #define NUM_THREADS_PER_BLOCK 256
 
+namespace {
+    // Adds the (possibly frozen-from-an-earlier-call) long-range force
+    // buffer into the GPU-resident mirror's force array -- one atomicAdd
+    // triple per atom, since the mirror may also be receiving concurrent
+    // atomicAdd writes from bonded terms running on their own streams.
+    __global__ void add_force_into_kernel(FPL3_TYPE * __restrict__ dst,
+                                           const FPL3_TYPE * __restrict__ src,
+                                           unsigned num_atoms) {
+        const unsigned i = blockIdx.x * blockDim.x + threadIdx.x;
+        if (i >= num_atoms) return;
+        atomicAdd(&dst[i].x, src[i].x);
+        atomicAdd(&dst[i].y, src[i].y);
+        atomicAdd(&dst[i].z, src[i].z);
+    }
+
+    void launch_add_force_into(FPL3_TYPE * dst, const FPL3_TYPE * src,
+                                unsigned num_atoms, cudaStream_t stream) {
+        if (num_atoms == 0) return;
+        const unsigned blocks = (num_atoms + NUM_THREADS_PER_BLOCK - 1) / NUM_THREADS_PER_BLOCK;
+        add_force_into_kernel<<<blocks, NUM_THREADS_PER_BLOCK, 0, stream>>>(dst, src, num_atoms);
+    }
+}
+
 interaction::CUDA_Pairlist_Algorithm_Impl::CUDA_Pairlist_Algorithm_Impl() {
     DEBUG(0, "CUDA_Pairlist_Algorithm_Impl constructor");
 };
+
+interaction::CUDA_Pairlist_Algorithm_Impl::~CUDA_Pairlist_Algorithm_Impl() {
+    if (m_stream) cudaStreamDestroy(m_stream);
+}
 
 int interaction::CUDA_Pairlist_Algorithm_Impl::init(topology::Topology &topo,
     configuration::Configuration &conf,
@@ -65,7 +92,9 @@ int interaction::CUDA_Pairlist_Algorithm_Impl::init(topology::Topology &topo,
     m_num_energy_groups = static_cast<unsigned>(topo.energy_groups().size());
     const unsigned num_buckets = m_num_energy_groups * m_num_energy_groups;
 
-    m_force.resize(num_atoms);
+    m_num_atoms = num_atoms;
+    if (m_stream == 0) cudaStreamCreate(&m_stream);
+
     m_e_lj.resize(num_buckets);
     m_e_crf.resize(num_buckets);
     m_virial.resize(9);
@@ -721,22 +750,29 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::compute_forces_energies(
                 bool recompute_long,
                 bool rf_excluded)
 {
-    const unsigned num_atoms   = static_cast<unsigned>(m_force.size());
+    const unsigned num_atoms   = m_num_atoms;
     const unsigned num_buckets = m_num_energy_groups * m_num_energy_groups;
 
-    // IEEE-754 zero is the all-zero bit pattern -- cudaMemset is safe and
-    // matches the existing convention (TileVecT::clear() zeroes its tile
-    // array the same way).
-    cudaMemset(m_force.data(), 0, sizeof(FPL3_TYPE) * num_atoms);
-    cudaMemset(m_e_lj.data(),  0, sizeof(double) * num_buckets);
-    cudaMemset(m_e_crf.data(), 0, sizeof(double) * num_buckets);
-    cudaMemset(m_virial.data(), 0, sizeof(double) * 9);
+    // IEEE-754 zero is the all-zero bit pattern -- cudaMemsetAsync is
+    // safe and matches the existing convention (TileVecT::clear()
+    // zeroes its tile array the same way). Short-range force is no
+    // longer a private buffer -- it's written directly into the
+    // GPU-resident mirror (zeroed once per step by Forcefield::
+    // calculate_interactions()'s sim.cuda().zero_mirror_force(), not
+    // here).
+    cudaMemsetAsync(m_e_lj.data(),  0, sizeof(double) * num_buckets, m_stream);
+    cudaMemsetAsync(m_e_crf.data(), 0, sizeof(double) * num_buckets, m_stream);
+    cudaMemsetAsync(m_virial.data(), 0, sizeof(double) * 9, m_stream);
 
     // sync_pos_vel = false: prepare() already did this step's one real
     // resync; called from calculate_interactions(), always after
-    // prepare().
-    const math::CuVArray::View pos =
-        sim.cuda().configuration_view(conf, gpu::MIRROR_POS).current().pos;
+    // prepare(). Only MIRROR_POS is requested as a read field (never
+    // MIRROR_FORCE) -- that's what keeps this from triggering a coarse
+    // resync that would clobber force bonded terms may have already
+    // accumulated into the mirror this step.
+    gpu::Configuration::View view = sim.cuda().configuration_view(conf, gpu::MIRROR_POS);
+    const math::CuVArray::View pos = view.current().pos;
+    FPL3_TYPE * const mirror_force = view.current().force.data();
     const math::boundary_enum boundary = conf.boundary_type;
     const math::Box box = conf.current().box;
 
@@ -753,13 +789,13 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::compute_forces_energies(
         m_tiles.solute_short.view(), m_solute_atom_order.data(), num_solute_atoms,
         m_solvent_atom_order.data(), num_solvent_atoms,
         pos, m_iac.data(), m_charge.data(), m_atom_energy_group.data(), lj, nb, boundary, box,
-        m_force.data(), m_e_lj.data(), m_e_crf.data(), m_virial.data());
+        mirror_force, m_e_lj.data(), m_e_crf.data(), m_virial.data(), m_stream);
 
     gpu::launch_lj_crf_tiles(
         m_tiles.solvent_short.view(), m_solvent_atom_order.data(), num_solvent_atoms,
         nullptr, 0u,
         pos, m_iac.data(), m_charge.data(), m_atom_energy_group.data(), lj, nb, boundary, box,
-        m_force.data(), m_e_lj.data(), m_e_crf.data(), m_virial.data());
+        mirror_force, m_e_lj.data(), m_e_crf.data(), m_virial.data(), m_stream);
 
     // RF for excluded pairs (param.nonbonded.rf_excluded): independent of
     // the pairlist/twin-range cadence entirely -- walks the exclusion
@@ -774,7 +810,7 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::compute_forces_energies(
             m_rf_excl_ptr.data(), m_rf_excl_list.data(), num_solute_atoms,
             topo_view.chargegroup, topo_view.num_solute_chargegroups, topo_view.num_chargegroups,
             pos, m_charge.data(), m_atom_energy_group.data(), nb, boundary, box,
-            m_force.data(), m_e_crf.data(), m_virial.data());
+            mirror_force, m_e_crf.data(), m_virial.data(), m_stream);
     }
 
     // 1,4-pair ("LJ exception") interactions: unconditional, matching
@@ -787,7 +823,7 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::compute_forces_energies(
         m_one_four_ptr.data(), m_one_four_list.data(), num_solute_atoms,
         pos, m_iac.data(), m_charge.data(), m_atom_energy_group.data(), lj, nb,
         nb.coulomb_scaling, boundary, box,
-        m_force.data(), m_e_lj.data(), m_e_crf.data(), m_virial.data());
+        mirror_force, m_e_lj.data(), m_e_crf.data(), m_virial.data(), m_stream);
 
     // Long-range: only recomputed on a classification/rebuild step
     // (recompute_long == true) -- otherwise m_longrange_force/
@@ -797,37 +833,40 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::compute_forces_energies(
     // branch: zeroing unconditionally would wipe the frozen values a
     // non-rebuild step is supposed to reuse.
     if (recompute_long) {
-        cudaMemset(m_longrange_force.data(), 0, sizeof(FPL3_TYPE) * num_atoms);
-        cudaMemset(m_e_lj_long.data(),  0, sizeof(double) * num_buckets);
-        cudaMemset(m_e_crf_long.data(), 0, sizeof(double) * num_buckets);
-        cudaMemset(m_virial_long.data(), 0, sizeof(double) * 9);
+        cudaMemsetAsync(m_longrange_force.data(), 0, sizeof(FPL3_TYPE) * num_atoms, m_stream);
+        cudaMemsetAsync(m_e_lj_long.data(),  0, sizeof(double) * num_buckets, m_stream);
+        cudaMemsetAsync(m_e_crf_long.data(), 0, sizeof(double) * num_buckets, m_stream);
+        cudaMemsetAsync(m_virial_long.data(), 0, sizeof(double) * 9, m_stream);
 
         gpu::launch_lj_crf_tiles(
             m_tiles.solute_long.view(), m_solute_atom_order.data(), num_solute_atoms,
             m_solvent_atom_order.data(), num_solvent_atoms,
             pos, m_iac.data(), m_charge.data(), m_atom_energy_group.data(), lj, nb, boundary, box,
-            m_longrange_force.data(), m_e_lj_long.data(), m_e_crf_long.data(), m_virial_long.data());
+            m_longrange_force.data(), m_e_lj_long.data(), m_e_crf_long.data(), m_virial_long.data(), m_stream);
 
         gpu::launch_lj_crf_tiles(
             m_tiles.solvent_long.view(), m_solvent_atom_order.data(), num_solvent_atoms,
             nullptr, 0u,
             pos, m_iac.data(), m_charge.data(), m_atom_energy_group.data(), lj, nb, boundary, box,
-            m_longrange_force.data(), m_e_lj_long.data(), m_e_crf_long.data(), m_virial_long.data());
+            m_longrange_force.data(), m_e_lj_long.data(), m_e_crf_long.data(), m_virial_long.data(), m_stream);
     }
 
-    cudaDeviceSynchronize();
+    // Long-range force is a private, persistent buffer (must freeze
+    // across non-recompute_long steps, unlike short-range which is
+    // recomputed every call) -- add its current value into the mirror
+    // every single step, regardless of recompute_long, since the mirror
+    // itself is zeroed fresh every step by Forcefield and would
+    // otherwise lose the frozen contribution entirely on a non-rebuild
+    // step. Same accumulation nonbonded_set.cc's m_storage.force +=
+    // m_longrange_storage.force does, just GPU-resident.
+    launch_add_force_into(mirror_force, m_longrange_force.data(), num_atoms, m_stream);
 
-    // Forcefield::calculate_interactions() zeroes conf.current().force/
-    // energies once before every Interaction in the sequence runs --
-    // accumulate (+=), don't overwrite. Add the (possibly frozen-from-an-
-    // earlier-call) long-range contribution in unconditionally, same as
-    // nonbonded_set.cc's m_storage.force += m_longrange_storage.force.
-    for (unsigned i = 0; i < num_atoms; ++i) {
-        conf.current().force(i) += math::Vec(m_force[i].x, m_force[i].y, m_force[i].z);
-        conf.current().force(i) += math::Vec(m_longrange_force[i].x,
-                                              m_longrange_force[i].y,
-                                              m_longrange_force[i].z);
-    }
+    sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_FORCE);
+
+    // Energy/virial are small, private, double-precision buffers (not
+    // part of the mirror) so still need a sync to read back, but only on
+    // this algorithm's own stream, not a device-wide barrier.
+    cudaStreamSynchronize(m_stream);
 
     // Direct per-[gi][gj] accumulation, same style as
     // nonbonded_innerloop.cc's CPU inner loop -- no scalar out-params.

@@ -79,6 +79,26 @@ namespace interaction
 				       simulation::Simulation & sim) = 0;
 
     /**
+     * @brief Does this Interaction read the *already-accumulated*
+     * conf.current().force (e.g. to derive a correction term) before
+     * computing/adding its own? Default false -- the overwhelming
+     * majority of Interactions (bonded terms, NonBonded, restraint/
+     * special forces) only ever += their own contribution, so they
+     * don't care whether the array currently holds a CPU-fresh value or
+     * is lagging behind an as-yet-unpublished GPU-resident write.
+     * Molecular_Virial_Interaction is the one exception (it needs the
+     * true per-atom total to correct atomic virial to molecular virial)
+     * -- Forcefield::calculate_interactions() checks this flag and
+     * publishes the GPU mirror's force before calling such an
+     * Interaction, since GPU-native force writers (CUDA_Angle_
+     * Interaction, CUDA_Nonbonded_Interaction, etc.) leave force
+     * GPU-resident (gpu::MIRROR_FORCE marked dirty via mark_gpu_dirty(),
+     * not synced back every call) until something downstream actually
+     * needs the CPU-side value.
+     */
+    virtual bool needs_fresh_cpu_force() const { return false; }
+
+    /**
      * timing information.
      */
     virtual void print_timing(std::ostream & os)
