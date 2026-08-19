@@ -34,6 +34,9 @@
 #include "../../algorithm/constraints/remove_com_motion.h"
 
 #include "../../algorithm/algorithm/algorithm_sequence.h"
+#include "../../util/error.h"
+#include "../../io/message.h"
+#include "../../gpu/constraint_error_slots.h"
 
 #undef MODULE
 #undef SUBMODULE
@@ -100,7 +103,14 @@ int algorithm::Algorithm_Sequence
 {
   DEBUG(5, "Algorithm_Sequence: apply algorithm - START");
 
-  for(Algorithm_Sequence::iterator 
+  // Deferred constraint-error-flags buffer (gpu/constraint_error_
+  // slots.h): zero once here, check once at the very end, instead of
+  // each GPU constraint algorithm syncing on (and checking) its own
+  // private flag immediately after its own kernels. See this file's
+  // end for the corresponding check.
+  sim.cuda().zero_constraint_error_flags();
+
+  for(Algorithm_Sequence::iterator
 	it = begin(), to = end();
       it != to;
       ++it){
@@ -125,6 +135,41 @@ int algorithm::Algorithm_Sequence
     }
     sim.cuda().invalidate_gpu_mirror(conf, (*it)->gpu_mirror_touches());
   }
+
+  // The one deferred-error check for the whole step. Safe to do after
+  // every algorithm already ran (rather than right after the failing
+  // one) because a constraint failure is already a fatal, whole-step-
+  // discarding event -- program/md.cc aborts the entire run on any
+  // nonzero return from this function, so detecting the failure here
+  // instead of mid-step changes nothing observable.
+  std::vector<int> constraint_codes;
+  const bool fatal = sim.cuda().check_constraint_error_flags(constraint_codes);
+  for (unsigned s = 0; s < constraint_codes.size(); ++s) {
+    if (constraint_codes[s] == 0) continue;
+    const std::string msg = gpu::describe_constraint_error(s, constraint_codes[s]);
+    if (gpu::constraint_error_slot_is_fatal(s)) {
+      io::messages.add(msg, "Algorithm_Sequence", io::message::error);
+      std::cout << msg << std::endl;
+    } else {
+      std::cout << msg << std::endl;
+    }
+  }
+  if (fatal) {
+    conf.special().shake_failure_occurred = true;
+    // Slot order (constraint_error_slots.h) puts every solute slot
+    // before every solvent slot, so the first fatal slot found tells
+    // us which side failed for a specific-enough return code, matching
+    // the granularity callers already branch on (E_SHAKE_FAILURE_
+    // SOLUTE/SOLVENT) without needing a separate per-slot->code table.
+    for (unsigned s = 0; s < constraint_codes.size(); ++s) {
+      if (constraint_codes[s] == 0 || !gpu::constraint_error_slot_is_fatal(s)) continue;
+      if (s == gpu::ERR_SLOT_SHAKE_SOLUTE) return E_SHAKE_FAILURE_SOLUTE;
+      if (s == gpu::ERR_SLOT_SHAKE_SOLVENT || s == gpu::ERR_SLOT_M_SHAKE || s == gpu::ERR_SLOT_SETTLE)
+        return E_SHAKE_FAILURE_SOLVENT;
+    }
+    return E_SHAKE_FAILURE;
+  }
+
   DEBUG(5, "Algorithm_Sequence: apply algorithm - DONE");
   return 0;
 }

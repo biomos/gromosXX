@@ -283,3 +283,27 @@ test the way it hid from the original, memory-only version.
   of similar shape. Low priority given the magnitude is small and no
   other test has ever shown a similar pattern, but worth investigating
   properly before it's mistaken for noise on some future, larger change.
+
+## Known, unfixed: `gpu::Configuration::copy_to_device()`'s Box copy is
+## the same size-mismatch bug the tensor copies had
+
+- **Symptom (if it ever becomes live):** `cudaMemcpy(current.box,
+  &conf.current().box, sizeof(Box), cudaMemcpyHostToDevice)`
+  (`configuration_struct.cu`) copies `sizeof(gpu::Box)` bytes from a
+  `math::Box` (CPU, double-based) source. `gpu::Box` is `FPL_TYPE`-based
+  (`gpu/cuda/math/box.h`: `value_type = FPL_TYPE`), so under
+  `FP_PRECISION` 1/2 this is the exact same class of bug the
+  virial/kinetic/pressure tensor copies had (fixed this session) --
+  wrong size, silently truncated/misinterpreted data.
+- **Not fixed, because currently harmless:** confirmed nothing reads
+  the GPU-resident mirror's `.box` field at all -- every kernel
+  (SHAKE/LINCS/M-SHAKE/nonbonded tile kernels/etc.) takes `math::Box`
+  as a plain by-value launch parameter, computed fresh from
+  `conf.current().box` at each call site, not read from this mirror.
+  Dead code path, same as the tensors were before this session's
+  constraint-residency work made them live.
+- **Fix if/when something starts reading it:** same pattern as
+  `matrix_to_fpl9()`/`fpl9_to_matrix()` (`configuration_struct.cu`) --
+  an element-wise `math::Box` <-> `gpu::Box` conversion function,
+  not a raw `cudaMemcpy`.
+  properly before it's mistaken for noise on some future, larger change.

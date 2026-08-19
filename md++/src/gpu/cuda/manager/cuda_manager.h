@@ -7,10 +7,12 @@
 
 #include "gpu/cuda/cuheader.h"
 #include "gpu/mirror_fields.h"
+#include "gpu/constraint_error_slots.h"
 
 #ifdef USE_CUDA
 #include "gpu/cuda/memory/topology_struct.h"
 #include "gpu/cuda/memory/configuration_struct.h"
+#include "gpu/cuda/memory/cuvector.h"
 #endif
 
 namespace topology {
@@ -306,6 +308,47 @@ namespace gpu {
             void sync_configuration_from_device(configuration::Configuration & conf);
 #endif
 
+            /**
+             * @brief Zero the deferred constraint-error-flags buffer
+             * (gpu/constraint_error_slots.h). Called once per step, at
+             * the top of Algorithm_Sequence::run(), before any
+             * constraint algorithm's apply() runs. Declared
+             * unconditionally (like flush_gpu_dirty()) since
+             * Algorithm_Sequence::run() compiles in CPU-only builds
+             * too; genuine no-op there.
+             */
+            void zero_constraint_error_flags();
+
+            /**
+             * @brief The one sync + readback for every constraint
+             * algorithm's deferred status, called once at the very end
+             * of Algorithm_Sequence::run() instead of each algorithm
+             * checking (and syncing on) its own flag immediately.
+             * Returns true if any *fatal* slot (gpu::
+             * constraint_error_slot_is_fatal()) is nonzero; always
+             * populates `out_codes` (size gpu::
+             * NUM_CONSTRAINT_ERROR_SLOTS) with every slot's raw value,
+             * fatal or not, so the caller can also report non-fatal
+             * diagnostics (LINCS's rotation counter). No-op (returns
+             * false, `out_codes` left empty) if no constraint algorithm
+             * has requested the buffer yet this run (CPU-only builds,
+             * or a run using no GPU constraints).
+             */
+            bool check_constraint_error_flags(std::vector<int> & out_codes);
+
+#ifdef USE_CUDA
+            /**
+             * @brief Raw device pointer to slot `slot`'s int (gpu::
+             * ConstraintErrorSlot) in the shared deferred-error-flags
+             * buffer -- pass directly as a kernel's existing
+             * `error_flag`/`rotation_count` parameter instead of a
+             * private per-algorithm buffer. Lazily allocates the
+             * buffer (size gpu::NUM_CONSTRAINT_ERROR_SLOTS) on first
+             * call.
+             */
+            int * constraint_error_flag_slot(unsigned slot);
+#endif
+
         private:
             /**
              * @brief Validate a device ID.
@@ -328,6 +371,13 @@ namespace gpu {
             gpu::Topology * m_last_topo_gpu = nullptr;
             std::size_t m_last_conf_id = 0;
             gpu::Configuration * m_last_conf_gpu = nullptr;
+
+            // Deferred constraint-error-flags buffer (gpu/
+            // constraint_error_slots.h) -- one persistent, GPU-resident
+            // int array shared by every constraint algorithm, lazily
+            // allocated on first constraint_error_flag_slot() call, not
+            // per-Configuration (errors aren't conf-scoped).
+            gpu::cuvector<int> m_constraint_error_flags;
 #endif
     };
 }

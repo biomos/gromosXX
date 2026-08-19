@@ -90,7 +90,8 @@ namespace {
                                 configuration::Configuration & conf,
                                 unsigned missing) {
         if (missing == 0) return;
-        if (missing & (gpu::MIRROR_FORCE | gpu::MIRROR_BOX)) {
+        if (missing & (gpu::MIRROR_FORCE | gpu::MIRROR_BOX |
+                        gpu::MIRROR_CONSTRAINT_FORCE | gpu::MIRROR_VIRIAL)) {
             // Full copy_to_device() overwrites POS/VEL too -- if either
             // is currently GPU-dirty (a kernel wrote it, CPU hasn't
             // seen it yet), publish it first so this doesn't silently
@@ -164,10 +165,18 @@ void gpu::CudaManager::flush_gpu_dirty(configuration::Configuration & conf, unsi
         mirror->copy_pos_vel_from_device(conf);
         mirror->gpu_dirty_fields &= ~(gpu::MIRROR_POS | gpu::MIRROR_VEL);
     }
+    if (to_flush & (gpu::MIRROR_CONSTRAINT_FORCE | gpu::MIRROR_VIRIAL)) {
+        // Publishes both fields together (copy_constraint_data_from_
+        // device() has no finer granularity) -- the constraint
+        // algorithms always mark_gpu_dirty() both at once anyway, so
+        // this never does unnecessary work in practice.
+        mirror->copy_constraint_data_from_device(conf);
+        mirror->gpu_dirty_fields &= ~(gpu::MIRROR_CONSTRAINT_FORCE | gpu::MIRROR_VIRIAL);
+    }
     // FORCE/BOX: nothing ever marks these dirty today (mark_gpu_dirty()
-    // is only called for VEL), so there's no flush routine needed for
-    // them yet -- add one here if a future writer starts leaving them
-    // GPU-only too.
+    // is only called for VEL and, now, CONSTRAINT_FORCE/VIRIAL), so
+    // there's no flush routine needed for them yet -- add one here if
+    // a future writer starts leaving them GPU-only too.
 }
 
 void gpu::CudaManager::invalidate_gpu_mirror(configuration::Configuration & conf, unsigned fields) {
@@ -198,6 +207,41 @@ void gpu::CudaManager::sync_configuration_from_device(configuration::Configurati
         it->second->copy_pos_vel_from_device(conf);
         it->second->gpu_dirty_fields &= ~(gpu::MIRROR_POS | gpu::MIRROR_VEL);
     }
+}
+
+int * gpu::CudaManager::constraint_error_flag_slot(unsigned slot) {
+    if (m_constraint_error_flags.size() == 0) {
+        m_constraint_error_flags.resize(gpu::NUM_CONSTRAINT_ERROR_SLOTS);
+        cudaMemset(m_constraint_error_flags.data(), 0,
+                   gpu::NUM_CONSTRAINT_ERROR_SLOTS * sizeof(int));
+    }
+    return m_constraint_error_flags.data() + slot;
+}
+
+void gpu::CudaManager::zero_constraint_error_flags() {
+    if (m_constraint_error_flags.size() == 0) return; // nothing allocated yet
+    cudaMemset(m_constraint_error_flags.data(), 0,
+               gpu::NUM_CONSTRAINT_ERROR_SLOTS * sizeof(int));
+}
+
+bool gpu::CudaManager::check_constraint_error_flags(std::vector<int> & out_codes) {
+    if (m_constraint_error_flags.size() == 0) return false; // no GPU constraint ran this build/run
+
+    // The one sync for every constraint algorithm's deferred status,
+    // instead of each checking (and syncing on) its own flag right
+    // after its own kernels.
+    cudaDeviceSynchronize();
+
+    out_codes.assign(gpu::NUM_CONSTRAINT_ERROR_SLOTS, 0);
+    for (unsigned s = 0; s < gpu::NUM_CONSTRAINT_ERROR_SLOTS; ++s) {
+        out_codes[s] = m_constraint_error_flags[s];
+    }
+
+    bool fatal = false;
+    for (unsigned s = 0; s < gpu::NUM_CONSTRAINT_ERROR_SLOTS; ++s) {
+        if (out_codes[s] != 0 && gpu::constraint_error_slot_is_fatal(s)) fatal = true;
+    }
+    return fatal;
 }
 
 void gpu::CudaManager::init(const std::vector<int>& device_ids) {

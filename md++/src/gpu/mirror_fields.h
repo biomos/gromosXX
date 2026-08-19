@@ -41,11 +41,29 @@ namespace gpu {
    * directly.
    */
   enum MirrorField : unsigned {
-    MIRROR_POS   = 1u << 0,
-    MIRROR_VEL   = 1u << 1,
-    MIRROR_FORCE = 1u << 2,
-    MIRROR_BOX   = 1u << 3,
-    MIRROR_ALL   = MIRROR_POS | MIRROR_VEL | MIRROR_FORCE | MIRROR_BOX,
+    MIRROR_POS             = 1u << 0,
+    MIRROR_VEL             = 1u << 1,
+    MIRROR_FORCE           = 1u << 2,
+    MIRROR_BOX             = 1u << 3,
+    /**
+     * conf.{current,old}().constraint_force -- written by the
+     * constraint algorithms (SHAKE/M-SHAKE/LINCS/SETTLE), each
+     * accumulating into the shared GPU-resident buffer instead of a
+     * private per-algorithm one, so consecutive constraint algorithms
+     * in the same step never round-trip through the CPU between them.
+     */
+    MIRROR_CONSTRAINT_FORCE = 1u << 4,
+    /**
+     * conf.{current,old}().virial_tensor -- same rationale as
+     * MIRROR_CONSTRAINT_FORCE. Deliberately not bundled with
+     * MIRROR_FORCE: a plain force-field algorithm touches FORCE but
+     * not necessarily VIRIAL (and vice versa for e.g.
+     * Molecular_Virial_Interaction), so keeping them independent bits
+     * avoids one causing an unnecessary resync of the other.
+     */
+    MIRROR_VIRIAL           = 1u << 5,
+    MIRROR_ALL   = MIRROR_POS | MIRROR_VEL | MIRROR_FORCE | MIRROR_BOX |
+                   MIRROR_CONSTRAINT_FORCE | MIRROR_VIRIAL,
   };
 
 }

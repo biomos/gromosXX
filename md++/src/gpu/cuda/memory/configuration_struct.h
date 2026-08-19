@@ -252,6 +252,19 @@ namespace gpu {
         void copy_pos_vel_from_device(configuration::Configuration& conf);
 
         /**
+         * @brief Copy GPU constraint_force (current+old) and virial_tensor
+         * (current+old) back to the CPU configuration. Calls
+         * cudaDeviceSynchronize() internally. Counterpart to
+         * copy_pos_vel_from_device() for the constraint algorithms
+         * (SHAKE/M-SHAKE/LINCS/SETTLE), which accumulate into the
+         * shared GPU-resident constraint_force/virial_tensor buffers
+         * (gpu::MIRROR_CONSTRAINT_FORCE/MIRROR_VIRIAL) instead of each
+         * keeping a private one and round-tripping through the CPU
+         * every apply() call.
+         */
+        void copy_constraint_data_from_device(configuration::Configuration& conf);
+
+        /**
          * @brief Allow to exchange states efficiently
          * Views are exchanged implicitly as well
          * 
