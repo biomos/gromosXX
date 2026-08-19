@@ -39,7 +39,8 @@
 #include "../../util/error.h"
 #include "../../util/debug.h"
 
-#include "gpu/cuda/memory/vec3_convert.h"
+#include "gpu/cuda/manager/cuda_manager.h"
+#include "gpu/constraint_error_slots.h"
 #include "cuda_m_shake.h"
 
 #undef MODULE
@@ -124,11 +125,8 @@ int algorithm::CUDA_M_Shake::init(
   }
 
   const unsigned num_atoms = static_cast<unsigned>(topo.num_atoms());
-  m_pos.resize(num_atoms);
-  m_old_pos.resize(num_atoms);
   m_constraint_force.resize(num_atoms);
   m_virial.resize(9);
-  m_error_flag.resize(1);
 
   m_constr.resize(3);
   for (unsigned i = 0; i < 3; ++i) m_constr[i] = host_constr[i];
@@ -139,6 +137,14 @@ int algorithm::CUDA_M_Shake::init(
   m_mass_i_dev.resize(3);
   for (unsigned i = 0; i < 3; ++i) m_mass_i_dev[i] = static_cast<FPL_TYPE>(m_mass_i[i]);
 
+  m_constrained_atoms_dev.resize(constrained_atoms().size());
+  {
+    unsigned idx = 0;
+    for (unsigned int a : constrained_atoms()) m_constrained_atoms_dev[idx++] = a;
+  }
+
+  if (m_stream == 0) cudaStreamCreate(&m_stream);
+
   m_initialized = true;
 
   if (!quiet) {
@@ -147,6 +153,10 @@ int algorithm::CUDA_M_Shake::init(
        << "END\n";
   }
   return 0;
+}
+
+algorithm::CUDA_M_Shake::~CUDA_M_Shake() {
+  if (m_stream) cudaStreamDestroy(m_stream);
 }
 
 int algorithm::CUDA_M_Shake::apply(
@@ -167,42 +177,54 @@ int algorithm::CUDA_M_Shake::apply(
     return 0;
   }
 
+  // GPU-resident: reads/writes positions through the shared mirror
+  // instead of this algorithm's own private upload/download every
+  // call (see cuda_m_shake.h's doc comment for why constraint_force/
+  // virial_tensor still use the older private-buffer path for now).
+  gpu::Configuration::View view = sim.cuda().configuration_view(conf, gpu::MIRROR_POS);
+
   const unsigned num_atoms = static_cast<unsigned>(topo.num_atoms());
   const unsigned num_solvent_atoms = num_atoms - m_first_atom;
 
-  gpu::vec3_upload_fpl(m_pos.data() + m_first_atom, &conf.current().pos(m_first_atom), num_solvent_atoms);
-  gpu::vec3_upload_fpl(m_old_pos.data() + m_first_atom, &conf.old().pos(m_first_atom), num_solvent_atoms);
-  cudaMemset(m_constraint_force.data() + m_first_atom, 0, num_solvent_atoms * sizeof(FPL3_TYPE));
-  cudaMemset(m_virial.data(), 0, 9 * sizeof(double));
-  m_error_flag[0] = 0;
+  cudaMemsetAsync(m_constraint_force.data() + m_first_atom, 0,
+                   num_solvent_atoms * sizeof(FPL3_TYPE), m_stream);
+  cudaMemsetAsync(m_virial.data(), 0, 9 * sizeof(double), m_stream);
 
   const double dt = sim.time_step_size();
   const double dt2i = 1.0 / (dt * dt);
   const bool do_virial = sim.param().pcouple.virial == math::atomic_virial;
 
+  int * error_flag = sim.cuda().constraint_error_flag_slot(gpu::ERR_SLOT_M_SHAKE);
+
   gpu::launch_m_shake_solvent(
-      m_pos.data(), m_old_pos.data(), m_constr.data(), m_factor_dev.data(),
+      view.current().pos.data(), view.old().pos.data(), m_constr.data(), m_factor_dev.data(),
       m_constr_length2_dev.data(), m_mass_i_dev.data(),
       m_first_atom, m_num_molecules, static_cast<FPL_TYPE>(m_tolerance),
       static_cast<unsigned>(m_max_iterations), static_cast<FPL_TYPE>(dt2i), do_virial,
-      m_constraint_force.data(), m_virial.data(), m_error_flag.data());
-  cudaDeviceSynchronize();
+      m_constraint_force.data(), m_virial.data(), error_flag, m_stream);
 
-  if (m_error_flag[0] != 0) {
-    if (m_error_flag[0] == 1) {
-      io::messages.add("M_SHAKE error. vectors orthogonal",
-                        "CUDA_M_Shake::apply", io::message::error);
-      std::cout << "M_SHAKE failure in solvent!" << std::endl;
-    } else {
-      io::messages.add("M_SHAKE error: too many iterations",
-                        "CUDA_M_Shake::apply", io::message::critical);
-    }
-    conf.special().shake_failure_occurred = true;
-    m_timer.stop();
-    return E_SHAKE_FAILURE_SOLVENT;
+  // Vouch for the position we just corrected: no CPU round trip, and
+  // gpu_mirror_touches() == 0 keeps Algorithm_Sequence::run()'s
+  // default post-apply() invalidation from immediately erasing this.
+  sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_POS);
+
+  if (!sim.param().stochastic.sd && !sim.param().minimise.ntem &&
+      !sim.param().analyze.analyze) {
+    gpu::launch_velocity_from_delta(
+        view.current().pos.data(), view.old().pos.data(), view.current().vel.data(),
+        m_constrained_atoms_dev.data(), static_cast<unsigned>(m_constrained_atoms_dev.size()),
+        static_cast<FPL_TYPE>(1.0 / dt), m_stream);
+    sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_VEL);
   }
 
-  gpu::vec3_download_fpl(&conf.current().pos(m_first_atom), m_pos.data() + m_first_atom, num_solvent_atoms);
+  // constraint_force/virial_tensor: still the private-buffer path
+  // (cuda_m_shake.h's doc comment explains why), so publishing them
+  // needs an explicit small sync+download here -- but only on this
+  // algorithm's own stream, not a global cudaDeviceSynchronize(), so
+  // it doesn't stall whatever else (e.g. CUDA_Lincs) is running
+  // concurrently on a different stream.
+  cudaStreamSynchronize(m_stream);
+
   for (unsigned int i : constrained_atoms()) {
     conf.old().constraint_force(i) +=
         math::Vec(static_cast<double>(m_constraint_force[i].x),
@@ -215,14 +237,6 @@ int algorithm::CUDA_M_Shake::apply(
       for (unsigned a = 0; a < 3; ++a) {
         conf.old().virial_tensor(b, a) += m_virial[b * 3 + a];
       }
-    }
-  }
-
-  if (!sim.param().stochastic.sd && !sim.param().minimise.ntem &&
-      !sim.param().analyze.analyze) {
-    const double dti = 1.0 / dt;
-    for (unsigned int i : constrained_atoms()) {
-      conf.current().vel(i) = (conf.current().pos(i) - conf.old().pos(i)) * dti;
     }
   }
 

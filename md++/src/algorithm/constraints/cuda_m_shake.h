@@ -35,6 +35,28 @@
  * (KNOWN_ISSUES.md) -- fewer iterations means a shorter unhideable
  * per-thread dependency chain, not just less arithmetic.
  *
+ * GPU-resident: reads/writes positions through the shared
+ * CudaManager mirror (sim.cuda().configuration_view()/mark_gpu_dirty())
+ * instead of its own private upload/download every apply() call, and
+ * runs on its own stream with no cudaDeviceSynchronize() at all --
+ * status is written into the shared deferred constraint-error-flags
+ * buffer (gpu/constraint_error_slots.h) and checked once, centrally,
+ * at the end of Algorithm_Sequence::run(). This lets it run genuinely
+ * concurrently with CUDA_Lincs's solute pass (disjoint atom ranges,
+ * separate streams, no data hazard) instead of serializing through a
+ * host round-trip between them.
+ *
+ * constraint_force/virial_tensor deliberately stay on the older,
+ * private-buffer-then-small-download path for now (not yet routed
+ * through the shared mirror's MIRROR_CONSTRAINT_FORCE/MIRROR_VIRIAL,
+ * despite that infrastructure existing) -- virial_tensor is a single
+ * global accumulator that multiple contributors (e.g. a future
+ * CUDA_Shake solute pass run alongside this) would need careful
+ * "zero once per step, then only ever += " semantics for, which is a
+ * real design question of its own, not yet solved. Revisit once
+ * CUDA_Shake/CUDA_Settle are migrated too and that multi-contributor
+ * case actually exists.
+ *
  * v1 scope, hard-errored in init() rather than silently producing a
  * wrong/no-op result -- same conditions algorithm::M_Shake::init()
  * itself checks: exactly one solvent type, exactly 3 atoms per
@@ -48,6 +70,7 @@
 #include "gpu/cuda/memory/cuvector.h"
 #include "gpu/cuda/memory/precision.h"
 #include "gpu/cuda/algorithm/constraints/m_shake_kernels.h"
+#include "gpu/cuda/algorithm/constraints/velocity_from_delta_kernels.h"
 
 namespace algorithm {
 
@@ -55,7 +78,7 @@ namespace algorithm {
   public:
     CUDA_M_Shake(double const tolerance = 0.000001, int const max_iterations = 1000)
       : Algorithm("CUDA_M_Shake"), m_tolerance(tolerance), m_max_iterations(max_iterations) {}
-    virtual ~CUDA_M_Shake() {}
+    virtual ~CUDA_M_Shake();
 
     virtual int init(topology::Topology & topo,
                       configuration::Configuration & conf,
@@ -68,6 +91,12 @@ namespace algorithm {
                        simulation::Simulation & sim);
 
     std::set<unsigned int> & constrained_atoms() { return m_constrained_atoms; }
+
+    // Owns its own GPU-mirror freshness: apply() marks MIRROR_POS
+    // fresh+dirty itself and must not have that immediately erased by
+    // Algorithm_Sequence::run()'s default post-apply() invalidation
+    // (see leap_frog_gpu.cc for the same pattern).
+    virtual unsigned gpu_mirror_touches() const { return 0; }
 
   private:
     std::set<unsigned int> m_constrained_atoms;
@@ -85,15 +114,22 @@ namespace algorithm {
     unsigned m_first_atom = 0;
     unsigned m_num_molecules = 0;
 
-    gpu::cuvector<FPL3_TYPE> m_pos;
-    gpu::cuvector<FPL3_TYPE> m_old_pos;
     gpu::cuvector<gpu::MShakeConstraint> m_constr;
     gpu::cuvector<FPL_TYPE> m_factor_dev;
     gpu::cuvector<FPL_TYPE> m_constr_length2_dev;
     gpu::cuvector<FPL_TYPE> m_mass_i_dev;
     gpu::cuvector<FPL3_TYPE> m_constraint_force;
     gpu::cuvector<double> m_virial;
-    gpu::cuvector<int> m_error_flag;
+    // constrained_atoms(), uploaded once in init(), for the on-device
+    // velocity_from_delta kernel -- contiguous here (the whole solvent
+    // range) but stored explicitly anyway to share the one kernel with
+    // CUDA_Lincs's possibly-non-contiguous solute chain.
+    gpu::cuvector<unsigned> m_constrained_atoms_dev;
+
+    // Own stream: lets this run concurrently with CUDA_Lincs's solute
+    // pass (or anything else) instead of implicitly serializing on the
+    // default stream.
+    cudaStream_t m_stream = 0;
 
     bool m_initialized = false;
   };
