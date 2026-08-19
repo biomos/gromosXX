@@ -114,39 +114,50 @@ int algorithm::CUDA_Shake::init(
     m_changed_flag.resize(1);
   }
 
-  unsigned first_atom = topo.num_solute_atoms();
-  m_solvent_types.resize(topo.num_solvents());
-  for (unsigned s = 0; s < topo.num_solvents(); ++s) {
-    SolventType & st = m_solvent_types[s];
-    st.num_atoms_per_molecule = topo.solvent(s).num_atoms();
-    st.num_molecules = topo.num_solvent_molecules(s);
-    st.first_atom = first_atom;
-
-    if (st.num_atoms_per_molecule > gpu::MAX_SHAKE_ATOMS_PER_MOLECULE) {
-      io::messages.add(
-          "CUDA_Shake: solvent molecule exceeds MAX_SHAKE_ATOMS_PER_MOLECULE "
-          "(gpu/cuda/algorithm/constraints/shake_kernels.h).",
-          "CUDA_Shake", io::message::error);
-      return 1;
-    }
-
-    const std::vector<topology::two_body_term_struct> & dc =
-        topo.solvent(s).distance_constraints();
-    st.constraints.resize(dc.size());
-    for (unsigned c = 0; c < dc.size(); ++c) {
-      const double r0 = bondtypes[dc[c].type].r0;
-      st.constraints[c] = gpu::ShakeConstraint{dc[c].i, dc[c].j, r0 * r0};
-    }
-
-    st.inv_mass_local.resize(st.num_atoms_per_molecule);
-    for (unsigned a = 0; a < st.num_atoms_per_molecule; ++a) {
-      st.inv_mass_local[a] = topo.inverse_mass()(first_atom + a);
-    }
-
-    first_atom += st.num_atoms_per_molecule * st.num_molecules;
-  }
-
+  // Only build solvent constraint sets -- and thus only ever run
+  // apply()'s solvent SHAKE kernel -- when the solvent algorithm is
+  // actually SHAKE. Previously this was unconditional: m_solvent_types
+  // got populated from the topology regardless of
+  // sim.param().constraint.solvent.algorithm, so apply()'s solvent loop
+  // (which iterates m_solvent_types with no algorithm check at all) ran
+  // SHAKE on the solvent even when NTCS selected a different algorithm
+  // (e.g. SETTLE) -- double-constraining the same water molecules via
+  // two independent solvers, corrupting geometry until SHAKE itself
+  // failed ("vectors orthogonal"). Matches the CPU Shake class's own
+  // gating (shake.cc, checked before every solvent-touching block).
   if (sim.param().constraint.solvent.algorithm == simulation::constr_shake) {
+    unsigned first_atom = topo.num_solute_atoms();
+    m_solvent_types.resize(topo.num_solvents());
+    for (unsigned s = 0; s < topo.num_solvents(); ++s) {
+      SolventType & st = m_solvent_types[s];
+      st.num_atoms_per_molecule = topo.solvent(s).num_atoms();
+      st.num_molecules = topo.num_solvent_molecules(s);
+      st.first_atom = first_atom;
+
+      if (st.num_atoms_per_molecule > gpu::MAX_SHAKE_ATOMS_PER_MOLECULE) {
+        io::messages.add(
+            "CUDA_Shake: solvent molecule exceeds MAX_SHAKE_ATOMS_PER_MOLECULE "
+            "(gpu/cuda/algorithm/constraints/shake_kernels.h).",
+            "CUDA_Shake", io::message::error);
+        return 1;
+      }
+
+      const std::vector<topology::two_body_term_struct> & dc =
+          topo.solvent(s).distance_constraints();
+      st.constraints.resize(dc.size());
+      for (unsigned c = 0; c < dc.size(); ++c) {
+        const double r0 = bondtypes[dc[c].type].r0;
+        st.constraints[c] = gpu::ShakeConstraint{dc[c].i, dc[c].j, r0 * r0};
+      }
+
+      st.inv_mass_local.resize(st.num_atoms_per_molecule);
+      for (unsigned a = 0; a < st.num_atoms_per_molecule; ++a) {
+        st.inv_mass_local[a] = topo.inverse_mass()(first_atom + a);
+      }
+
+      first_atom += st.num_atoms_per_molecule * st.num_molecules;
+    }
+
     for (unsigned int i = topo.num_solute_atoms(); i < topo.num_atoms(); ++i) {
       constrained_atoms().insert(i);
     }
