@@ -65,6 +65,7 @@
 #include "../../algorithm/constraints/cuda_shake.h"
 #include "../../algorithm/constraints/cuda_settle.h"
 #include "../../algorithm/constraints/cuda_lincs.h"
+#include "../../algorithm/constraints/cuda_m_shake.h"
 #endif
 
 #include "../../algorithm/constraints/rottrans.h"
@@ -354,9 +355,25 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
             io::messages.add("M_Shake only implemented for solvents with three constraints",
                 "create_constraints", io::message::error);
         }
-        algorithm::M_Shake * s =
-                new algorithm::M_Shake(sim.param().constraint.solvent.shake_tolerance);
-        md_seq.push_back(s);
+#ifdef USE_CUDA
+        // Same gating as CUDA_Settle: MPI/shake_pos/shake_vel aren't
+        // ported (CUDA_M_Shake::init() hard-errors the same way the
+        // CPU class does), so no graceful-fallback case is lost by
+        // trying it whenever just accelerator/perturbation allow it.
+        if (sim.param().gpu.accelerator == simulation::gpu_cuda &&
+            !sim.param().perturbation.perturbation &&
+            !sim.mpi_enabled() &&
+            !sim.param().start.shake_pos && !sim.param().start.shake_vel) {
+          algorithm::CUDA_M_Shake * gs =
+                  new algorithm::CUDA_M_Shake(sim.param().constraint.solvent.shake_tolerance);
+          md_seq.push_back(gs);
+        } else
+#endif
+        {
+          algorithm::M_Shake * s =
+                  new algorithm::M_Shake(sim.param().constraint.solvent.shake_tolerance);
+          md_seq.push_back(s);
+        }
 
         break;
       }

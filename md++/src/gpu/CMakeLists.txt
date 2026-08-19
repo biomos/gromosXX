@@ -48,6 +48,7 @@ set(GPU_HEADERS
     cuda/algorithm/constraints/shake_kernels.h
     cuda/algorithm/constraints/settle_kernels.h
     cuda/algorithm/constraints/lincs_kernels.h
+    cuda/algorithm/constraints/m_shake_kernels.h
     cuda/memory/vec3_convert.h
     cuda/algorithm/temperature/atom_bath_arrays.h
     cuda/algorithm/temperature/thermostat_velocity_scale.h
@@ -88,6 +89,7 @@ if(USE_CUDA)
         cuda/algorithm/constraints/shake_kernels.cu
         cuda/algorithm/constraints/settle_kernels.cu
         cuda/algorithm/constraints/lincs_kernels.cu
+        cuda/algorithm/constraints/m_shake_kernels.cu
     )
 
     add_library(grocuda STATIC ${GPU_SOURCES})

@@ -60,6 +60,7 @@ if (USE_CUDA)
     constraints/cuda_shake.cc
     constraints/cuda_settle.cc
     constraints/cuda_lincs.cc
+    constraints/cuda_m_shake.cc
     temperature/nosehoover_thermostat_gpu.cc
     )
 endif()
