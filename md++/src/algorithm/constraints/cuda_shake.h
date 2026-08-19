@@ -49,6 +49,7 @@
 #pragma once
 
 #include "gpu/cuda/memory/cuvector.h"
+#include "gpu/cuda/memory/precision.h"
 #include "gpu/cuda/algorithm/constraints/shake_kernels.h"
 
 namespace algorithm {
@@ -84,7 +85,7 @@ namespace algorithm {
      */
     struct SolventType {
       gpu::cuvector<gpu::ShakeConstraint> constraints;
-      gpu::cuvector<double> inv_mass_local;
+      gpu::cuvector<FPL_TYPE> inv_mass_local;
       unsigned num_atoms_per_molecule = 0;
       unsigned first_atom = 0;
       unsigned num_molecules = 0;
@@ -98,13 +99,13 @@ namespace algorithm {
 
     bool m_solute_active = false;
     gpu::cuvector<gpu::ShakeConstraint> m_solute_constraints;
-    gpu::cuvector<double> m_solute_inv_mass;
-    gpu::cuvector<double3> m_solute_delta;
+    gpu::cuvector<FPL_TYPE> m_solute_inv_mass;
+    gpu::cuvector<FPL3_TYPE> m_solute_delta;
     gpu::cuvector<int> m_changed_flag;
 
-    gpu::cuvector<double3> m_pos;
-    gpu::cuvector<double3> m_old_pos;
-    gpu::cuvector<double3> m_constraint_force;
+    gpu::cuvector<FPL3_TYPE> m_pos;
+    gpu::cuvector<FPL3_TYPE> m_old_pos;
+    gpu::cuvector<FPL3_TYPE> m_constraint_force;
     gpu::cuvector<double> m_virial;
     gpu::cuvector<int> m_error_flag;
 

@@ -52,21 +52,28 @@
  * to the CPU's specific iteration path -- see cuda_shake.h's doc
  * comment.
  *
- * Deliberately uses plain `double`/`double3` throughout, not
- * `FPL_TYPE`/`FPL3_TYPE` -- unlike a force/energy kernel, SHAKE's
- * position corrections directly become the positions the *entire next
- * MD step* integrates from, so precision loss here is far more
- * consequential than in an energy tolerance comparison (PLAN.md's
- * quartic-bond precision note explains the magnitude for a similarly
- * cancellation-prone formula: `diff = r0^2 - dist2`). Positions are
- * uploaded/downloaded as raw doubles each call, independent of the
- * `FP_PRECISION` build setting and the float position mirror used
- * elsewhere in the GPU pipeline.
+ * Uses `FPL_TYPE`/`FPL3_TYPE` (gpu/cuda/memory/precision.h) for
+ * per-atom position/force data, matching the rest of the GPU pipeline
+ * (e.g. lj_crf_tiles.cu) -- this was previously deliberately plain
+ * `double`/`double3` (position corrections directly become the next
+ * MD step's integration input, so precision loss here is more
+ * consequential than in an energy comparison), but profiling this
+ * consumer GPU (RTX 5060 Ti) found double-precision throughput
+ * catastrophically throttled relative to a CPU core (~19-135x slower
+ * per constraint call, versus only ~1.5x for the already-mixed-
+ * precision nonbonded kernels) -- consumer/GeForce parts run FP64 at
+ * a small fraction of FP32 rate, unlike datacenter GPUs. Switched to
+ * `FPL_TYPE` deliberately, accepting the precision tradeoff, per this
+ * session's explicit direction. The global virial accumulator stays
+ * plain `double` (matching lj_crf_tiles.cu's own convention: bulk
+ * per-thread math in low precision, the one cross-molecule reduction
+ * target in high precision).
  */
 
 #pragma once
 
 #include "gpu/cuda/memory/cuvector.h"
+#include "gpu/cuda/memory/precision.h"
 #include "math/gmath.h"
 
 namespace gpu {
@@ -87,7 +94,7 @@ namespace gpu {
   struct ShakeConstraint {
     unsigned i;
     unsigned j;
-    double r0sq;
+    FPL_TYPE r0sq;
   };
 
   /**
@@ -119,20 +126,20 @@ namespace gpu {
    *   zeroes before launch and checks after.
    */
   void launch_shake_solvent(
-      double3* pos,
-      const double3* old_pos,
+      FPL3_TYPE* pos,
+      const FPL3_TYPE* old_pos,
       const ShakeConstraint* constraints,
       unsigned num_constraints,
-      const double* inv_mass_local,
+      const FPL_TYPE* inv_mass_local,
       unsigned num_atoms_per_molecule,
       unsigned first_atom,
       unsigned num_molecules,
-      double tolerance,
+      FPL_TYPE tolerance,
       unsigned max_iterations,
       math::boundary_enum boundary,
       math::Box box,
-      double dt2,
-      double3* constraint_force,
+      FPL_TYPE dt2,
+      FPL3_TYPE* constraint_force,
       double* virial,
       int* error_flag,
       cudaStream_t stream = 0);
@@ -154,17 +161,17 @@ namespace gpu {
    * scheme this class deliberately uses (see this file's doc comment).
    */
   void launch_shake_solute_round(
-      const double3* pos,
-      const double3* old_pos,
+      const FPL3_TYPE* pos,
+      const FPL3_TYPE* old_pos,
       const ShakeConstraint* constraints,
       unsigned num_constraints,
-      const double* inv_mass,
-      double tolerance,
+      const FPL_TYPE* inv_mass,
+      FPL_TYPE tolerance,
       math::boundary_enum boundary,
       math::Box box,
-      double dt2,
-      double3* delta,
-      double3* constraint_force,
+      FPL_TYPE dt2,
+      FPL3_TYPE* delta,
+      FPL3_TYPE* constraint_force,
       double* virial,
       int* changed_flag,
       int* error_flag,
@@ -175,8 +182,8 @@ namespace gpu {
    * `pos` and resets `delta` to zero, one thread per solute atom.
    */
   void launch_shake_solute_apply(
-      double3* pos,
-      double3* delta,
+      FPL3_TYPE* pos,
+      FPL3_TYPE* delta,
       unsigned num_atoms,
       cudaStream_t stream = 0);
 

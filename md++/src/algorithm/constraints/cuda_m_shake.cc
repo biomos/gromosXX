@@ -133,11 +133,11 @@ int algorithm::CUDA_M_Shake::init(
   m_constr.resize(3);
   for (unsigned i = 0; i < 3; ++i) m_constr[i] = host_constr[i];
   m_factor_dev.resize(9);
-  for (unsigned i = 0; i < 9; ++i) m_factor_dev[i] = m_factor[i];
+  for (unsigned i = 0; i < 9; ++i) m_factor_dev[i] = static_cast<FPL_TYPE>(m_factor[i]);
   m_constr_length2_dev.resize(3);
-  for (unsigned i = 0; i < 3; ++i) m_constr_length2_dev[i] = m_constr_length2[i];
+  for (unsigned i = 0; i < 3; ++i) m_constr_length2_dev[i] = static_cast<FPL_TYPE>(m_constr_length2[i]);
   m_mass_i_dev.resize(3);
-  for (unsigned i = 0; i < 3; ++i) m_mass_i_dev[i] = m_mass_i[i];
+  for (unsigned i = 0; i < 3; ++i) m_mass_i_dev[i] = static_cast<FPL_TYPE>(m_mass_i[i]);
 
   m_initialized = true;
 
@@ -170,9 +170,9 @@ int algorithm::CUDA_M_Shake::apply(
   const unsigned num_atoms = static_cast<unsigned>(topo.num_atoms());
   const unsigned num_solvent_atoms = num_atoms - m_first_atom;
 
-  gpu::vec3_upload(m_pos.data() + m_first_atom, &conf.current().pos(m_first_atom), num_solvent_atoms);
-  gpu::vec3_upload(m_old_pos.data() + m_first_atom, &conf.old().pos(m_first_atom), num_solvent_atoms);
-  cudaMemset(m_constraint_force.data() + m_first_atom, 0, num_solvent_atoms * sizeof(double3));
+  gpu::vec3_upload_fpl(m_pos.data() + m_first_atom, &conf.current().pos(m_first_atom), num_solvent_atoms);
+  gpu::vec3_upload_fpl(m_old_pos.data() + m_first_atom, &conf.old().pos(m_first_atom), num_solvent_atoms);
+  cudaMemset(m_constraint_force.data() + m_first_atom, 0, num_solvent_atoms * sizeof(FPL3_TYPE));
   cudaMemset(m_virial.data(), 0, 9 * sizeof(double));
   m_error_flag[0] = 0;
 
@@ -183,8 +183,8 @@ int algorithm::CUDA_M_Shake::apply(
   gpu::launch_m_shake_solvent(
       m_pos.data(), m_old_pos.data(), m_constr.data(), m_factor_dev.data(),
       m_constr_length2_dev.data(), m_mass_i_dev.data(),
-      m_first_atom, m_num_molecules, m_tolerance,
-      static_cast<unsigned>(m_max_iterations), dt2i, do_virial,
+      m_first_atom, m_num_molecules, static_cast<FPL_TYPE>(m_tolerance),
+      static_cast<unsigned>(m_max_iterations), static_cast<FPL_TYPE>(dt2i), do_virial,
       m_constraint_force.data(), m_virial.data(), m_error_flag.data());
   cudaDeviceSynchronize();
 
@@ -202,11 +202,12 @@ int algorithm::CUDA_M_Shake::apply(
     return E_SHAKE_FAILURE_SOLVENT;
   }
 
-  gpu::vec3_download(&conf.current().pos(m_first_atom), m_pos.data() + m_first_atom, num_solvent_atoms);
+  gpu::vec3_download_fpl(&conf.current().pos(m_first_atom), m_pos.data() + m_first_atom, num_solvent_atoms);
   for (unsigned int i : constrained_atoms()) {
     conf.old().constraint_force(i) +=
-        math::Vec(m_constraint_force[i].x, m_constraint_force[i].y,
-                  m_constraint_force[i].z) * dt2i;
+        math::Vec(static_cast<double>(m_constraint_force[i].x),
+                  static_cast<double>(m_constraint_force[i].y),
+                  static_cast<double>(m_constraint_force[i].z)) * dt2i;
   }
 
   if (do_virial) {

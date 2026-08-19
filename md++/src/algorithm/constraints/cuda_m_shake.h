@@ -46,6 +46,7 @@
 #pragma once
 
 #include "gpu/cuda/memory/cuvector.h"
+#include "gpu/cuda/memory/precision.h"
 #include "gpu/cuda/algorithm/constraints/m_shake_kernels.h"
 
 namespace algorithm {
@@ -84,13 +85,13 @@ namespace algorithm {
     unsigned m_first_atom = 0;
     unsigned m_num_molecules = 0;
 
-    gpu::cuvector<double3> m_pos;
-    gpu::cuvector<double3> m_old_pos;
+    gpu::cuvector<FPL3_TYPE> m_pos;
+    gpu::cuvector<FPL3_TYPE> m_old_pos;
     gpu::cuvector<gpu::MShakeConstraint> m_constr;
-    gpu::cuvector<double> m_factor_dev;
-    gpu::cuvector<double> m_constr_length2_dev;
-    gpu::cuvector<double> m_mass_i_dev;
-    gpu::cuvector<double3> m_constraint_force;
+    gpu::cuvector<FPL_TYPE> m_factor_dev;
+    gpu::cuvector<FPL_TYPE> m_constr_length2_dev;
+    gpu::cuvector<FPL_TYPE> m_mass_i_dev;
+    gpu::cuvector<FPL3_TYPE> m_constraint_force;
     gpu::cuvector<double> m_virial;
     gpu::cuvector<int> m_error_flag;
 

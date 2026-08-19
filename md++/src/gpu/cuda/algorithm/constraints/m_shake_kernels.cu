@@ -27,6 +27,7 @@
 
 #include "gpu/cuda/memory/types.h"
 #include "gpu/cuda/memory/cuvector.h"
+#include "gpu/cuda/memory/precision.h"
 #include "math/gmath.h"
 
 #include "m_shake_kernels.h"
@@ -39,25 +40,28 @@ namespace gpu {
 constexpr unsigned M_SHAKE_THREADS = 128;
 
 __global__ void m_shake_solvent_kernel(
-    double3* __restrict__ pos,
-    const double3* __restrict__ old_pos,
+    FPL3_TYPE* __restrict__ pos,
+    const FPL3_TYPE* __restrict__ old_pos,
     const gpu::MShakeConstraint* __restrict__ constr,
-    const double* __restrict__ factor,
-    const double* __restrict__ constr_length2,
-    const double* __restrict__ mass_i,
+    const FPL_TYPE* __restrict__ factor,
+    const FPL_TYPE* __restrict__ constr_length2,
+    const FPL_TYPE* __restrict__ mass_i,
     unsigned first_atom,
     unsigned num_molecules,
-    double tolerance,
+    FPL_TYPE tolerance,
     unsigned max_iterations,
-    double dt2i,
+    FPL_TYPE dt2i,
     bool do_virial,
-    double3* __restrict__ constraint_force,
+    FPL3_TYPE* __restrict__ constraint_force,
     double* __restrict__ virial,
     int* __restrict__ error_flag) {
 
   const unsigned mol = blockIdx.x * blockDim.x + threadIdx.x;
   const bool active = mol < num_molecules;
 
+  // Virial stays high precision (matches the global accumulator it
+  // feeds), even though the geometry/matrix math it's built from is
+  // FPL_TYPE -- same convention as shake_kernels.cu.
   double v_local[9] = {0,0,0,0,0,0,0,0,0};
 
   if (active) {
@@ -65,32 +69,32 @@ __global__ void m_shake_solvent_kernel(
 
     // dist_old never changes across iterations (old_pos is this step's
     // fixed reference) -- computed once, unlike dist_new below.
-    double3 dist_old[3];
+    FPL3_TYPE dist_old[3];
     for (unsigned k = 0; k < 3; ++k) {
       dist_old[k] = old_pos[base + constr[k].i] - old_pos[base + constr[k].j];
     }
 
-    double3 cf0 = make_double3(0.0, 0.0, 0.0);
-    double3 cf1 = make_double3(0.0, 0.0, 0.0);
-    double3 cf2 = make_double3(0.0, 0.0, 0.0);
+    FPL3_TYPE cf0 = make_FPL3(FPL_TYPE(0), FPL_TYPE(0), FPL_TYPE(0));
+    FPL3_TYPE cf1 = make_FPL3(FPL_TYPE(0), FPL_TYPE(0), FPL_TYPE(0));
+    FPL3_TYPE cf2 = make_FPL3(FPL_TYPE(0), FPL_TYPE(0), FPL_TYPE(0));
 
-    const double tol2 = tolerance * 2.0;
+    const FPL_TYPE tol2 = tolerance * FPL_TYPE(2);
     unsigned iterations = 0;
     bool convergence = false;
 
     while (!convergence) {
       convergence = true;
 
-      double3 dist_new[3];
+      FPL3_TYPE dist_new[3];
       for (unsigned k = 0; k < 3; ++k) {
         dist_new[k] = pos[base + constr[k].i] - pos[base + constr[k].j];
       }
-      const double dist2_0 = dot(dist_new[0], dist_new[0]);
-      const double dist2_1 = dot(dist_new[1], dist_new[1]);
-      const double dist2_2 = dot(dist_new[2], dist_new[2]);
-      const double diff0 = constr_length2[0] - dist2_0;
-      const double diff1 = constr_length2[1] - dist2_1;
-      const double diff2 = constr_length2[2] - dist2_2;
+      const FPL_TYPE dist2_0 = dot(dist_new[0], dist_new[0]);
+      const FPL_TYPE dist2_1 = dot(dist_new[1], dist_new[1]);
+      const FPL_TYPE dist2_2 = dot(dist_new[2], dist_new[2]);
+      const FPL_TYPE diff0 = constr_length2[0] - dist2_0;
+      const FPL_TYPE diff1 = constr_length2[1] - dist2_1;
+      const FPL_TYPE diff2 = constr_length2[2] - dist2_2;
 
       if (fabs(diff0) >= constr_length2[0] * tol2 ||
           fabs(diff1) >= constr_length2[1] * tol2 ||
@@ -98,57 +102,64 @@ __global__ void m_shake_solvent_kernel(
 
         // A(k,l) = dot(dist_old[l], dist_new[k]) * factor(k,l),
         // factor row-major: factor[3*k+l].
-        double A[9];
+        FPL_TYPE A[9];
         for (unsigned k = 0; k < 3; ++k) {
           for (unsigned l = 0; l < 3; ++l) {
             A[3*k+l] = dot(dist_old[l], dist_new[k]) * factor[3*k+l];
           }
         }
 
-        if (A[0] < constr_length2[0] * 1.0e-12 ||
-            A[4] < constr_length2[1] * 1.0e-12 ||
-            A[8] < constr_length2[2] * 1.0e-12) {
+        if (A[0] < constr_length2[0] * FPL_TYPE(1.0e-12) ||
+            A[4] < constr_length2[1] * FPL_TYPE(1.0e-12) ||
+            A[8] < constr_length2[2] * FPL_TYPE(1.0e-12)) {
           atomicExch(error_flag, 1);
           return;
         }
 
         // 3x3 cofactor inverse, matching math::inverse (gmath.h).
-        const double det = A[0]*(A[4]*A[8]-A[5]*A[7])
+        const FPL_TYPE det = A[0]*(A[4]*A[8]-A[5]*A[7])
                           - A[1]*(A[3]*A[8]-A[5]*A[6])
                           + A[2]*(A[3]*A[7]-A[4]*A[6]);
-        const double idet = 1.0 / det;
-        const double Ai00 = (A[4]*A[8]-A[5]*A[7]) * idet;
-        const double Ai01 = (A[2]*A[7]-A[1]*A[8]) * idet;
-        const double Ai02 = (A[1]*A[5]-A[2]*A[4]) * idet;
-        const double Ai10 = (A[5]*A[6]-A[3]*A[8]) * idet;
-        const double Ai11 = (A[0]*A[8]-A[2]*A[6]) * idet;
-        const double Ai12 = (A[2]*A[3]-A[0]*A[5]) * idet;
-        const double Ai20 = (A[3]*A[7]-A[4]*A[6]) * idet;
-        const double Ai21 = (A[1]*A[6]-A[0]*A[7]) * idet;
-        const double Ai22 = (A[0]*A[4]-A[1]*A[3]) * idet;
+        const FPL_TYPE idet = FPL_TYPE(1) / det;
+        const FPL_TYPE Ai00 = (A[4]*A[8]-A[5]*A[7]) * idet;
+        const FPL_TYPE Ai01 = (A[2]*A[7]-A[1]*A[8]) * idet;
+        const FPL_TYPE Ai02 = (A[1]*A[5]-A[2]*A[4]) * idet;
+        const FPL_TYPE Ai10 = (A[5]*A[6]-A[3]*A[8]) * idet;
+        const FPL_TYPE Ai11 = (A[0]*A[8]-A[2]*A[6]) * idet;
+        const FPL_TYPE Ai12 = (A[2]*A[3]-A[0]*A[5]) * idet;
+        const FPL_TYPE Ai20 = (A[3]*A[7]-A[4]*A[6]) * idet;
+        const FPL_TYPE Ai21 = (A[1]*A[6]-A[0]*A[7]) * idet;
+        const FPL_TYPE Ai22 = (A[0]*A[4]-A[1]*A[3]) * idet;
 
-        const double f0 = (Ai00*diff0 + Ai01*diff1 + Ai02*diff2) * 0.5;
-        const double f1 = (Ai10*diff0 + Ai11*diff1 + Ai12*diff2) * 0.5;
-        const double f2 = (Ai20*diff0 + Ai21*diff1 + Ai22*diff2) * 0.5;
+        const FPL_TYPE f0 = (Ai00*diff0 + Ai01*diff1 + Ai02*diff2) * FPL_TYPE(0.5);
+        const FPL_TYPE f1 = (Ai10*diff0 + Ai11*diff1 + Ai12*diff2) * FPL_TYPE(0.5);
+        const FPL_TYPE f2 = (Ai20*diff0 + Ai21*diff1 + Ai22*diff2) * FPL_TYPE(0.5);
 
-        const double3 f01 = f0 * dist_old[0] + f1 * dist_old[1];
-        const double3 f02 = f2 * dist_old[2] - f0 * dist_old[0];
-        const double3 f12 = f1 * dist_old[1] + f2 * dist_old[2];
+        const FPL3_TYPE f01 = f0 * dist_old[0] + f1 * dist_old[1];
+        const FPL3_TYPE f02 = f2 * dist_old[2] - f0 * dist_old[0];
+        const FPL3_TYPE f12 = f1 * dist_old[1] + f2 * dist_old[2];
 
         cf0 += f01;
         cf1 += f02;
         cf2 -= f12;
 
         if (do_virial) {
+          const double da[3] = {static_cast<double>(dist_old[0].x),
+                                 static_cast<double>(dist_old[0].y),
+                                 static_cast<double>(dist_old[0].z)};
+          const double db[3] = {static_cast<double>(dist_old[1].x),
+                                 static_cast<double>(dist_old[1].y),
+                                 static_cast<double>(dist_old[1].z)};
+          const double dc[3] = {static_cast<double>(dist_old[2].x),
+                                 static_cast<double>(dist_old[2].y),
+                                 static_cast<double>(dist_old[2].z)};
+          const double f0d = static_cast<double>(f0);
+          const double f1d = static_cast<double>(f1);
+          const double f2d = static_cast<double>(f2);
+          const double dt2i_d = static_cast<double>(dt2i);
           for (unsigned a = 0; a < 3; ++a) {
-            const double da0 = (a==0)?dist_old[0].x:(a==1)?dist_old[0].y:dist_old[0].z;
-            const double da1 = (a==0)?dist_old[1].x:(a==1)?dist_old[1].y:dist_old[1].z;
-            const double da2 = (a==0)?dist_old[2].x:(a==1)?dist_old[2].y:dist_old[2].z;
             for (unsigned aa = 0; aa < 3; ++aa) {
-              const double db0 = (aa==0)?dist_old[0].x:(aa==1)?dist_old[0].y:dist_old[0].z;
-              const double db1 = (aa==0)?dist_old[1].x:(aa==1)?dist_old[1].y:dist_old[1].z;
-              const double db2 = (aa==0)?dist_old[2].x:(aa==1)?dist_old[2].y:dist_old[2].z;
-              v_local[3*a+aa] -= (da0*db0*f0 + da1*db1*f1 + da2*db2*f2) * dt2i;
+              v_local[3*a+aa] -= (da[a]*da[aa]*f0d + db[a]*db[aa]*f1d + dc[a]*dc[aa]*f2d) * dt2i_d;
             }
           }
         }
@@ -189,19 +200,19 @@ __global__ void m_shake_solvent_kernel(
 } // namespace gpu
 
 void gpu::launch_m_shake_solvent(
-    double3* pos,
-    const double3* old_pos,
+    FPL3_TYPE* pos,
+    const FPL3_TYPE* old_pos,
     const gpu::MShakeConstraint* constr,
-    const double* factor,
-    const double* constr_length2,
-    const double* mass_i,
+    const FPL_TYPE* factor,
+    const FPL_TYPE* constr_length2,
+    const FPL_TYPE* mass_i,
     unsigned first_atom,
     unsigned num_molecules,
-    double tolerance,
+    FPL_TYPE tolerance,
     unsigned max_iterations,
-    double dt2i,
+    FPL_TYPE dt2i,
     bool do_virial,
-    double3* constraint_force,
+    FPL3_TYPE* constraint_force,
     double* virial,
     int* error_flag,
     cudaStream_t stream) {

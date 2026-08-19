@@ -10,6 +10,14 @@ option(MPI "enable MPI" OFF)
 option(USE_CUDA "enable CUDA" OFF)
 option(XTB "enable XTB" OFF)
 
+# GPU floating-point precision policy (gpu/cuda/memory/precision.h):
+# 1 = float only, 2 = mixed (low=float, high=double), 3 = double only.
+# Was previously unset here, silently falling back to precision.h's own
+# default (1, float-only) -- src/gpu/CLAUDE.md documents mixed (2) as
+# the intended default, so wire that up for real.
+set(FP_PRECISION 2 CACHE STRING "GPU precision: 1=float, 2=mixed, 3=double")
+add_definitions(-DFP_PRECISION=${FP_PRECISION})
+
 option(BUILD_SHARED_LIBS "Build shared libraries instead of static" ON)
 
 # TODO do we still want to support these options?

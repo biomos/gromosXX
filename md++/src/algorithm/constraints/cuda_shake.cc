@@ -100,7 +100,7 @@ int algorithm::CUDA_Shake::init(
     m_solute_constraints.resize(dc.size());
     for (unsigned c = 0; c < dc.size(); ++c) {
       const double r0 = bondtypes[dc[c].type].r0;
-      m_solute_constraints[c] = gpu::ShakeConstraint{dc[c].i, dc[c].j, r0 * r0};
+      m_solute_constraints[c] = gpu::ShakeConstraint{dc[c].i, dc[c].j, static_cast<FPL_TYPE>(r0 * r0)};
       constrained_atoms().insert(dc[c].i);
       constrained_atoms().insert(dc[c].j);
     }
@@ -108,7 +108,7 @@ int algorithm::CUDA_Shake::init(
     const unsigned num_solute_atoms = static_cast<unsigned>(topo.num_solute_atoms());
     m_solute_inv_mass.resize(num_solute_atoms);
     for (unsigned a = 0; a < num_solute_atoms; ++a) {
-      m_solute_inv_mass[a] = topo.inverse_mass()(a);
+      m_solute_inv_mass[a] = static_cast<FPL_TYPE>(topo.inverse_mass()(a));
     }
     m_solute_delta.resize(num_solute_atoms);
     m_changed_flag.resize(1);
@@ -147,12 +147,12 @@ int algorithm::CUDA_Shake::init(
       st.constraints.resize(dc.size());
       for (unsigned c = 0; c < dc.size(); ++c) {
         const double r0 = bondtypes[dc[c].type].r0;
-        st.constraints[c] = gpu::ShakeConstraint{dc[c].i, dc[c].j, r0 * r0};
+        st.constraints[c] = gpu::ShakeConstraint{dc[c].i, dc[c].j, static_cast<FPL_TYPE>(r0 * r0)};
       }
 
       st.inv_mass_local.resize(st.num_atoms_per_molecule);
       for (unsigned a = 0; a < st.num_atoms_per_molecule; ++a) {
-        st.inv_mass_local[a] = topo.inverse_mass()(first_atom + a);
+        st.inv_mass_local[a] = static_cast<FPL_TYPE>(topo.inverse_mass()(first_atom + a));
       }
 
       first_atom += st.num_atoms_per_molecule * st.num_molecules;
@@ -194,19 +194,20 @@ int algorithm::CUDA_Shake::apply(
   const unsigned num_atoms = static_cast<unsigned>(topo.num_atoms());
   const unsigned num_solute_atoms = static_cast<unsigned>(topo.num_solute_atoms());
 
-  // Bulk memcpy, not a per-atom struct-rebuild loop -- math::Vec and
-  // double3 are layout-identical (gpu/cuda/memory/vec3_convert.h).
-  gpu::vec3_upload(m_pos.data(), &conf.current().pos(0), num_atoms);
-  gpu::vec3_upload(m_old_pos.data(), &conf.old().pos(0), num_atoms);
-  cudaMemset(m_constraint_force.data(), 0, num_atoms * sizeof(double3));
+  // FPL_TYPE-narrowing bulk upload (float under FP_PRECISION 1/2) --
+  // see vec3_convert.h's doc comment for why this can't be a memcpy.
+  gpu::vec3_upload_fpl(m_pos.data(), &conf.current().pos(0), num_atoms);
+  gpu::vec3_upload_fpl(m_old_pos.data(), &conf.old().pos(0), num_atoms);
+  cudaMemset(m_constraint_force.data(), 0, num_atoms * sizeof(FPL3_TYPE));
   cudaMemset(m_virial.data(), 0, 9 * sizeof(double));
   m_error_flag[0] = 0;
 
   const double dt = sim.time_step_size();
   const double dt2 = dt * dt;
+  const FPL_TYPE dt2_fpl = static_cast<FPL_TYPE>(dt2);
 
   if (m_solute_active) {
-    cudaMemset(m_solute_delta.data(), 0, num_solute_atoms * sizeof(double3));
+    cudaMemset(m_solute_delta.data(), 0, num_solute_atoms * sizeof(FPL3_TYPE));
 
     unsigned iterations = 0;
     bool converged = false;
@@ -215,8 +216,8 @@ int algorithm::CUDA_Shake::apply(
       gpu::launch_shake_solute_round(
           m_pos.data(), m_old_pos.data(),
           m_solute_constraints.data(), static_cast<unsigned>(m_solute_constraints.size()),
-          m_solute_inv_mass.data(), m_solute_tolerance,
-          conf.boundary_type, conf.current().box, dt2,
+          m_solute_inv_mass.data(), static_cast<FPL_TYPE>(m_solute_tolerance),
+          conf.boundary_type, conf.current().box, dt2_fpl,
           m_solute_delta.data(), m_constraint_force.data(), m_virial.data(),
           m_changed_flag.data(), m_error_flag.data());
       gpu::launch_shake_solute_apply(m_pos.data(), m_solute_delta.data(), num_solute_atoms);
@@ -252,8 +253,8 @@ int algorithm::CUDA_Shake::apply(
         st.constraints.data(), static_cast<unsigned>(st.constraints.size()),
         st.inv_mass_local.data(), st.num_atoms_per_molecule,
         st.first_atom, st.num_molecules,
-        m_solvent_tolerance, static_cast<unsigned>(m_max_iterations),
-        conf.boundary_type, conf.current().box, dt2,
+        static_cast<FPL_TYPE>(m_solvent_tolerance), static_cast<unsigned>(m_max_iterations),
+        conf.boundary_type, conf.current().box, dt2_fpl,
         m_constraint_force.data(), m_virial.data(), m_error_flag.data());
   }
   cudaDeviceSynchronize();
@@ -272,7 +273,7 @@ int algorithm::CUDA_Shake::apply(
     return E_SHAKE_FAILURE_SOLVENT;
   }
 
-  gpu::vec3_download(&conf.current().pos(0), m_pos.data(), num_atoms);
+  gpu::vec3_download_fpl(&conf.current().pos(0), m_pos.data(), num_atoms);
   // Accumulation (+=), not a plain copy -- stays a per-atom loop, but
   // only over constrained_atoms() (already exactly the atoms this
   // class's term lists reference), not every atom in the system --
@@ -281,8 +282,9 @@ int algorithm::CUDA_Shake::apply(
   // lambda*ref_r sum) is preserved here.
   for (unsigned int i : constrained_atoms()) {
     conf.old().constraint_force(i) +=
-        math::Vec(m_constraint_force[i].x, m_constraint_force[i].y,
-                   m_constraint_force[i].z) / dt2;
+        math::Vec(static_cast<double>(m_constraint_force[i].x),
+                  static_cast<double>(m_constraint_force[i].y),
+                  static_cast<double>(m_constraint_force[i].z)) / dt2;
   }
 
   // Matches the CPU's real `V == math::atomic_virial` gate (shake.h's

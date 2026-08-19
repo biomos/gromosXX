@@ -196,6 +196,14 @@ namespace {
     // looser tolerance than shake_gpu.t.cc's solvent-only 1e-6 (that
     // path *is* bit-comparable, one CPU-equivalent thread per molecule).
     const double tol = 1e-4;
+    // constraint_force/vel are position differences divided by
+    // dt^2/dt, amplifying ordinary float32-vs-double rounding noise
+    // (GPU now computes in FPL_TYPE, see shake_kernels.cu) by orders of
+    // magnitude -- verified this is exactly that (not a bug) by
+    // checking pos itself still agrees at `tol` above. See
+    // m_shake_gpu.t.cc's fuller comment.
+    const double cf_atol = 1.0, cf_rtol = 2e-3;
+    const double vel_atol = 2e-3, vel_rtol = 5e-4;
     int errors = 0;
 
     const unsigned num_atoms = static_cast<unsigned>(cpu_s.topo.num_atoms());
@@ -208,7 +216,7 @@ namespace {
         ++errors;
       }
       const math::Vec vel_diff = cpu_s.conf.current().vel(i) - gpu_s.conf.current().vel(i);
-      if (math::abs(vel_diff) > tol) {
+      if (math::abs(vel_diff) > vel_atol + vel_rtol * math::abs(cpu_s.conf.current().vel(i))) {
         std::cerr << label << ": vel mismatch at atom " << i
                   << ": cpu=" << math::v2s(cpu_s.conf.current().vel(i))
                   << " gpu=" << math::v2s(gpu_s.conf.current().vel(i)) << std::endl;
@@ -216,7 +224,7 @@ namespace {
       }
       const math::Vec cf_diff = cpu_s.conf.old().constraint_force(i) -
                                  gpu_s.conf.old().constraint_force(i);
-      if (math::abs(cf_diff) > tol) {
+      if (math::abs(cf_diff) > cf_atol + cf_rtol * math::abs(cpu_s.conf.old().constraint_force(i))) {
         std::cerr << label << ": constraint_force mismatch at atom " << i
                   << ": cpu=" << math::v2s(cpu_s.conf.old().constraint_force(i))
                   << " gpu=" << math::v2s(gpu_s.conf.old().constraint_force(i)) << std::endl;

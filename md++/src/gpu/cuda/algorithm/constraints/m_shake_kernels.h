@@ -48,6 +48,7 @@
 #pragma once
 
 #include "gpu/cuda/memory/cuvector.h"
+#include "gpu/cuda/memory/precision.h"
 #include "math/gmath.h"
 
 namespace gpu {
@@ -92,19 +93,19 @@ namespace gpu {
    *   matrix is singular (matches the CPU's `E_SHAKE_FAILURE` check).
    */
   void launch_m_shake_solvent(
-      double3* pos,
-      const double3* old_pos,
+      FPL3_TYPE* pos,
+      const FPL3_TYPE* old_pos,
       const gpu::MShakeConstraint* constr,
-      const double* factor,
-      const double* constr_length2,
-      const double* mass_i,
+      const FPL_TYPE* factor,
+      const FPL_TYPE* constr_length2,
+      const FPL_TYPE* mass_i,
       unsigned first_atom,
       unsigned num_molecules,
-      double tolerance,
+      FPL_TYPE tolerance,
       unsigned max_iterations,
-      double dt2i,
+      FPL_TYPE dt2i,
       bool do_virial,
-      double3* constraint_force,
+      FPL3_TYPE* constraint_force,
       double* virial,
       int* error_flag,
       cudaStream_t stream = 0);

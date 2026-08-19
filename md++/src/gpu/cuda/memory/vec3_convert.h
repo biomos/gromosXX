@@ -44,6 +44,7 @@
 #include <cuda_runtime.h>
 
 #include "math/gmath.h"
+#include "gpu/cuda/memory/precision.h"
 
 namespace gpu {
 
@@ -62,6 +63,30 @@ namespace gpu {
   /** Copies `n` consecutive `double3`s starting at `*src` into `dst`. */
   inline void vec3_download(math::Vec* dst, const double3* src, std::size_t n) {
     std::memcpy(dst, src, n * sizeof(double3));
+  }
+
+  /**
+   * FPL3_TYPE counterparts for the mixed-precision constraint kernels
+   * (SHAKE/M-SHAKE/SETTLE) -- unlike the double3 versions above, this
+   * can't be a bulk memcpy: FPL3_TYPE is `float3` under FP_PRECISION
+   * 1/2, a different byte layout than `math::Vec`'s three `double`s, so
+   * each component is narrowed/widened element-by-element. Only used
+   * at each apply() call's upload/download boundary, not per-iteration.
+   */
+  inline void vec3_upload_fpl(FPL3_TYPE* dst, const math::Vec* src, std::size_t n) {
+    for (std::size_t i = 0; i < n; ++i) {
+      dst[i] = make_FPL3(static_cast<FPL_TYPE>(src[i](0)),
+                          static_cast<FPL_TYPE>(src[i](1)),
+                          static_cast<FPL_TYPE>(src[i](2)));
+    }
+  }
+
+  inline void vec3_download_fpl(math::Vec* dst, const FPL3_TYPE* src, std::size_t n) {
+    for (std::size_t i = 0; i < n; ++i) {
+      dst[i] = math::Vec(static_cast<double>(src[i].x),
+                          static_cast<double>(src[i].y),
+                          static_cast<double>(src[i].z));
+    }
   }
 
 } // namespace gpu

@@ -27,6 +27,7 @@
 
 #include "gpu/cuda/memory/types.h"
 #include "gpu/cuda/memory/cuvector.h"
+#include "gpu/cuda/memory/precision.h"
 #include "gpu/cuda/math/periodicity.h"
 #include "math/gmath.h"
 
@@ -36,19 +37,19 @@ namespace gpu {
 
 template <math::boundary_enum BOUNDARY>
 __global__ void shake_solvent_kernel(
-    double3* __restrict__ pos,
-    const double3* __restrict__ old_pos,
+    FPL3_TYPE* __restrict__ pos,
+    const FPL3_TYPE* __restrict__ old_pos,
     const gpu::ShakeConstraint* __restrict__ constraints,
     unsigned num_constraints,
-    const double* __restrict__ inv_mass_local,
+    const FPL_TYPE* __restrict__ inv_mass_local,
     unsigned num_atoms_per_molecule,
     unsigned first_atom,
     unsigned num_molecules,
-    double tolerance,
+    FPL_TYPE tolerance,
     unsigned max_iterations,
     gpu::Periodicity<BOUNDARY> periodicity,
-    double dt2,
-    double3* __restrict__ constraint_force,
+    FPL_TYPE dt2,
+    FPL3_TYPE* __restrict__ constraint_force,
     double* __restrict__ virial,
     int* __restrict__ error_flag) {
 
@@ -59,18 +60,17 @@ __global__ void shake_solvent_kernel(
 
   // Cache this molecule's atoms in registers/local memory for the whole
   // Jacobi loop instead of re-reading pos[]/old_pos[] from global memory
-  // on every constraint check of every iteration (measured ~12 iterations
-  // per molecule -- each one previously re-fetched every atom involved).
-  // old_pos never changes within apply(), so it's loaded once and never
-  // written back; pos and the constraint-force accumulator are written
-  // back exactly once, after convergence, instead of per-update.
-  double3 local_pos[gpu::MAX_SHAKE_ATOMS_PER_MOLECULE];
-  double3 local_old_pos[gpu::MAX_SHAKE_ATOMS_PER_MOLECULE];
-  double3 local_cf[gpu::MAX_SHAKE_ATOMS_PER_MOLECULE];
+  // on every constraint check of every iteration. old_pos never changes
+  // within apply(), so it's loaded once and never written back; pos and
+  // the constraint-force accumulator are written back exactly once,
+  // after convergence, instead of per-update.
+  FPL3_TYPE local_pos[gpu::MAX_SHAKE_ATOMS_PER_MOLECULE];
+  FPL3_TYPE local_old_pos[gpu::MAX_SHAKE_ATOMS_PER_MOLECULE];
+  FPL3_TYPE local_cf[gpu::MAX_SHAKE_ATOMS_PER_MOLECULE];
   for (unsigned a = 0; a < num_atoms_per_molecule; ++a) {
     local_pos[a] = pos[base + a];
     local_old_pos[a] = old_pos[base + a];
-    local_cf[a] = make_double3(0.0, 0.0, 0.0);
+    local_cf[a] = make_FPL3(FPL_TYPE(0), FPL_TYPE(0), FPL_TYPE(0));
   }
 
   bool skip_now[gpu::MAX_SHAKE_ATOMS_PER_MOLECULE];
@@ -82,6 +82,10 @@ __global__ void shake_solvent_kernel(
 
   unsigned iterations = 0;
   bool convergence = false;
+  // Virial stays high precision (matches the global accumulator it
+  // eventually feeds, and lj_crf_tiles.cu's own low-per-thread/
+  // high-at-reduction convention) even though the geometry it's built
+  // from is FPL_TYPE.
   double v_local[9] = {0,0,0,0,0,0,0,0,0};
 
   while (!convergence) {
@@ -92,41 +96,41 @@ __global__ void shake_solvent_kernel(
       const unsigned lj = constraints[c].j;
 
       if (skip_now[li] && skip_now[lj]) continue;
-      if (inv_mass_local[li] == 0.0 && inv_mass_local[lj] == 0.0) continue;
+      if (inv_mass_local[li] == FPL_TYPE(0) && inv_mass_local[lj] == FPL_TYPE(0)) continue;
 
-      const double3 r = periodicity.nearest_image(local_pos[li], local_pos[lj]);
-      const double dist2 = dot(r, r);
-      const double r0sq = constraints[c].r0sq;
-      const double diff = r0sq - dist2;
+      const FPL3_TYPE r = periodicity.nearest_image(local_pos[li], local_pos[lj]);
+      const FPL_TYPE dist2 = dot(r, r);
+      const FPL_TYPE r0sq = constraints[c].r0sq;
+      const FPL_TYPE diff = r0sq - dist2;
 
-      if (fabs(diff) >= r0sq * tolerance * 2.0) {
-        double3 ref_r = periodicity.nearest_image(local_old_pos[li], local_old_pos[lj]);
-        const double sp = dot(ref_r, r);
+      if (fabs(diff) >= r0sq * tolerance * FPL_TYPE(2)) {
+        FPL3_TYPE ref_r = periodicity.nearest_image(local_old_pos[li], local_old_pos[lj]);
+        const FPL_TYPE sp = dot(ref_r, r);
 
         // 1e-12, matching math::epsilon (math/gmath.h) -- that constant
         // isn't device-accessible (a plain non-constexpr host global),
         // so the literal is inlined here instead.
-        if (sp < r0sq * 1.0e-12) {
+        if (sp < r0sq * FPL_TYPE(1.0e-12)) {
           atomicExch(error_flag, 1);
           return;
         }
 
-        const double lambda = diff / (sp * 2.0 * (inv_mass_local[li] + inv_mass_local[lj]));
+        const FPL_TYPE lambda = diff / (sp * FPL_TYPE(2) * (inv_mass_local[li] + inv_mass_local[lj]));
 
-        const double3 cons_force = lambda * ref_r;
+        const FPL3_TYPE cons_force = lambda * ref_r;
         local_cf[li] += cons_force;
         local_cf[lj] -= cons_force;
 
-        const double inv_dt2 = lambda / dt2;
-        v_local[0] += ref_r.x * ref_r.x * inv_dt2; // (0,0)
-        v_local[1] += ref_r.x * ref_r.y * inv_dt2; // (0,1)
-        v_local[2] += ref_r.x * ref_r.z * inv_dt2; // (0,2)
-        v_local[3] += ref_r.y * ref_r.x * inv_dt2; // (1,0)
-        v_local[4] += ref_r.y * ref_r.y * inv_dt2; // (1,1)
-        v_local[5] += ref_r.y * ref_r.z * inv_dt2; // (1,2)
-        v_local[6] += ref_r.z * ref_r.x * inv_dt2; // (2,0)
-        v_local[7] += ref_r.z * ref_r.y * inv_dt2; // (2,1)
-        v_local[8] += ref_r.z * ref_r.z * inv_dt2; // (2,2)
+        const double inv_dt2 = static_cast<double>(lambda) / static_cast<double>(dt2);
+        v_local[0] += static_cast<double>(ref_r.x) * static_cast<double>(ref_r.x) * inv_dt2; // (0,0)
+        v_local[1] += static_cast<double>(ref_r.x) * static_cast<double>(ref_r.y) * inv_dt2; // (0,1)
+        v_local[2] += static_cast<double>(ref_r.x) * static_cast<double>(ref_r.z) * inv_dt2; // (0,2)
+        v_local[3] += static_cast<double>(ref_r.y) * static_cast<double>(ref_r.x) * inv_dt2; // (1,0)
+        v_local[4] += static_cast<double>(ref_r.y) * static_cast<double>(ref_r.y) * inv_dt2; // (1,1)
+        v_local[5] += static_cast<double>(ref_r.y) * static_cast<double>(ref_r.z) * inv_dt2; // (1,2)
+        v_local[6] += static_cast<double>(ref_r.z) * static_cast<double>(ref_r.x) * inv_dt2; // (2,0)
+        v_local[7] += static_cast<double>(ref_r.z) * static_cast<double>(ref_r.y) * inv_dt2; // (2,1)
+        v_local[8] += static_cast<double>(ref_r.z) * static_cast<double>(ref_r.z) * inv_dt2; // (2,2)
 
         ref_r *= lambda;
         local_pos[li] += ref_r * inv_mass_local[li];
@@ -159,7 +163,7 @@ __global__ void shake_solvent_kernel(
   // touched, then flushed with one atomicAdd per component instead of
   // one per constraint update -- thousands of molecule-threads otherwise
   // hammer the same 9 global addresses every iteration, serializing the
-  // whole kernel (measured: ~150ms/call before this change).
+  // whole kernel.
   for (unsigned k = 0; k < 9; ++k) {
     if (v_local[k] != 0.0) atomicAdd(&virial[k], v_local[k]);
   }
@@ -168,20 +172,20 @@ __global__ void shake_solvent_kernel(
 } // namespace gpu
 
 void gpu::launch_shake_solvent(
-    double3* pos,
-    const double3* old_pos,
+    FPL3_TYPE* pos,
+    const FPL3_TYPE* old_pos,
     const gpu::ShakeConstraint* constraints,
     unsigned num_constraints,
-    const double* inv_mass_local,
+    const FPL_TYPE* inv_mass_local,
     unsigned num_atoms_per_molecule,
     unsigned first_atom,
     unsigned num_molecules,
-    double tolerance,
+    FPL_TYPE tolerance,
     unsigned max_iterations,
     math::boundary_enum boundary,
     math::Box box,
-    double dt2,
-    double3* constraint_force,
+    FPL_TYPE dt2,
+    FPL3_TYPE* constraint_force,
     double* virial,
     int* error_flag,
     cudaStream_t stream) {
@@ -222,16 +226,16 @@ namespace gpu {
 
 template <math::boundary_enum BOUNDARY>
 __global__ void shake_solute_round_kernel(
-    const double3* __restrict__ pos,
-    const double3* __restrict__ old_pos,
+    const FPL3_TYPE* __restrict__ pos,
+    const FPL3_TYPE* __restrict__ old_pos,
     const gpu::ShakeConstraint* __restrict__ constraints,
     unsigned num_constraints,
-    const double* __restrict__ inv_mass,
-    double tolerance,
+    const FPL_TYPE* __restrict__ inv_mass,
+    FPL_TYPE tolerance,
     gpu::Periodicity<BOUNDARY> periodicity,
-    double dt2,
-    double3* __restrict__ delta,
-    double3* __restrict__ constraint_force,
+    FPL_TYPE dt2,
+    FPL3_TYPE* __restrict__ delta,
+    FPL3_TYPE* __restrict__ constraint_force,
     double* __restrict__ virial,
     int* __restrict__ changed_flag,
     int* __restrict__ error_flag) {
@@ -242,25 +246,25 @@ __global__ void shake_solute_round_kernel(
   const unsigned i = constraints[c].i;
   const unsigned j = constraints[c].j;
 
-  const double3 r = periodicity.nearest_image(pos[i], pos[j]);
-  const double dist2 = dot(r, r);
-  const double r0sq = constraints[c].r0sq;
-  const double diff = r0sq - dist2;
+  const FPL3_TYPE r = periodicity.nearest_image(pos[i], pos[j]);
+  const FPL_TYPE dist2 = dot(r, r);
+  const FPL_TYPE r0sq = constraints[c].r0sq;
+  const FPL_TYPE diff = r0sq - dist2;
 
-  if (fabs(diff) < r0sq * tolerance * 2.0) return;
+  if (fabs(diff) < r0sq * tolerance * FPL_TYPE(2)) return;
 
-  double3 ref_r = periodicity.nearest_image(old_pos[i], old_pos[j]);
-  const double sp = dot(ref_r, r);
+  FPL3_TYPE ref_r = periodicity.nearest_image(old_pos[i], old_pos[j]);
+  const FPL_TYPE sp = dot(ref_r, r);
 
   // 1e-12, matching math::epsilon -- see shake_solvent_kernel's comment.
-  if (sp < r0sq * 1.0e-12) {
+  if (sp < r0sq * FPL_TYPE(1.0e-12)) {
     atomicExch(error_flag, 1);
     return;
   }
 
-  const double lambda = diff / (sp * 2.0 * (inv_mass[i] + inv_mass[j]));
+  const FPL_TYPE lambda = diff / (sp * FPL_TYPE(2) * (inv_mass[i] + inv_mass[j]));
 
-  const double3 cons_force = lambda * ref_r;
+  const FPL3_TYPE cons_force = lambda * ref_r;
   atomicAdd(&constraint_force[i].x, cons_force.x);
   atomicAdd(&constraint_force[i].y, cons_force.y);
   atomicAdd(&constraint_force[i].z, cons_force.z);
@@ -268,19 +272,20 @@ __global__ void shake_solute_round_kernel(
   atomicAdd(&constraint_force[j].y, -cons_force.y);
   atomicAdd(&constraint_force[j].z, -cons_force.z);
 
-  atomicAdd(&virial[0], ref_r.x * ref_r.x * lambda / dt2);
-  atomicAdd(&virial[1], ref_r.x * ref_r.y * lambda / dt2);
-  atomicAdd(&virial[2], ref_r.x * ref_r.z * lambda / dt2);
-  atomicAdd(&virial[3], ref_r.y * ref_r.x * lambda / dt2);
-  atomicAdd(&virial[4], ref_r.y * ref_r.y * lambda / dt2);
-  atomicAdd(&virial[5], ref_r.y * ref_r.z * lambda / dt2);
-  atomicAdd(&virial[6], ref_r.z * ref_r.x * lambda / dt2);
-  atomicAdd(&virial[7], ref_r.z * ref_r.y * lambda / dt2);
-  atomicAdd(&virial[8], ref_r.z * ref_r.z * lambda / dt2);
+  const double inv_dt2 = static_cast<double>(lambda) / static_cast<double>(dt2);
+  atomicAdd(&virial[0], static_cast<double>(ref_r.x) * static_cast<double>(ref_r.x) * inv_dt2);
+  atomicAdd(&virial[1], static_cast<double>(ref_r.x) * static_cast<double>(ref_r.y) * inv_dt2);
+  atomicAdd(&virial[2], static_cast<double>(ref_r.x) * static_cast<double>(ref_r.z) * inv_dt2);
+  atomicAdd(&virial[3], static_cast<double>(ref_r.y) * static_cast<double>(ref_r.x) * inv_dt2);
+  atomicAdd(&virial[4], static_cast<double>(ref_r.y) * static_cast<double>(ref_r.y) * inv_dt2);
+  atomicAdd(&virial[5], static_cast<double>(ref_r.y) * static_cast<double>(ref_r.z) * inv_dt2);
+  atomicAdd(&virial[6], static_cast<double>(ref_r.z) * static_cast<double>(ref_r.x) * inv_dt2);
+  atomicAdd(&virial[7], static_cast<double>(ref_r.z) * static_cast<double>(ref_r.y) * inv_dt2);
+  atomicAdd(&virial[8], static_cast<double>(ref_r.z) * static_cast<double>(ref_r.z) * inv_dt2);
 
   ref_r *= lambda;
-  const double3 di = ref_r * inv_mass[i];
-  const double3 dj = ref_r * inv_mass[j];
+  const FPL3_TYPE di = ref_r * inv_mass[i];
+  const FPL3_TYPE dj = ref_r * inv_mass[j];
   atomicAdd(&delta[i].x, di.x);
   atomicAdd(&delta[i].y, di.y);
   atomicAdd(&delta[i].z, di.z);
@@ -292,29 +297,29 @@ __global__ void shake_solute_round_kernel(
 }
 
 __global__ void shake_solute_apply_kernel(
-    double3* __restrict__ pos,
-    double3* __restrict__ delta,
+    FPL3_TYPE* __restrict__ pos,
+    FPL3_TYPE* __restrict__ delta,
     unsigned num_atoms) {
   const unsigned a = blockIdx.x * blockDim.x + threadIdx.x;
   if (a >= num_atoms) return;
   pos[a] += delta[a];
-  delta[a] = double3{0.0, 0.0, 0.0};
+  delta[a] = make_FPL3(FPL_TYPE(0), FPL_TYPE(0), FPL_TYPE(0));
 }
 
 } // namespace gpu
 
 void gpu::launch_shake_solute_round(
-    const double3* pos,
-    const double3* old_pos,
+    const FPL3_TYPE* pos,
+    const FPL3_TYPE* old_pos,
     const gpu::ShakeConstraint* constraints,
     unsigned num_constraints,
-    const double* inv_mass,
-    double tolerance,
+    const FPL_TYPE* inv_mass,
+    FPL_TYPE tolerance,
     math::boundary_enum boundary,
     math::Box box,
-    double dt2,
-    double3* delta,
-    double3* constraint_force,
+    FPL_TYPE dt2,
+    FPL3_TYPE* delta,
+    FPL3_TYPE* constraint_force,
     double* virial,
     int* changed_flag,
     int* error_flag,
@@ -350,8 +355,8 @@ void gpu::launch_shake_solute_round(
 }
 
 void gpu::launch_shake_solute_apply(
-    double3* pos,
-    double3* delta,
+    FPL3_TYPE* pos,
+    FPL3_TYPE* delta,
     unsigned num_atoms,
     cudaStream_t stream) {
 
