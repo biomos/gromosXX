@@ -33,6 +33,12 @@
  * iteration structure as the CPU, just executed by one GPU thread per
  * constraint per round instead of a CPU loop, and *is* bit-comparable
  * to the CPU per constraint (up to floating-point non-associativity).
+ * The round count (`lincs_order`) is a fixed run parameter, not a
+ * data-dependent convergence check, so `CUDA_Lincs::apply()` needs no
+ * host-side synchronization between rounds at all -- every kernel for
+ * every group is launched back-to-back on one stream, one single
+ * `cudaDeviceSynchronize()` at the very end -- unlike solute SHAKE's
+ * per-iteration host round-trip (cuda_shake.cc).
  *
  * A single "group" covers either the whole solute system (one
  * instance, `num_instances = 1`) or one solvent type (`num_instances =
@@ -47,14 +53,21 @@
  * coupling degree is small, so this trades a few redundant dot
  * products for a much smaller amount of GPU memory traffic overall.
  *
- * Deliberately uses plain `double`/`double3` throughout, not
- * `FPL_TYPE`/`FPL3_TYPE` -- same rationale as shake_kernels.h/
- * settle_kernels.h.
+ * Uses `FPL_TYPE`/`FPL3_TYPE` (gpu/cuda/memory/precision.h), matching
+ * the rest of the GPU pipeline and the sibling SHAKE/M-SHAKE kernels
+ * (converted for the same reason: this consumer GPU throttles FP64
+ * throughput to a small fraction of FP32, and LINCS -- unlike solute
+ * SHAKE -- has no per-iteration host sync to dominate its cost
+ * instead, so precision genuinely is the lever here). No virial/
+ * constraint_force output at all -- matches algorithm::Lincs (CPU),
+ * which doesn't compute either either (a pre-existing GROMOS
+ * limitation, not introduced by this port).
  */
 
 #pragma once
 
 #include "gpu/cuda/memory/cuvector.h"
+#include "gpu/cuda/memory/precision.h"
 #include "math/gmath.h"
 
 namespace gpu {
@@ -67,10 +80,10 @@ namespace gpu {
   struct LincsConstraint {
     unsigned i;
     unsigned j;
-    double r0;
-    double sdiag;
-    double mass_i;
-    double mass_j;
+    FPL_TYPE r0;
+    FPL_TYPE sdiag;
+    FPL_TYPE mass_i;
+    FPL_TYPE mass_j;
   };
 
   /**
@@ -80,7 +93,7 @@ namespace gpu {
    * `num_instances * num_constr_per_instance`.
    */
   void launch_lincs_compute_b(
-      const double3* old_pos,
+      const FPL3_TYPE* old_pos,
       const gpu::LincsConstraint* constraints,
       unsigned num_constr_per_instance,
       unsigned num_instances,
@@ -88,7 +101,7 @@ namespace gpu {
       unsigned atom_stride_per_instance,
       math::boundary_enum boundary,
       math::Box box,
-      double3* B,
+      FPL3_TYPE* B,
       cudaStream_t stream = 0);
 
   /**
@@ -98,7 +111,7 @@ namespace gpu {
    * per (instance, local constraint).
    */
   void launch_lincs_init_rhs(
-      const double3* pos,
+      const FPL3_TYPE* pos,
       const gpu::LincsConstraint* constraints,
       unsigned num_constr_per_instance,
       unsigned num_instances,
@@ -106,9 +119,9 @@ namespace gpu {
       unsigned atom_stride_per_instance,
       math::boundary_enum boundary,
       math::Box box,
-      const double3* B,
-      double* rhs,
-      double* sol,
+      const FPL3_TYPE* B,
+      FPL_TYPE* rhs,
+      FPL_TYPE* sol,
       cudaStream_t stream = 0);
 
   /**
@@ -120,7 +133,7 @@ namespace gpu {
    * (instance, local constraint).
    */
   void launch_lincs_rotation_rhs(
-      const double3* pos,
+      const FPL3_TYPE* pos,
       const gpu::LincsConstraint* constraints,
       unsigned num_constr_per_instance,
       unsigned num_instances,
@@ -128,8 +141,8 @@ namespace gpu {
       unsigned atom_stride_per_instance,
       math::boundary_enum boundary,
       math::Box box,
-      double* rhs,
-      double* sol,
+      FPL_TYPE* rhs,
+      FPL_TYPE* sol,
       int* rotation_count,
       cudaStream_t stream = 0);
 
@@ -144,15 +157,15 @@ namespace gpu {
    * `num_constr_per_instance + 1`.
    */
   void launch_lincs_round(
-      const double3* B,
+      const FPL3_TYPE* B,
       const unsigned* coupled_offset,
       const unsigned* coupled_index,
-      const double* coupled_coef,
+      const FPL_TYPE* coupled_coef,
       unsigned num_constr_per_instance,
       unsigned num_instances,
-      const double* rhs_in,
-      double* rhs_out,
-      double* sol,
+      const FPL_TYPE* rhs_in,
+      FPL_TYPE* rhs_out,
+      FPL_TYPE* sol,
       cudaStream_t stream = 0);
 
   /**
@@ -162,10 +175,10 @@ namespace gpu {
    * an atom (a constrained chain) write the same position concurrently.
    */
   void launch_lincs_apply(
-      double3* pos,
+      FPL3_TYPE* pos,
       const gpu::LincsConstraint* constraints,
-      const double3* B,
-      const double* sol,
+      const FPL3_TYPE* B,
+      const FPL_TYPE* sol,
       unsigned num_constr_per_instance,
       unsigned num_instances,
       unsigned first_atom,

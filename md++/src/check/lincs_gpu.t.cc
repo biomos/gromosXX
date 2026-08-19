@@ -184,8 +184,17 @@ namespace {
     // LINCS's own recursion is already Jacobi-shaped (see
     // lincs_kernels.h), so this port is bit-comparable to the CPU per
     // constraint, unlike solute SHAKE's Jacobi-vs-Gauss-Seidel
-    // reformulation -- a tight relative tolerance is appropriate.
+    // reformulation -- a tight relative tolerance is appropriate for
+    // position. GPU now computes in FPL_TYPE (float under FP_PRECISION
+    // 1/2, see lincs_kernels.cu) -- position itself still agrees with
+    // CPU (double) at this tolerance, but vel = (pos - old_pos) / dt
+    // amplifies ordinary float32-vs-double rounding noise by ~1/dt
+    // (same phenomenon as shake_gpu.t.cc/m_shake_gpu.t.cc's
+    // constraint_force, just a smaller amplification factor since
+    // there's no second division by dt): verified via max observed
+    // diff (~1e-4) that this is exactly that, not a bug.
     const double tol = 1e-6;
+    const double vel_atol = 2e-4, vel_rtol = 5e-4;
     int errors = 0;
 
     const unsigned num_atoms = static_cast<unsigned>(cpu_s.topo.num_atoms());
@@ -199,8 +208,7 @@ namespace {
         ++errors;
       }
       const math::Vec vel_diff = cpu_s.conf.current().vel(i) - gpu_s.conf.current().vel(i);
-      const double vel_scale = std::max(1.0, math::abs(cpu_s.conf.current().vel(i)));
-      if (math::abs(vel_diff) > tol * vel_scale) {
+      if (math::abs(vel_diff) > vel_atol + vel_rtol * math::abs(cpu_s.conf.current().vel(i))) {
         std::cerr << label << ": vel mismatch at atom " << i
                   << ": cpu=" << math::v2s(cpu_s.conf.current().vel(i))
                   << " gpu=" << math::v2s(gpu_s.conf.current().vel(i)) << std::endl;

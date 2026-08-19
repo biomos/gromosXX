@@ -44,6 +44,7 @@
 #pragma once
 
 #include "gpu/cuda/memory/cuvector.h"
+#include "gpu/cuda/memory/precision.h"
 #include "gpu/cuda/algorithm/constraints/lincs_kernels.h"
 
 namespace algorithm {
@@ -75,7 +76,7 @@ namespace algorithm {
       gpu::cuvector<gpu::LincsConstraint> constraints;   // per-type, size num_constr_per_instance
       gpu::cuvector<unsigned> coupled_offset;            // per-type CSR, size num_constr_per_instance+1
       gpu::cuvector<unsigned> coupled_index;             // per-type CSR
-      gpu::cuvector<double> coupled_coef;                // per-type CSR
+      gpu::cuvector<FPL_TYPE> coupled_coef;              // per-type CSR
       unsigned num_constr_per_instance = 0;
       unsigned num_instances = 0;
       unsigned first_atom = 0;
@@ -83,13 +84,13 @@ namespace algorithm {
       int lincs_order = 0;
 
       // per-call scratch, sized num_instances*num_constr_per_instance
-      gpu::cuvector<double3> B;
-      gpu::cuvector<double> rhs_a;
-      gpu::cuvector<double> rhs_b;
-      gpu::cuvector<double> sol;
+      gpu::cuvector<FPL3_TYPE> B;
+      gpu::cuvector<FPL_TYPE> rhs_a;
+      gpu::cuvector<FPL_TYPE> rhs_b;
+      gpu::cuvector<FPL_TYPE> sol;
     };
 
-    void run_group(Group & g, double3* pos, const double3* old_pos,
+    void run_group(Group & g, FPL3_TYPE* pos, const FPL3_TYPE* old_pos,
                    math::boundary_enum boundary, math::Box box);
 
     std::set<unsigned int> m_constrained_atoms;
@@ -97,8 +98,8 @@ namespace algorithm {
     Group m_solute_group;
     std::vector<Group> m_solvent_groups;
 
-    gpu::cuvector<double3> m_pos;
-    gpu::cuvector<double3> m_old_pos;
+    gpu::cuvector<FPL3_TYPE> m_pos;
+    gpu::cuvector<FPL3_TYPE> m_old_pos;
     gpu::cuvector<int> m_rotation_count;
 
     bool m_initialized = false;

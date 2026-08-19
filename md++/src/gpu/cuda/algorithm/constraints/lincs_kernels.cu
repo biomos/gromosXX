@@ -27,6 +27,7 @@
 
 #include "gpu/cuda/memory/types.h"
 #include "gpu/cuda/memory/cuvector.h"
+#include "gpu/cuda/memory/precision.h"
 #include "gpu/cuda/math/periodicity.h"
 #include "math/gmath.h"
 
@@ -36,14 +37,14 @@ namespace gpu {
 
 template <math::boundary_enum BOUNDARY>
 __global__ void lincs_compute_b_kernel(
-    const double3* __restrict__ old_pos,
+    const FPL3_TYPE* __restrict__ old_pos,
     const gpu::LincsConstraint* __restrict__ constraints,
     unsigned num_constr_per_instance,
     unsigned num_instances,
     unsigned first_atom,
     unsigned atom_stride_per_instance,
     gpu::Periodicity<BOUNDARY> periodicity,
-    double3* __restrict__ B) {
+    FPL3_TYPE* __restrict__ B) {
 
   const unsigned idx = blockIdx.x * blockDim.x + threadIdx.x;
   const unsigned total = num_instances * num_constr_per_instance;
@@ -55,23 +56,23 @@ __global__ void lincs_compute_b_kernel(
   const unsigned ai = base + constraints[local_c].i;
   const unsigned aj = base + constraints[local_c].j;
 
-  const double3 ref_r = periodicity.nearest_image(old_pos[ai], old_pos[aj]);
-  const double norm = sqrt(dot(ref_r, ref_r));
+  const FPL3_TYPE ref_r = periodicity.nearest_image(old_pos[ai], old_pos[aj]);
+  const FPL_TYPE norm = sqrt(dot(ref_r, ref_r));
   B[idx] = ref_r / norm;
 }
 
 template <math::boundary_enum BOUNDARY>
 __global__ void lincs_init_rhs_kernel(
-    const double3* __restrict__ pos,
+    const FPL3_TYPE* __restrict__ pos,
     const gpu::LincsConstraint* __restrict__ constraints,
     unsigned num_constr_per_instance,
     unsigned num_instances,
     unsigned first_atom,
     unsigned atom_stride_per_instance,
     gpu::Periodicity<BOUNDARY> periodicity,
-    const double3* __restrict__ B,
-    double* __restrict__ rhs,
-    double* __restrict__ sol) {
+    const FPL3_TYPE* __restrict__ B,
+    FPL_TYPE* __restrict__ rhs,
+    FPL_TYPE* __restrict__ sol) {
 
   const unsigned idx = blockIdx.x * blockDim.x + threadIdx.x;
   const unsigned total = num_instances * num_constr_per_instance;
@@ -83,23 +84,23 @@ __global__ void lincs_init_rhs_kernel(
   const unsigned ai = base + constraints[local_c].i;
   const unsigned aj = base + constraints[local_c].j;
 
-  const double3 r = periodicity.nearest_image(pos[ai], pos[aj]);
-  const double val = constraints[local_c].sdiag * (dot(B[idx], r) - constraints[local_c].r0);
+  const FPL3_TYPE r = periodicity.nearest_image(pos[ai], pos[aj]);
+  const FPL_TYPE val = constraints[local_c].sdiag * (dot(B[idx], r) - constraints[local_c].r0);
   rhs[idx] = val;
   sol[idx] = val;
 }
 
 template <math::boundary_enum BOUNDARY>
 __global__ void lincs_rotation_rhs_kernel(
-    const double3* __restrict__ pos,
+    const FPL3_TYPE* __restrict__ pos,
     const gpu::LincsConstraint* __restrict__ constraints,
     unsigned num_constr_per_instance,
     unsigned num_instances,
     unsigned first_atom,
     unsigned atom_stride_per_instance,
     gpu::Periodicity<BOUNDARY> periodicity,
-    double* __restrict__ rhs,
-    double* __restrict__ sol,
+    FPL_TYPE* __restrict__ rhs,
+    FPL_TYPE* __restrict__ sol,
     int* __restrict__ rotation_count) {
 
   const unsigned idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -112,30 +113,30 @@ __global__ void lincs_rotation_rhs_kernel(
   const unsigned ai = base + constraints[local_c].i;
   const unsigned aj = base + constraints[local_c].j;
 
-  const double3 r = periodicity.nearest_image(pos[ai], pos[aj]);
-  const double r0 = constraints[local_c].r0;
-  const double diff = 2.0 * r0 * r0 - dot(r, r);
-  double p = 0.0;
-  if (diff > 0.0) {
+  const FPL3_TYPE r = periodicity.nearest_image(pos[ai], pos[aj]);
+  const FPL_TYPE r0 = constraints[local_c].r0;
+  const FPL_TYPE diff = FPL_TYPE(2) * r0 * r0 - dot(r, r);
+  FPL_TYPE p = FPL_TYPE(0);
+  if (diff > FPL_TYPE(0)) {
     p = sqrt(diff);
   } else {
     atomicAdd(rotation_count, 1);
   }
-  const double val = constraints[local_c].sdiag * (r0 - p);
+  const FPL_TYPE val = constraints[local_c].sdiag * (r0 - p);
   rhs[idx] = val;
   sol[idx] = val;
 }
 
 __global__ void lincs_round_kernel(
-    const double3* __restrict__ B,
+    const FPL3_TYPE* __restrict__ B,
     const unsigned* __restrict__ coupled_offset,
     const unsigned* __restrict__ coupled_index,
-    const double* __restrict__ coupled_coef,
+    const FPL_TYPE* __restrict__ coupled_coef,
     unsigned num_constr_per_instance,
     unsigned num_instances,
-    const double* __restrict__ rhs_in,
-    double* __restrict__ rhs_out,
-    double* __restrict__ sol) {
+    const FPL_TYPE* __restrict__ rhs_in,
+    FPL_TYPE* __restrict__ rhs_out,
+    FPL_TYPE* __restrict__ sol) {
 
   const unsigned idx = blockIdx.x * blockDim.x + threadIdx.x;
   const unsigned total = num_instances * num_constr_per_instance;
@@ -143,9 +144,9 @@ __global__ void lincs_round_kernel(
 
   const unsigned instance = idx / num_constr_per_instance;
   const unsigned local_c = idx % num_constr_per_instance;
-  const double3 Bi = B[idx];
+  const FPL3_TYPE Bi = B[idx];
 
-  double acc = 0.0;
+  FPL_TYPE acc = FPL_TYPE(0);
   const unsigned start = coupled_offset[local_c];
   const unsigned end = coupled_offset[local_c + 1];
   for (unsigned k = start; k < end; ++k) {
@@ -157,10 +158,10 @@ __global__ void lincs_round_kernel(
 }
 
 __global__ void lincs_apply_kernel(
-    double3* __restrict__ pos,
+    FPL3_TYPE* __restrict__ pos,
     const gpu::LincsConstraint* __restrict__ constraints,
-    const double3* __restrict__ B,
-    const double* __restrict__ sol,
+    const FPL3_TYPE* __restrict__ B,
+    const FPL_TYPE* __restrict__ sol,
     unsigned num_constr_per_instance,
     unsigned num_instances,
     unsigned first_atom,
@@ -176,10 +177,10 @@ __global__ void lincs_apply_kernel(
   const unsigned ai = base + constraints[local_c].i;
   const unsigned aj = base + constraints[local_c].j;
 
-  const double3 Bi = B[idx];
-  const double coeff = constraints[local_c].sdiag * sol[idx];
-  const double3 corr_i = Bi / constraints[local_c].mass_i * coeff;
-  const double3 corr_j = Bi / constraints[local_c].mass_j * coeff;
+  const FPL3_TYPE Bi = B[idx];
+  const FPL_TYPE coeff = constraints[local_c].sdiag * sol[idx];
+  const FPL3_TYPE corr_i = Bi / constraints[local_c].mass_i * coeff;
+  const FPL3_TYPE corr_j = Bi / constraints[local_c].mass_j * coeff;
 
   atomicAdd(&pos[ai].x, -corr_i.x);
   atomicAdd(&pos[ai].y, -corr_i.y);
@@ -199,7 +200,7 @@ namespace {
 }
 
 void gpu::launch_lincs_compute_b(
-    const double3* old_pos,
+    const FPL3_TYPE* old_pos,
     const gpu::LincsConstraint* constraints,
     unsigned num_constr_per_instance,
     unsigned num_instances,
@@ -207,7 +208,7 @@ void gpu::launch_lincs_compute_b(
     unsigned atom_stride_per_instance,
     math::boundary_enum boundary,
     math::Box box,
-    double3* B,
+    FPL3_TYPE* B,
     cudaStream_t stream) {
 
   const unsigned total = num_instances * num_constr_per_instance;
@@ -236,7 +237,7 @@ void gpu::launch_lincs_compute_b(
 }
 
 void gpu::launch_lincs_init_rhs(
-    const double3* pos,
+    const FPL3_TYPE* pos,
     const gpu::LincsConstraint* constraints,
     unsigned num_constr_per_instance,
     unsigned num_instances,
@@ -244,9 +245,9 @@ void gpu::launch_lincs_init_rhs(
     unsigned atom_stride_per_instance,
     math::boundary_enum boundary,
     math::Box box,
-    const double3* B,
-    double* rhs,
-    double* sol,
+    const FPL3_TYPE* B,
+    FPL_TYPE* rhs,
+    FPL_TYPE* sol,
     cudaStream_t stream) {
 
   const unsigned total = num_instances * num_constr_per_instance;
@@ -275,7 +276,7 @@ void gpu::launch_lincs_init_rhs(
 }
 
 void gpu::launch_lincs_rotation_rhs(
-    const double3* pos,
+    const FPL3_TYPE* pos,
     const gpu::LincsConstraint* constraints,
     unsigned num_constr_per_instance,
     unsigned num_instances,
@@ -283,8 +284,8 @@ void gpu::launch_lincs_rotation_rhs(
     unsigned atom_stride_per_instance,
     math::boundary_enum boundary,
     math::Box box,
-    double* rhs,
-    double* sol,
+    FPL_TYPE* rhs,
+    FPL_TYPE* sol,
     int* rotation_count,
     cudaStream_t stream) {
 
@@ -314,15 +315,15 @@ void gpu::launch_lincs_rotation_rhs(
 }
 
 void gpu::launch_lincs_round(
-    const double3* B,
+    const FPL3_TYPE* B,
     const unsigned* coupled_offset,
     const unsigned* coupled_index,
-    const double* coupled_coef,
+    const FPL_TYPE* coupled_coef,
     unsigned num_constr_per_instance,
     unsigned num_instances,
-    const double* rhs_in,
-    double* rhs_out,
-    double* sol,
+    const FPL_TYPE* rhs_in,
+    FPL_TYPE* rhs_out,
+    FPL_TYPE* sol,
     cudaStream_t stream) {
 
   const unsigned total = num_instances * num_constr_per_instance;
@@ -334,10 +335,10 @@ void gpu::launch_lincs_round(
 }
 
 void gpu::launch_lincs_apply(
-    double3* pos,
+    FPL3_TYPE* pos,
     const gpu::LincsConstraint* constraints,
-    const double3* B,
-    const double* sol,
+    const FPL3_TYPE* B,
+    const FPL_TYPE* sol,
     unsigned num_constr_per_instance,
     unsigned num_instances,
     unsigned first_atom,

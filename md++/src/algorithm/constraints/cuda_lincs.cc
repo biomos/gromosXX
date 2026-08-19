@@ -66,7 +66,7 @@ namespace algorithm {
                           gpu::cuvector<gpu::LincsConstraint> & constraints,
                           gpu::cuvector<unsigned> & coupled_offset,
                           gpu::cuvector<unsigned> & coupled_index,
-                          gpu::cuvector<double> & coupled_coef,
+                          gpu::cuvector<FPL_TYPE> & coupled_coef,
                           unsigned & num_constr_per_instance) {
     const unsigned num_constr = static_cast<unsigned>(constr.size());
     num_constr_per_instance = num_constr;
@@ -75,8 +75,10 @@ namespace algorithm {
     for (unsigned i = 0; i < num_constr; ++i) {
       const double r0 = topo.bond_types_harm()[constr[i].type].r0;
       constraints[i] = gpu::LincsConstraint{
-          constr[i].i, constr[i].j, r0, lincs.sdiag[i],
-          topo.mass()(constr[i].i + first_atom), topo.mass()(constr[i].j + first_atom)};
+          constr[i].i, constr[i].j,
+          static_cast<FPL_TYPE>(r0), static_cast<FPL_TYPE>(lincs.sdiag[i]),
+          static_cast<FPL_TYPE>(topo.mass()(constr[i].i + first_atom)),
+          static_cast<FPL_TYPE>(topo.mass()(constr[i].j + first_atom))};
     }
 
     // Flatten lincs.coupled_constr[i]/coef[i] (per-constraint
@@ -92,7 +94,7 @@ namespace algorithm {
       coupled_offset[i] = pos;
       for (unsigned n = 0; n < lincs.coupled_constr[i].size(); ++n) {
         coupled_index[pos] = lincs.coupled_constr[i][n];
-        coupled_coef[pos] = lincs.coef[i][n];
+        coupled_coef[pos] = static_cast<FPL_TYPE>(lincs.coef[i][n]);
         ++pos;
       }
     }
@@ -214,7 +216,7 @@ int algorithm::CUDA_Lincs::init(
 }
 
 void algorithm::CUDA_Lincs::run_group(
-    Group & g, double3* pos, const double3* old_pos,
+    Group & g, FPL3_TYPE* pos, const FPL3_TYPE* old_pos,
     math::boundary_enum boundary, math::Box box) {
 
   if (g.num_instances == 0 || g.num_constr_per_instance == 0) return;
@@ -226,8 +228,8 @@ void algorithm::CUDA_Lincs::run_group(
   // rotational-lengthening correction below -- same structure, just a
   // freshly recomputed starting rhs/sol each time.
   auto run_rounds = [&]() {
-    double * rhs_in = g.rhs_a.data();
-    double * rhs_out = g.rhs_b.data();
+    FPL_TYPE * rhs_in = g.rhs_a.data();
+    FPL_TYPE * rhs_out = g.rhs_b.data();
     for (int r = 0; r < g.lincs_order; ++r) {
       gpu::launch_lincs_round(g.B.data(), g.coupled_offset.data(), g.coupled_index.data(),
                                g.coupled_coef.data(), g.num_constr_per_instance,
@@ -272,10 +274,10 @@ int algorithm::CUDA_Lincs::apply(
   }
 
   const unsigned num_atoms = static_cast<unsigned>(topo.num_atoms());
-  // Bulk memcpy, not a per-atom struct-rebuild loop -- math::Vec and
-  // double3 are layout-identical (gpu/cuda/memory/vec3_convert.h).
-  gpu::vec3_upload(m_pos.data(), &conf.current().pos(0), num_atoms);
-  gpu::vec3_upload(m_old_pos.data(), &conf.old().pos(0), num_atoms);
+  // FPL_TYPE-narrowing bulk upload (float under FP_PRECISION 1/2) --
+  // see vec3_convert.h's doc comment for why this can't be a memcpy.
+  gpu::vec3_upload_fpl(m_pos.data(), &conf.current().pos(0), num_atoms);
+  gpu::vec3_upload_fpl(m_old_pos.data(), &conf.old().pos(0), num_atoms);
   m_rotation_count[0] = 0;
 
   if (m_solute_active) {
@@ -286,7 +288,7 @@ int algorithm::CUDA_Lincs::apply(
   }
   cudaDeviceSynchronize();
 
-  gpu::vec3_download(&conf.current().pos(0), m_pos.data(), num_atoms);
+  gpu::vec3_download_fpl(&conf.current().pos(0), m_pos.data(), num_atoms);
 
   if (m_rotation_count[0] > 0) {
     std::cout << "LINCS:\ttoo much rotation in " << m_rotation_count[0] << " cases!\n";
