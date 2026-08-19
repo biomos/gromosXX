@@ -33,6 +33,23 @@
  * Jacobi-shaped (unlike SHAKE), so this port needs no algorithmic
  * reformulation to parallelize, unlike solute SHAKE.
  *
+ * GPU-resident, same pattern as CUDA_M_Shake: reads/writes positions
+ * through sim.cuda().configuration_view()/mark_gpu_dirty() instead of
+ * a private upload/download every apply() call, runs every group's
+ * kernels on its own dedicated stream with no cudaDeviceSynchronize()
+ * at all, and reports status (including the "too much rotation"
+ * diagnostic counter) through the shared deferred constraint-error-
+ * flags buffer instead of an immediate host check. Since this and
+ * CUDA_M_Shake touch disjoint atom ranges and neither syncs before
+ * returning, they can run genuinely concurrently on this GPU instead
+ * of serializing through a host round-trip between them -- the actual
+ * point of giving each its own stream.
+ *
+ * No virial_tensor/constraint_force output at all (a pre-existing CPU
+ * Lincs limitation, not introduced here) -- unlike CUDA_M_Shake, there
+ * is no multi-contributor-virial question to defer; this class is
+ * fully GPU-resident with nothing left on the old private-buffer path.
+ *
  * v1 scope, hard-errored in init() rather than silently producing a
  * wrong/no-op result: MPI (`sim.mpi_enabled()`) and
  * `start.shake_pos`/`start.shake_vel` (the CPU class's own initial-
@@ -46,13 +63,14 @@
 #include "gpu/cuda/memory/cuvector.h"
 #include "gpu/cuda/memory/precision.h"
 #include "gpu/cuda/algorithm/constraints/lincs_kernels.h"
+#include "gpu/cuda/algorithm/constraints/velocity_from_delta_kernels.h"
 
 namespace algorithm {
 
   class CUDA_Lincs : public Algorithm {
   public:
     CUDA_Lincs() : Algorithm("CUDA_Lincs") {}
-    virtual ~CUDA_Lincs() {}
+    virtual ~CUDA_Lincs();
 
     virtual int init(topology::Topology & topo,
                       configuration::Configuration & conf,
@@ -65,6 +83,10 @@ namespace algorithm {
                        simulation::Simulation & sim);
 
     std::set<unsigned int> & constrained_atoms() { return m_constrained_atoms; }
+
+    // Owns its own GPU-mirror freshness -- same pattern as
+    // CUDA_M_Shake/Leap_Frog_Velocity<gpuBackend>.
+    virtual unsigned gpu_mirror_touches() const { return 0; }
 
   private:
     /**
@@ -91,16 +113,24 @@ namespace algorithm {
     };
 
     void run_group(Group & g, FPL3_TYPE* pos, const FPL3_TYPE* old_pos,
-                   math::boundary_enum boundary, math::Box box);
+                   math::boundary_enum boundary, math::Box box,
+                   int * rotation_count_slot, cudaStream_t stream);
 
     std::set<unsigned int> m_constrained_atoms;
     bool m_solute_active = false;
     Group m_solute_group;
     std::vector<Group> m_solvent_groups;
 
-    gpu::cuvector<FPL3_TYPE> m_pos;
-    gpu::cuvector<FPL3_TYPE> m_old_pos;
-    gpu::cuvector<int> m_rotation_count;
+    // constrained_atoms(), uploaded once in init(), for the shared
+    // on-device velocity_from_delta kernel -- one flat list covering
+    // solute+solvent together (constrained_atoms() already merges
+    // both), matching CUDA_M_Shake's approach.
+    gpu::cuvector<unsigned> m_constrained_atoms_dev;
+
+    // Own stream: lets this run concurrently with CUDA_M_Shake (or
+    // anything else) instead of implicitly serializing on the default
+    // stream.
+    cudaStream_t m_stream = 0;
 
     bool m_initialized = false;
   };

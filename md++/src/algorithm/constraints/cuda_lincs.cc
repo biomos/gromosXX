@@ -39,7 +39,8 @@
 #include "../../util/error.h"
 #include "../../util/debug.h"
 
-#include "gpu/cuda/memory/vec3_convert.h"
+#include "gpu/cuda/manager/cuda_manager.h"
+#include "gpu/constraint_error_slots.h"
 #include "lincs.h"
 #include "cuda_lincs.h"
 
@@ -205,19 +206,27 @@ int algorithm::CUDA_Lincs::init(
     }
   }
 
-  const unsigned num_atoms = static_cast<unsigned>(topo.num_atoms());
-  m_pos.resize(num_atoms);
-  m_old_pos.resize(num_atoms);
-  m_rotation_count.resize(1);
+  m_constrained_atoms_dev.resize(constrained_atoms().size());
+  {
+    unsigned idx = 0;
+    for (unsigned int a : constrained_atoms()) m_constrained_atoms_dev[idx++] = a;
+  }
+
+  if (m_stream == 0) cudaStreamCreate(&m_stream);
 
   m_initialized = true;
   if (!quiet) os << "END\n";
   return 0;
 }
 
+algorithm::CUDA_Lincs::~CUDA_Lincs() {
+  if (m_stream) cudaStreamDestroy(m_stream);
+}
+
 void algorithm::CUDA_Lincs::run_group(
     Group & g, FPL3_TYPE* pos, const FPL3_TYPE* old_pos,
-    math::boundary_enum boundary, math::Box box) {
+    math::boundary_enum boundary, math::Box box,
+    int * rotation_count_slot, cudaStream_t stream) {
 
   if (g.num_instances == 0 || g.num_constr_per_instance == 0) return;
 
@@ -233,32 +242,32 @@ void algorithm::CUDA_Lincs::run_group(
     for (int r = 0; r < g.lincs_order; ++r) {
       gpu::launch_lincs_round(g.B.data(), g.coupled_offset.data(), g.coupled_index.data(),
                                g.coupled_coef.data(), g.num_constr_per_instance,
-                               g.num_instances, rhs_in, rhs_out, g.sol.data());
+                               g.num_instances, rhs_in, rhs_out, g.sol.data(), stream);
       std::swap(rhs_in, rhs_out);
     }
   };
 
   gpu::launch_lincs_compute_b(old_pos, g.constraints.data(), g.num_constr_per_instance,
                                g.num_instances, g.first_atom, g.atom_stride_per_instance,
-                               boundary, box, g.B.data());
+                               boundary, box, g.B.data(), stream);
   gpu::launch_lincs_init_rhs(pos, g.constraints.data(), g.num_constr_per_instance,
                               g.num_instances, g.first_atom, g.atom_stride_per_instance,
-                              boundary, box, g.B.data(), g.rhs_a.data(), g.sol.data());
+                              boundary, box, g.B.data(), g.rhs_a.data(), g.sol.data(), stream);
   run_rounds();
   gpu::launch_lincs_apply(pos, g.constraints.data(), g.B.data(), g.sol.data(),
                            g.num_constr_per_instance, g.num_instances,
-                           g.first_atom, g.atom_stride_per_instance);
+                           g.first_atom, g.atom_stride_per_instance, stream);
 
   // rotational-lengthening correction, second pass -- fresh rhs/sol
   // from the just-updated positions, same round structure again.
   gpu::launch_lincs_rotation_rhs(pos, g.constraints.data(), g.num_constr_per_instance,
                                    g.num_instances, g.first_atom, g.atom_stride_per_instance,
                                    boundary, box, g.rhs_a.data(), g.sol.data(),
-                                   m_rotation_count.data());
+                                   rotation_count_slot, stream);
   run_rounds();
   gpu::launch_lincs_apply(pos, g.constraints.data(), g.B.data(), g.sol.data(),
                            g.num_constr_per_instance, g.num_instances,
-                           g.first_atom, g.atom_stride_per_instance);
+                           g.first_atom, g.atom_stride_per_instance, stream);
 }
 
 int algorithm::CUDA_Lincs::apply(
@@ -273,34 +282,42 @@ int algorithm::CUDA_Lincs::apply(
     return 1;
   }
 
-  const unsigned num_atoms = static_cast<unsigned>(topo.num_atoms());
-  // FPL_TYPE-narrowing bulk upload (float under FP_PRECISION 1/2) --
-  // see vec3_convert.h's doc comment for why this can't be a memcpy.
-  gpu::vec3_upload_fpl(m_pos.data(), &conf.current().pos(0), num_atoms);
-  gpu::vec3_upload_fpl(m_old_pos.data(), &conf.old().pos(0), num_atoms);
-  m_rotation_count[0] = 0;
+  // GPU-resident: reads/writes positions through the shared mirror
+  // instead of this algorithm's own private upload/download every
+  // call. Everything below runs on m_stream with no
+  // cudaDeviceSynchronize() at all -- genuinely concurrent with
+  // CUDA_M_Shake's solvent pass on its own stream, disjoint atom
+  // ranges, no data hazard.
+  gpu::Configuration::View view = sim.cuda().configuration_view(conf, gpu::MIRROR_POS);
+
+  int * rotation_solute = sim.cuda().constraint_error_flag_slot(gpu::ERR_SLOT_LINCS_SOLUTE);
+  int * rotation_solvent = sim.cuda().constraint_error_flag_slot(gpu::ERR_SLOT_LINCS_SOLVENT);
 
   if (m_solute_active) {
-    run_group(m_solute_group, m_pos.data(), m_old_pos.data(), conf.boundary_type, conf.current().box);
+    run_group(m_solute_group, view.current().pos.data(), view.old().pos.data(),
+              conf.boundary_type, conf.current().box, rotation_solute, m_stream);
   }
   for (Group & g : m_solvent_groups) {
-    run_group(g, m_pos.data(), m_old_pos.data(), conf.boundary_type, conf.current().box);
+    run_group(g, view.current().pos.data(), view.old().pos.data(),
+              conf.boundary_type, conf.current().box, rotation_solvent, m_stream);
   }
-  cudaDeviceSynchronize();
 
-  gpu::vec3_download_fpl(&conf.current().pos(0), m_pos.data(), num_atoms);
-
-  if (m_rotation_count[0] > 0) {
-    std::cout << "LINCS:\ttoo much rotation in " << m_rotation_count[0] << " cases!\n";
-  }
+  sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_POS);
 
   if (!sim.param().stochastic.sd && !sim.param().minimise.ntem &&
       !sim.param().analyze.analyze) {
-    for (std::set<unsigned int>::const_iterator it = constrained_atoms().begin(),
-         to = constrained_atoms().end(); it != to; ++it) {
-      conf.current().vel(*it) = (conf.current().pos(*it) - conf.old().pos(*it)) / sim.time_step_size();
-    }
+    gpu::launch_velocity_from_delta(
+        view.current().pos.data(), view.old().pos.data(), view.current().vel.data(),
+        m_constrained_atoms_dev.data(), static_cast<unsigned>(m_constrained_atoms_dev.size()),
+        static_cast<FPL_TYPE>(1.0 / sim.time_step_size()), m_stream);
+    sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_VEL);
   }
+
+  // No cudaDeviceSynchronize(), no rotation-count check here -- both
+  // deferred to the shared buffer, read once at the end of
+  // Algorithm_Sequence::run() (constraint_error_slots.h's doc comment
+  // explains why this is safe -- and for LINCS's rotation counter,
+  // it's purely informational anyway, never fatal).
 
   m_timer.stop();
   return 0;

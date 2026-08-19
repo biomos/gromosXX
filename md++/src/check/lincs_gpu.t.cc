@@ -157,6 +157,15 @@ namespace {
     const int gpu_rc = gpu_lincs.apply(gpu_s.topo, gpu_s.conf, gpu_s.sim);
     flush_messages("lincs apply");
 
+    // CUDA_Lincs is GPU-resident: apply() leaves the corrected
+    // position/velocity on the GPU mirror (mark_gpu_dirty()), relying
+    // on Algorithm_Sequence::run()'s automatic flush_gpu_dirty() before
+    // whatever runs next to publish it back to conf. This test calls
+    // apply() standalone, with no such "next algorithm" -- so it must
+    // publish explicitly itself before inspecting gpu_s.conf, the same
+    // way a real end-of-step eventually would (see m_shake_gpu.t.cc).
+    gpu_s.sim.cuda().sync_configuration_from_device(gpu_s.conf);
+
     if (cpu_rc != 0 || gpu_rc != 0) {
       std::cerr << label << ": apply() failed (cpu_rc=" << cpu_rc
                 << " gpu_rc=" << gpu_rc << ")" << std::endl;
