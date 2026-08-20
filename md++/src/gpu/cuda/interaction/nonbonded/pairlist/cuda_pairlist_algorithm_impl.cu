@@ -770,7 +770,7 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::compute_forces_energies(
     // MIRROR_FORCE) -- that's what keeps this from triggering a coarse
     // resync that would clobber force bonded terms may have already
     // accumulated into the mirror this step.
-    gpu::Configuration::View view = sim.cuda().configuration_view(conf, gpu::MIRROR_POS);
+    gpu::Configuration::View view = sim.cuda().configuration_view(conf, gpu::MIRROR_POS, m_stream);
     const math::CuVArray::View pos = view.current().pos;
     FPL3_TYPE * const mirror_force = view.current().force.data();
     const math::boundary_enum boundary = conf.boundary_type;
@@ -861,7 +861,7 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::compute_forces_energies(
     // m_longrange_storage.force does, just GPU-resident.
     launch_add_force_into(mirror_force, m_longrange_force.data(), num_atoms, m_stream);
 
-    sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_FORCE);
+    sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_FORCE, m_stream);
 
     // Energy/virial are small, private, double-precision buffers (not
     // part of the mirror) so still need a sync to read back, but only on

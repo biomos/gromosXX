@@ -116,29 +116,36 @@ int algorithm::Temperature_Calculation<util::gpuBackend>
   const unsigned num_groups = num_temperature_groups(topo);
   const gpu::cuvector<unsigned> & group_index = atom_temp_group(topo);
 
+  // Own stream: both reductions (new_sums from current().vel, old_sums
+  // from old().vel) queue on it back-to-back with no CPU involvement
+  // between them, then one stream-scoped (not device-wide) wait below.
+  static cudaStream_t stream = 0;
+  if (stream == 0) cudaStreamCreate(&stream);
+
+  // MIRROR_VEL freshness covers current()+old() together (mark_gpu_dirty
+  // always moves both, matching copy_pos_vel_to_device()'s own
+  // granularity) -- now that CudaManager::exchange_mirror_state() keeps
+  // the GPU mirror's current/old halves in lockstep with conf.
+  // exchange_state() (fixed alongside this), view.old().vel here is
+  // already correct GPU-resident data: no algorithm swaps state again
+  // between Leap_Frog_Velocity and this call, so it's exactly what CPU's
+  // conf.old().vel holds too. This replaces what used to be a per-atom
+  // host upload loop (old_vel_gpu) every single call.
   gpu::Configuration::View conf_view =
-      sim.cuda().configuration_view(conf, gpu::MIRROR_VEL);
+      sim.cuda().configuration_view(conf, gpu::MIRROR_VEL, stream);
   const gpu::Topology::View topo_view = sim.cuda().topology_view(topo);
 
   static gpu::cuvector<double> new_sums, old_sums;
   if (new_sums.size() < 5u * num_groups) new_sums.resize(5u * num_groups);
   if (old_sums.size() < 5u * num_groups) old_sums.resize(5u * num_groups);
 
-  // conf.old().vel isn't covered by the mirror-freshness tracker at all
-  // (nothing else needs it there) -- upload it directly, a one-off,
-  // rather than extending the tracker for a value read only here.
-  static math::CuVArray old_vel_gpu;
-  old_vel_gpu.resize(num_atoms);
-  for (unsigned i = 0; i < num_atoms; ++i)
-    old_vel_gpu[i] = static_cast<FPL3_TYPE>(conf.old().vel(i));
-
   gpu::launch_group_velocity_reduce(conf_view.current().vel, topo_view.mass,
                                      group_index.data(), num_atoms, num_groups,
-                                     new_sums.data());
-  gpu::launch_group_velocity_reduce(old_vel_gpu.view(), topo_view.mass,
+                                     new_sums.data(), stream);
+  gpu::launch_group_velocity_reduce(conf_view.old().vel, topo_view.mass,
                                      group_index.data(), num_atoms, num_groups,
-                                     old_sums.data());
-  cudaDeviceSynchronize();
+                                     old_sums.data(), stream);
+  cudaStreamSynchronize(stream);
 
   unsigned ir_bath = 0, com_bath = 0;
 

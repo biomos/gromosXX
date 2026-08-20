@@ -75,6 +75,14 @@ int algorithm::Leap_Frog_Velocity<util::gpuBackend>::apply(
     sim.cuda().exchange_mirror_state(conf);
     conf.current().box = conf.old().box;
 
+    // Own stream: MIRROR_FORCE is typically produced by five different
+    // algorithms (four bonded terms + NonBonded, each on their own
+    // stream) -- passing this stream to configuration_view() below lets
+    // it insert cudaStreamWaitEvent() against all of them instead of
+    // relying on legacy-default-stream implicit ordering.
+    static cudaStream_t stream = 0;
+    if (stream == 0) cudaStreamCreate(&stream);
+
     // MIRROR_BOX deliberately not requested: launch_leap_frog_velocity()
     // takes no box argument at all (confirmed against leap_frog_kernels.h)
     // -- it was dead weight in this mask, and forced configuration_view()'s
@@ -82,7 +90,7 @@ int algorithm::Leap_Frog_Velocity<util::gpuBackend>::apply(
     // covers BOX), silently masking the fact that view.old().force wasn't
     // actually being kept correct any other way (fixed above).
     gpu::Configuration::View view = sim.cuda().configuration_view(
-        conf, gpu::MIRROR_POS | gpu::MIRROR_VEL | gpu::MIRROR_FORCE);
+        conf, gpu::MIRROR_POS | gpu::MIRROR_VEL | gpu::MIRROR_FORCE, stream);
     const gpu::Topology::View topo_view = sim.cuda().topology_view(topo);
 
     const unsigned num_atoms = static_cast<unsigned>(topo.num_atoms());
@@ -90,14 +98,14 @@ int algorithm::Leap_Frog_Velocity<util::gpuBackend>::apply(
 
     gpu::launch_leap_frog_velocity(view.old().vel, view.old().force,
                                     view.current().vel, topo_view.mass,
-                                    num_atoms, dt);
+                                    num_atoms, dt, stream);
 
     // Vouch for the velocity we just wrote: no CPU round trip, and
     // don't let a subsequent configuration_view() read re-download and
     // clobber it with the (now stale) CPU value. gpu_mirror_touches()
     // == 0 keeps Algorithm_Sequence::run()'s default invalidation from
     // erasing this immediately after apply() returns.
-    sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_VEL);
+    sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_VEL, stream);
 
     this->m_timer.stop();
     return 0;
@@ -128,6 +136,14 @@ int algorithm::Leap_Frog_Position<util::gpuBackend>::apply(
     const unsigned num_atoms = static_cast<unsigned>(topo.num_atoms());
     const double   dt        = sim.time_step_size();
 
+    // Own stream: if a GPU-native thermostat (Berendsen/NoseHoover<
+    // gpuBackend>) ran between Velocity and Position and rescaled VEL on
+    // its own stream, this lets configuration_view() wait on that
+    // producer's event instead of relying on legacy-default-stream
+    // ordering.
+    static cudaStream_t stream = 0;
+    if (stream == 0) cudaStreamCreate(&stream);
+
     // POS and VEL are both already marked fresh on the GPU mirror
     // (Velocity's full upload covered POS, and its mark_gpu_dirty()
     // covered VEL) -- this resolves to zero extra transfers, not a
@@ -138,10 +154,10 @@ int algorithm::Leap_Frog_Position<util::gpuBackend>::apply(
     // correctly resync from CPU instead of silently reading stale GPU
     // state.
     gpu::Configuration::View view =
-        sim.cuda().configuration_view(conf, gpu::MIRROR_POS | gpu::MIRROR_VEL);
+        sim.cuda().configuration_view(conf, gpu::MIRROR_POS | gpu::MIRROR_VEL, stream);
 
     gpu::launch_leap_frog_position(view.old().pos, view.current().vel,
-                                    view.current().pos, num_atoms, dt);
+                                    view.current().pos, num_atoms, dt, stream);
 
     // The one sync-back per step: publish the GPU-computed pos/vel to
     // the CPU-authoritative conf, since nothing else yet consumes

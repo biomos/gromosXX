@@ -288,7 +288,7 @@ int algorithm::CUDA_Lincs::apply(
   // cudaDeviceSynchronize() at all -- genuinely concurrent with
   // CUDA_M_Shake's solvent pass on its own stream, disjoint atom
   // ranges, no data hazard.
-  gpu::Configuration::View view = sim.cuda().configuration_view(conf, gpu::MIRROR_POS);
+  gpu::Configuration::View view = sim.cuda().configuration_view(conf, gpu::MIRROR_POS, m_stream);
 
   int * rotation_solute = sim.cuda().constraint_error_flag_slot(gpu::ERR_SLOT_LINCS_SOLUTE);
   int * rotation_solvent = sim.cuda().constraint_error_flag_slot(gpu::ERR_SLOT_LINCS_SOLVENT);
@@ -302,7 +302,7 @@ int algorithm::CUDA_Lincs::apply(
               conf.boundary_type, conf.current().box, rotation_solvent, m_stream);
   }
 
-  sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_POS);
+  sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_POS, m_stream);
 
   if (!sim.param().stochastic.sd && !sim.param().minimise.ntem &&
       !sim.param().analyze.analyze) {
@@ -310,7 +310,7 @@ int algorithm::CUDA_Lincs::apply(
         view.current().pos.data(), view.old().pos.data(), view.current().vel.data(),
         m_constrained_atoms_dev.data(), static_cast<unsigned>(m_constrained_atoms_dev.size()),
         static_cast<FPL_TYPE>(1.0 / sim.time_step_size()), m_stream);
-    sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_VEL);
+    sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_VEL, m_stream);
   }
 
   // No cudaDeviceSynchronize(), no rotation-count check here -- both

@@ -111,11 +111,12 @@ void gpu::launch_group_velocity_reduce(math::CuVArray::View vel,
                                         const unsigned* group_index,
                                         unsigned num_atoms,
                                         unsigned num_groups,
-                                        double* sums) {
+                                        double* sums,
+                                        cudaStream_t stream) {
     const size_t sums_bytes = 5ull * num_groups * sizeof(double);
-    cudaMemset(sums, 0, sums_bytes);
+    cudaMemsetAsync(sums, 0, sums_bytes, stream);
     const unsigned blocks = num_blocks_for(num_atoms);
-    group_velocity_reduce_kernel<<<blocks, kThreadsPerBlock>>>(
+    group_velocity_reduce_kernel<<<blocks, kThreadsPerBlock, 0, stream>>>(
         vel, mass, group_index, num_atoms, sums);
 }
 
@@ -125,9 +126,10 @@ void gpu::launch_thermostat_scale_apply(math::CuVArray::View vel,
                                          const unsigned* ir_bath_of_atom,
                                          const FPL3_TYPE* com_v_per_group,
                                          const double* bath_scale,
-                                         unsigned num_atoms) {
+                                         unsigned num_atoms,
+                                         cudaStream_t stream) {
     const unsigned blocks = num_blocks_for(num_atoms);
-    thermostat_scale_apply_kernel<<<blocks, kThreadsPerBlock>>>(
+    thermostat_scale_apply_kernel<<<blocks, kThreadsPerBlock, 0, stream>>>(
         vel, group_index, com_bath_of_atom, ir_bath_of_atom,
         com_v_per_group, bath_scale, num_atoms);
 }

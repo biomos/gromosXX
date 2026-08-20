@@ -84,10 +84,11 @@ void gpu::launch_leap_frog_velocity(math::CuVArray::View old_vel,
                                      math::CuVArray::View new_vel,
                                      const float* mass,
                                      unsigned num_atoms,
-                                     double dt) {
+                                     double dt,
+                                     cudaStream_t stream) {
     const unsigned threads = 256;
     const unsigned blocks  = (num_atoms + threads - 1) / threads;
-    leap_frog_velocity_kernel<<<blocks, threads>>>(
+    leap_frog_velocity_kernel<<<blocks, threads, 0, stream>>>(
         old_vel, old_force, new_vel, mass, num_atoms, static_cast<FPL_TYPE>(dt));
 }
 
@@ -95,9 +96,10 @@ void gpu::launch_leap_frog_position(math::CuVArray::View old_pos,
                                      math::CuVArray::View current_vel,
                                      math::CuVArray::View new_pos,
                                      unsigned num_atoms,
-                                     double dt) {
+                                     double dt,
+                                     cudaStream_t stream) {
     const unsigned threads = 256;
     const unsigned blocks  = (num_atoms + threads - 1) / threads;
-    leap_frog_position_kernel<<<blocks, threads>>>(
+    leap_frog_position_kernel<<<blocks, threads, 0, stream>>>(
         old_pos, current_vel, new_pos, num_atoms, static_cast<FPL_TYPE>(dt));
 }

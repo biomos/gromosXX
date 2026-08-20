@@ -131,7 +131,7 @@ int interaction::CUDA_Quartic_Bond_Interaction::calculate_interactions(
   // per step by Forcefield::calculate_interactions()'s sim.cuda().
   // zero_mirror_force(), not here) -- accumulate (+=) via atomicAdd
   // inside the kernel, not overwrite, matching Forcefield's convention.
-  gpu::Configuration::View view = sim.cuda().configuration_view(conf, gpu::MIRROR_POS);
+  gpu::Configuration::View view = sim.cuda().configuration_view(conf, gpu::MIRROR_POS, m_stream);
 
   gpu::launch_quartic_bond(
       view.current().pos, m_bond_i.data(), m_bond_j.data(), m_bond_type.data(),
@@ -139,7 +139,7 @@ int interaction::CUDA_Quartic_Bond_Interaction::calculate_interactions(
       conf.boundary_type, conf.current().box,
       view.current().force.data(), m_bond_energy.data(), m_virial.data(), m_stream);
 
-  sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_FORCE);
+  sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_FORCE, m_stream);
 
   cudaStreamSynchronize(m_stream);
 

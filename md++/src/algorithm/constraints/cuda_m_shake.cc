@@ -181,7 +181,7 @@ int algorithm::CUDA_M_Shake::apply(
   // instead of this algorithm's own private upload/download every
   // call (see cuda_m_shake.h's doc comment for why constraint_force/
   // virial_tensor still use the older private-buffer path for now).
-  gpu::Configuration::View view = sim.cuda().configuration_view(conf, gpu::MIRROR_POS);
+  gpu::Configuration::View view = sim.cuda().configuration_view(conf, gpu::MIRROR_POS, m_stream);
 
   const unsigned num_atoms = static_cast<unsigned>(topo.num_atoms());
   const unsigned num_solvent_atoms = num_atoms - m_first_atom;
@@ -206,7 +206,7 @@ int algorithm::CUDA_M_Shake::apply(
   // Vouch for the position we just corrected: no CPU round trip, and
   // gpu_mirror_touches() == 0 keeps Algorithm_Sequence::run()'s
   // default post-apply() invalidation from immediately erasing this.
-  sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_POS);
+  sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_POS, m_stream);
 
   if (!sim.param().stochastic.sd && !sim.param().minimise.ntem &&
       !sim.param().analyze.analyze) {
@@ -214,7 +214,7 @@ int algorithm::CUDA_M_Shake::apply(
         view.current().pos.data(), view.old().pos.data(), view.current().vel.data(),
         m_constrained_atoms_dev.data(), static_cast<unsigned>(m_constrained_atoms_dev.size()),
         static_cast<FPL_TYPE>(1.0 / dt), m_stream);
-    sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_VEL);
+    sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_VEL, m_stream);
   }
 
   // constraint_force/virial_tensor: still the private-buffer path

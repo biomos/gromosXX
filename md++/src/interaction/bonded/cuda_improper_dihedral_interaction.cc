@@ -134,7 +134,7 @@ int interaction::CUDA_Improper_Dihedral_Interaction::calculate_interactions(
   cudaMemsetAsync(m_improper_energy.data(), 0, sizeof(double) * num_energy_groups, m_stream);
   cudaMemsetAsync(m_virial.data(), 0, sizeof(double) * 9, m_stream);
 
-  gpu::Configuration::View view = sim.cuda().configuration_view(conf, gpu::MIRROR_POS);
+  gpu::Configuration::View view = sim.cuda().configuration_view(conf, gpu::MIRROR_POS, m_stream);
 
   gpu::launch_improper_dihedral(
       view.current().pos, m_dihedral_i.data(), m_dihedral_j.data(), m_dihedral_k.data(),
@@ -143,7 +143,7 @@ int interaction::CUDA_Improper_Dihedral_Interaction::calculate_interactions(
       conf.boundary_type, conf.current().box,
       view.current().force.data(), m_improper_energy.data(), m_virial.data(), m_stream);
 
-  sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_FORCE);
+  sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_FORCE, m_stream);
 
   cudaStreamSynchronize(m_stream);
 

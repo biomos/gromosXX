@@ -53,14 +53,16 @@ namespace gpu {
   void launch_com_translation_reduce(math::CuVArray::View vel,
                                       const float* mass,
                                       unsigned num_atoms,
-                                      double* sums);
+                                      double* sums,
+                                      cudaStream_t stream = 0);
 
   /**
    * @brief vel[i] -= com_v, for all atoms. In-place.
    */
   void launch_com_translation_apply(math::CuVArray::View vel,
                                      double com_v_x, double com_v_y, double com_v_z,
-                                     unsigned num_atoms);
+                                     unsigned num_atoms,
+                                     cudaStream_t stream = 0);
 
   /**
    * @brief sums[0..2] = sum_i(mass[i] * vel[i]), sums[3..5] =
@@ -75,7 +77,8 @@ namespace gpu {
                                          const float* mass,
                                          double dt,
                                          unsigned num_atoms,
-                                         double* sums);
+                                         double* sums,
+                                         cudaStream_t stream = 0);
 
   /**
    * @brief sums[0..2] = angular momentum L = sum_i(mass[i] *
@@ -92,7 +95,8 @@ namespace gpu {
                                          double com_v_x, double com_v_y, double com_v_z,
                                          double com_r_x, double com_r_y, double com_r_z,
                                          unsigned num_atoms,
-                                         double* sums);
+                                         double* sums,
+                                         cudaStream_t stream = 0);
 
   /**
    * @brief vel[i] -= cross(com_O, r_i), r_i = pos[i] - 0.5*dt*vel[i] -
@@ -105,6 +109,7 @@ namespace gpu {
                                   double dt,
                                   double com_r_x, double com_r_y, double com_r_z,
                                   double com_O_x, double com_O_y, double com_O_z,
-                                  unsigned num_atoms);
+                                  unsigned num_atoms,
+                                  cudaStream_t stream = 0);
 
 }

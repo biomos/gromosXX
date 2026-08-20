@@ -151,7 +151,7 @@ int interaction::CUDA_Dihedral_Interaction::calculate_interactions(
   // (never MIRROR_FORCE) is what keeps this from triggering a coarse
   // resync that would clobber force NonBonded/other bonded terms may
   // have already accumulated this step.
-  gpu::Configuration::View view = sim.cuda().configuration_view(conf, gpu::MIRROR_POS);
+  gpu::Configuration::View view = sim.cuda().configuration_view(conf, gpu::MIRROR_POS, m_stream);
 
   gpu::launch_dihedral(
       view.current().pos, m_dihedral_i.data(), m_dihedral_j.data(), m_dihedral_k.data(),
@@ -161,7 +161,7 @@ int interaction::CUDA_Dihedral_Interaction::calculate_interactions(
       conf.boundary_type, conf.current().box,
       view.current().force.data(), m_dihedral_energy.data(), m_virial.data(), m_stream);
 
-  sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_FORCE);
+  sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_FORCE, m_stream);
 
   // Energy/virial are small, private, double-precision buffers (not
   // part of the mirror) so still need a sync to read back, but only on

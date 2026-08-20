@@ -52,8 +52,18 @@ namespace gpu {
     const unsigned num_groups = arrays.num_groups;
     const unsigned num_baths  = static_cast<unsigned>(sim.multibath().size());
 
+    // Own stream, function-local static (shared by every Thermostat-
+    // derived gpuBackend caller through this one function) -- the
+    // reduction's result (com_v_per_group, computed below) is a
+    // host-side input to launch_thermostat_scale_apply(), an inherent
+    // sequential dependency the event mechanism can't route around, but
+    // scoping the wait to this stream (not cudaDeviceSynchronize())
+    // keeps it from blocking whatever else is running concurrently.
+    static cudaStream_t stream = 0;
+    if (stream == 0) cudaStreamCreate(&stream);
+
     gpu::Configuration::View conf_view =
-        sim.cuda().configuration_view(conf, gpu::MIRROR_VEL);
+        sim.cuda().configuration_view(conf, gpu::MIRROR_VEL, stream);
     const gpu::Topology::View topo_view = sim.cuda().topology_view(topo);
 
     static gpu::cuvector<double> sums;
@@ -61,8 +71,8 @@ namespace gpu {
 
     gpu::launch_group_velocity_reduce(conf_view.current().vel, topo_view.mass,
                                        arrays.group_index.data(), num_atoms,
-                                       num_groups, sums.data());
-    cudaDeviceSynchronize();
+                                       num_groups, sums.data(), stream);
+    cudaStreamSynchronize(stream);
 
     static gpu::cuvector<FPL3_TYPE> com_v_per_group;
     if (com_v_per_group.size() < num_groups) com_v_per_group.resize(num_groups);
@@ -86,10 +96,10 @@ namespace gpu {
     gpu::launch_thermostat_scale_apply(
         conf_view.current().vel, arrays.group_index.data(),
         arrays.com_bath.data(), arrays.ir_bath.data(),
-        com_v_per_group.data(), bath_scale.data(), num_atoms);
+        com_v_per_group.data(), bath_scale.data(), num_atoms, stream);
 
     // Stay GPU-resident -- no sync back here, see this file's doc comment.
-    sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_VEL);
+    sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_VEL, stream);
   }
 
 } // namespace gpu

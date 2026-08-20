@@ -115,20 +115,31 @@ double algorithm::Remove_COM_Motion<util::gpuBackend>
 {
   const unsigned num_atoms = static_cast<unsigned>(topo.num_atoms());
 
+  // Own stream, function-local static (not a class member) since
+  // Remove_COM_Motion's header compiles unconditionally in CPU-only
+  // builds too and can't hold a cudaStream_t directly. This is a
+  // stream-scoped cudaStreamSynchronize() below, not a device-wide
+  // cudaDeviceSynchronize(), so it doesn't stall whatever else (bonded
+  // terms, NonBonded, constraints) is running concurrently on its own
+  // stream -- still a genuine CPU-blocking wait though: the reduction's
+  // result (com_v_x/y/z) is a host-computed launch parameter for
+  // launch_com_translation_apply() right below, an inherent sequential
+  // dependency this multi-pass-reduction design can't route around via
+  // the event mechanism (that only helps GPU-GPU ordering).
+  static cudaStream_t stream = 0;
+  if (stream == 0) cudaStreamCreate(&stream);
+
   gpu::Configuration::View conf_view =
-      sim.cuda().configuration_view(conf, gpu::MIRROR_VEL);
+      sim.cuda().configuration_view(conf, gpu::MIRROR_VEL, stream);
   const gpu::Topology::View topo_view = sim.cuda().topology_view(topo);
 
   // Persistent, GPU-only scratch for the reduction -- fixed size (4
   // doubles), allocated once on first call and reused thereafter.
-  // Kept function-local (not a class member) since Remove_COM_Motion's
-  // header compiles unconditionally in CPU-only builds too and can't
-  // hold a gpu::cuvector directly.
   static gpu::cuvector<double> sums;
   if (sums.size() < 4) sums.resize(4);
 
-  gpu::launch_com_translation_reduce(conf_view.current().vel, topo_view.mass, num_atoms, sums.data());
-  cudaDeviceSynchronize();
+  gpu::launch_com_translation_reduce(conf_view.current().vel, topo_view.mass, num_atoms, sums.data(), stream);
+  cudaStreamSynchronize(stream);
 
   const double com_mass = sums[3];
   const double com_v_x = sums[0] / com_mass;
@@ -139,7 +150,7 @@ double algorithm::Remove_COM_Motion<util::gpuBackend>
       (com_v_x * com_v_x + com_v_y * com_v_y + com_v_z * com_v_z);
 
   if (remove_trans) {
-    gpu::launch_com_translation_apply(conf_view.current().vel, com_v_x, com_v_y, com_v_z, num_atoms);
+    gpu::launch_com_translation_apply(conf_view.current().vel, com_v_x, com_v_y, com_v_z, num_atoms, stream);
     sim.cuda().sync_configuration_from_device(conf);
   }
 
@@ -159,8 +170,15 @@ double algorithm::Remove_COM_Motion<util::gpuBackend>
   const unsigned num_atoms = static_cast<unsigned>(topo.num_atoms());
   const double dt = sim.time_step_size();
 
+  // See remove_com_translation()'s comment: own stream, but the two
+  // reduction passes are an inherent host-in-the-loop sequential
+  // dependency (pass2's launch parameters are pass1's host-side
+  // result), not something the event mechanism can route around.
+  static cudaStream_t stream = 0;
+  if (stream == 0) cudaStreamCreate(&stream);
+
   gpu::Configuration::View conf_view =
-      sim.cuda().configuration_view(conf, gpu::MIRROR_POS | gpu::MIRROR_VEL);
+      sim.cuda().configuration_view(conf, gpu::MIRROR_POS | gpu::MIRROR_VEL, stream);
   const gpu::Topology::View topo_view = sim.cuda().topology_view(topo);
 
   static gpu::cuvector<double> sums1;
@@ -169,8 +187,8 @@ double algorithm::Remove_COM_Motion<util::gpuBackend>
   if (sums2.size() < 12) sums2.resize(12);
 
   gpu::launch_com_rotation_reduce_pass1(
-      conf_view.current().pos, conf_view.current().vel, topo_view.mass, dt, num_atoms, sums1.data());
-  cudaDeviceSynchronize();
+      conf_view.current().pos, conf_view.current().vel, topo_view.mass, dt, num_atoms, sums1.data(), stream);
+  cudaStreamSynchronize(stream);
 
   const double com_mass = sums1[6];
   const double com_v_x = sums1[0] / com_mass, com_v_y = sums1[1] / com_mass, com_v_z = sums1[2] / com_mass;
@@ -181,8 +199,8 @@ double algorithm::Remove_COM_Motion<util::gpuBackend>
 
   gpu::launch_com_rotation_reduce_pass2(
       conf_view.current().pos, conf_view.current().vel, topo_view.mass, dt,
-      com_v_x, com_v_y, com_v_z, com_r_x, com_r_y, com_r_z, num_atoms, sums2.data());
-  cudaDeviceSynchronize();
+      com_v_x, com_v_y, com_v_z, com_r_x, com_r_y, com_r_z, num_atoms, sums2.data(), stream);
+  cudaStreamSynchronize(stream);
 
   const double Lx = sums2[0], Ly = sums2[1], Lz = sums2[2];
   math::Matrix com_I;
@@ -230,7 +248,7 @@ double algorithm::Remove_COM_Motion<util::gpuBackend>
   if (remove_rot) {
     gpu::launch_com_rotation_apply(
         conf_view.current().pos, conf_view.current().vel, dt,
-        com_r_x, com_r_y, com_r_z, com_O(0), com_O(1), com_O(2), num_atoms);
+        com_r_x, com_r_y, com_r_z, com_O(0), com_O(1), com_O(2), num_atoms, stream);
     sim.cuda().sync_configuration_from_device(conf);
   }
 

@@ -136,7 +136,7 @@ int interaction::CUDA_Angle_Interaction::calculate_interactions(
   // (never MIRROR_FORCE) is what keeps this from triggering a coarse
   // resync that would clobber the force NonBonded/other bonded terms
   // may have already accumulated this step.
-  gpu::Configuration::View view = sim.cuda().configuration_view(conf, gpu::MIRROR_POS);
+  gpu::Configuration::View view = sim.cuda().configuration_view(conf, gpu::MIRROR_POS, m_stream);
 
   gpu::launch_angle(
       view.current().pos, m_angle_i.data(), m_angle_j.data(), m_angle_k.data(), m_angle_type.data(),
@@ -144,7 +144,7 @@ int interaction::CUDA_Angle_Interaction::calculate_interactions(
       conf.boundary_type, conf.current().box,
       view.current().force.data(), m_angle_energy.data(), m_virial.data(), m_stream);
 
-  sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_FORCE);
+  sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_FORCE, m_stream);
 
   // Energy/virial are small, private, double-precision buffers (not
   // part of the mirror -- see cuda_angle_interaction.h) so still need

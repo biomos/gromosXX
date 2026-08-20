@@ -75,7 +75,8 @@ namespace gpu {
                                      const unsigned* group_index,
                                      unsigned num_atoms,
                                      unsigned num_groups,
-                                     double* sums);
+                                     double* sums,
+                                     cudaStream_t stream = 0);
 
   /**
    * @brief `vel(i) = scale[com_bath_of_atom[i]] * com_v[group_index[i]]
@@ -100,6 +101,7 @@ namespace gpu {
                                       const unsigned* ir_bath_of_atom,
                                       const FPL3_TYPE* com_v_per_group,
                                       const double* bath_scale,
-                                      unsigned num_atoms);
+                                      unsigned num_atoms,
+                                      cudaStream_t stream = 0);
 
 }

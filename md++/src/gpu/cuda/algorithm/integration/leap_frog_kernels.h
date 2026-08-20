@@ -52,7 +52,8 @@ namespace gpu {
                                   math::CuVArray::View new_vel,
                                   const float* mass,
                                   unsigned num_atoms,
-                                  double dt);
+                                  double dt,
+                                  cudaStream_t stream = 0);
 
   /**
    * @brief x_new[i] = x_old[i] + v_current[i] * dt, for all atoms.
@@ -65,6 +66,7 @@ namespace gpu {
                                   math::CuVArray::View current_vel,
                                   math::CuVArray::View new_pos,
                                   unsigned num_atoms,
-                                  double dt);
+                                  double dt,
+                                  cudaStream_t stream = 0);
 
 }

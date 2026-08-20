@@ -197,17 +197,19 @@ inline unsigned num_blocks_for(unsigned num_atoms) {
 void gpu::launch_com_translation_reduce(math::CuVArray::View vel,
                                          const float* mass,
                                          unsigned num_atoms,
-                                         double* sums) {
-    cudaMemset(sums, 0, sizeof(double) * 4);
+                                         double* sums,
+                                         cudaStream_t stream) {
+    cudaMemsetAsync(sums, 0, sizeof(double) * 4, stream);
     const unsigned blocks = num_blocks_for(num_atoms);
-    com_translation_reduce_kernel<<<blocks, kThreadsPerBlock>>>(vel, mass, num_atoms, sums);
+    com_translation_reduce_kernel<<<blocks, kThreadsPerBlock, 0, stream>>>(vel, mass, num_atoms, sums);
 }
 
 void gpu::launch_com_translation_apply(math::CuVArray::View vel,
                                         double com_v_x, double com_v_y, double com_v_z,
-                                        unsigned num_atoms) {
+                                        unsigned num_atoms,
+                                        cudaStream_t stream) {
     const unsigned blocks = num_blocks_for(num_atoms);
-    com_translation_apply_kernel<<<blocks, kThreadsPerBlock>>>(vel, com_v_x, com_v_y, com_v_z, num_atoms);
+    com_translation_apply_kernel<<<blocks, kThreadsPerBlock, 0, stream>>>(vel, com_v_x, com_v_y, com_v_z, num_atoms);
 }
 
 void gpu::launch_com_rotation_reduce_pass1(math::CuVArray::View pos,
@@ -215,10 +217,11 @@ void gpu::launch_com_rotation_reduce_pass1(math::CuVArray::View pos,
                                            const float* mass,
                                            double dt,
                                            unsigned num_atoms,
-                                           double* sums) {
-    cudaMemset(sums, 0, sizeof(double) * 7);
+                                           double* sums,
+                                           cudaStream_t stream) {
+    cudaMemsetAsync(sums, 0, sizeof(double) * 7, stream);
     const unsigned blocks = num_blocks_for(num_atoms);
-    com_rotation_reduce_pass1_kernel<<<blocks, kThreadsPerBlock>>>(pos, vel, mass, dt, num_atoms, sums);
+    com_rotation_reduce_pass1_kernel<<<blocks, kThreadsPerBlock, 0, stream>>>(pos, vel, mass, dt, num_atoms, sums);
 }
 
 void gpu::launch_com_rotation_reduce_pass2(math::CuVArray::View pos,
@@ -228,10 +231,11 @@ void gpu::launch_com_rotation_reduce_pass2(math::CuVArray::View pos,
                                            double com_v_x, double com_v_y, double com_v_z,
                                            double com_r_x, double com_r_y, double com_r_z,
                                            unsigned num_atoms,
-                                           double* sums) {
-    cudaMemset(sums, 0, sizeof(double) * 12);
+                                           double* sums,
+                                           cudaStream_t stream) {
+    cudaMemsetAsync(sums, 0, sizeof(double) * 12, stream);
     const unsigned blocks = num_blocks_for(num_atoms);
-    com_rotation_reduce_pass2_kernel<<<blocks, kThreadsPerBlock>>>(
+    com_rotation_reduce_pass2_kernel<<<blocks, kThreadsPerBlock, 0, stream>>>(
         pos, vel, mass, dt, com_v_x, com_v_y, com_v_z, com_r_x, com_r_y, com_r_z, num_atoms, sums);
 }
 
@@ -240,8 +244,9 @@ void gpu::launch_com_rotation_apply(math::CuVArray::View pos,
                                     double dt,
                                     double com_r_x, double com_r_y, double com_r_z,
                                     double com_O_x, double com_O_y, double com_O_z,
-                                    unsigned num_atoms) {
+                                    unsigned num_atoms,
+                                    cudaStream_t stream) {
     const unsigned blocks = num_blocks_for(num_atoms);
-    com_rotation_apply_kernel<<<blocks, kThreadsPerBlock>>>(
+    com_rotation_apply_kernel<<<blocks, kThreadsPerBlock, 0, stream>>>(
         pos, vel, dt, com_r_x, com_r_y, com_r_z, com_O_x, com_O_y, com_O_z, num_atoms);
 }
