@@ -110,12 +110,30 @@ int algorithm::Algorithm_Sequence
   // end for the corresponding check.
   sim.cuda().zero_constraint_error_flags();
 
+  // Deferred GPU-finalize queue (Algorithm::finalize_gpu_step()'s doc
+  // comment): an algorithm that leaves GPU work queued (no CPU sync in
+  // its own apply()) is added here instead of syncing immediately;
+  // flushed only when a later algorithm this same step actually needs
+  // the resolved state (needs_finalized_gpu_state()), so the wait
+  // happens as late as possible -- by then the async kernel has often
+  // already finished on its own, making the eventual sync itself
+  // near-free instead of an active wait. Safety-net flush at the very
+  // end covers any step where no consumer happened to run.
+  std::vector<Algorithm *> pending_gpu_finalize;
+
   for(Algorithm_Sequence::iterator
 	it = begin(), to = end();
       it != to;
       ++it){
     int ret = 0;
     DEBUG(7, "algorithm: " << (*it)->name);
+
+    if ((*it)->needs_finalized_gpu_state() && !pending_gpu_finalize.empty()) {
+      for (Algorithm * pending : pending_gpu_finalize)
+        pending->finalize_gpu_step(topo, conf, sim);
+      pending_gpu_finalize.clear();
+    }
+
     // GPU-mirror freshness tracking (data-level cache coherence,
     // CudaManager), two hooks around apply() instead of hand-picked
     // sync booleans at each GPU call site -- default MIRROR_ALL means
@@ -134,7 +152,16 @@ int algorithm::Algorithm_Sequence
       return ret;
     }
     sim.cuda().invalidate_gpu_mirror(conf, (*it)->gpu_mirror_touches());
+
+    if ((*it)->has_pending_gpu_finalize())
+      pending_gpu_finalize.push_back(*it);
   }
+
+  // Safety net: resolve anything still pending before the deferred
+  // error check below, so a step where no consumer ran never silently
+  // leaves GPU work unresolved.
+  for (Algorithm * pending : pending_gpu_finalize)
+    pending->finalize_gpu_step(topo, conf, sim);
 
   // The one deferred-error check for the whole step. Safe to do after
   // every algorithm already ran (rather than right after the failing

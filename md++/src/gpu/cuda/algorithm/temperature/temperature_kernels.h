@@ -79,6 +79,24 @@ namespace gpu {
                                      cudaStream_t stream = 0);
 
   /**
+   * @brief Same reduction as launch_group_velocity_reduce(), but over
+   * two velocity arrays (`new_vel`/`old_vel`, e.g. conf.current().vel/
+   * conf.old().vel) in a single kernel launch, writing into
+   * `new_sums`/`old_sums` respectively -- halves the launch count for
+   * Temperature_Calculation<gpuBackend>, which always needs both.
+   * `mass`/`group_index` are shared between the two (same atoms).
+   */
+  void launch_group_velocity_reduce_dual(math::CuVArray::View new_vel,
+                                          math::CuVArray::View old_vel,
+                                          const float* mass,
+                                          const unsigned* group_index,
+                                          unsigned num_atoms,
+                                          unsigned num_groups,
+                                          double* new_sums,
+                                          double* old_sums,
+                                          cudaStream_t stream = 0);
+
+  /**
    * @brief `vel(i) = scale[com_bath_of_atom[i]] * com_v[group_index[i]]
    * + scale[ir_bath_of_atom[i]] * (vel(i) - com_v[group_index[i]])`,
    * for all atoms. In-place.

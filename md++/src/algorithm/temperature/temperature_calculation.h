@@ -79,6 +79,11 @@ namespace algorithm
 		     bool quiet = false)
     {
       this->apply(topo, conf, sim);
+      // Not part of a real Algorithm_Sequence::run() step here -- this
+      // one-off call has no later algorithm to flush the deferred
+      // gpuBackend result for it, so resolve it right away (init() runs
+      // once, not per-step; the cost doesn't matter).
+      this->finalize_gpu_step(topo, conf, sim);
 
       if (!quiet){
         io::print_MULTIBATH_COUPLING(os, sim.multibath());
@@ -104,7 +109,37 @@ namespace algorithm
             return gpu::MIRROR_ALL;
     }
 
+    /**
+     * gpuBackend's apply() only launches the reduction kernels (no
+     * sync); the per-bath bookkeeping (sim.multibath().bath(i).ekin,
+     * conf.old().energies.*_kinetic_energy) is deferred to finalize_
+     * gpu_step() below, resolved once Energy_Calculation (or the
+     * Algorithm_Sequence::run() end-of-step safety net) actually needs
+     * it -- see Algorithm::finalize_gpu_step()'s doc comment. cpuBackend
+     * never has anything pending; the if constexpr false-branch means
+     * *_impl() is never instantiated for it, so no cpuBackend
+     * definition is needed.
+     */
+    virtual bool has_pending_gpu_finalize() const override {
+        if constexpr (std::is_same_v<Backend, util::gpuBackend>)
+            return has_pending_gpu_finalize_impl();
+        else
+            return false;
+    }
+
+    virtual void finalize_gpu_step(topology::Topology & topo,
+                                    configuration::Configuration & conf,
+                                    simulation::Simulation & sim) override {
+        if constexpr (std::is_same_v<Backend, util::gpuBackend>)
+            finalize_gpu_step_impl(topo, conf, sim);
+    }
+
   private:
+    bool has_pending_gpu_finalize_impl() const;
+    void finalize_gpu_step_impl(topology::Topology & topo,
+                                 configuration::Configuration & conf,
+                                 simulation::Simulation & sim);
+
 
   };
 

@@ -62,7 +62,13 @@ namespace algorithm
 		     simulation::Simulation & sim,
 		     std::ostream & os = std::cout,
 		     bool quiet = false);
-    
+
+    // conf.old().energies.calculate_totals() (in apply()) reads
+    // kinetic_energy, which Temperature_Calculation<gpuBackend> may
+    // have only queued asynchronously on the GPU rather than finished
+    // computing on the host yet -- see Algorithm::needs_finalized_gpu_
+    // state()'s doc comment.
+    virtual bool needs_finalized_gpu_state() const override { return true; }
 
   };
   

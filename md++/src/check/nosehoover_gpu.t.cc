@@ -151,6 +151,10 @@ namespace {
       std::cerr << label << ": Temperature_Calculation::apply() failed" << std::endl;
       return 1;
     }
+    // gpu_tcalc's apply() only launches the reduction kernels -- see
+    // temperature_gpu.t.cc's identical comment for why this standalone
+    // test needs its own explicit finalize_gpu_step() call.
+    gpu_tcalc.finalize_gpu_step(gpu_s.topo, gpu_s.conf, gpu_s.sim);
     flush_messages("temperature_calculation apply");
 
     // --- NoseHoover_Thermostat ---

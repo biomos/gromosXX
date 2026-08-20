@@ -74,6 +74,45 @@ __global__ void group_velocity_reduce_kernel(
     }
 }
 
+__global__ void group_velocity_reduce_dual_kernel(
+    math::CuVArray::View new_vel,
+    math::CuVArray::View old_vel,
+    const float* __restrict__ mass,
+    const unsigned* __restrict__ group_index,
+    unsigned num_atoms,
+    double* new_sums,
+    double* old_sums) {
+
+    // Same shape/rationale as group_velocity_reduce_kernel above, just
+    // two arrays reduced per thread instead of launching the kernel
+    // twice -- halves launch overhead for Temperature_Calculation<
+    // gpuBackend>, which always needs both current().vel and old().vel.
+    for (unsigned i = blockIdx.x * blockDim.x + threadIdx.x; i < num_atoms;
+         i += blockDim.x * gridDim.x) {
+        const double m = static_cast<double>(mass[i]);
+        const unsigned g = group_index[i];
+        const unsigned base = 5u * g;
+
+        const FPL3_TYPE nv = new_vel(i);
+        atomicAdd(&new_sums[base + 0], m);
+        atomicAdd(&new_sums[base + 1], m * static_cast<double>(nv.x));
+        atomicAdd(&new_sums[base + 2], m * static_cast<double>(nv.y));
+        atomicAdd(&new_sums[base + 3], m * static_cast<double>(nv.z));
+        atomicAdd(&new_sums[base + 4], m * (static_cast<double>(nv.x) * nv.x +
+                                             static_cast<double>(nv.y) * nv.y +
+                                             static_cast<double>(nv.z) * nv.z));
+
+        const FPL3_TYPE ov = old_vel(i);
+        atomicAdd(&old_sums[base + 0], m);
+        atomicAdd(&old_sums[base + 1], m * static_cast<double>(ov.x));
+        atomicAdd(&old_sums[base + 2], m * static_cast<double>(ov.y));
+        atomicAdd(&old_sums[base + 3], m * static_cast<double>(ov.z));
+        atomicAdd(&old_sums[base + 4], m * (static_cast<double>(ov.x) * ov.x +
+                                             static_cast<double>(ov.y) * ov.y +
+                                             static_cast<double>(ov.z) * ov.z));
+    }
+}
+
 __global__ void thermostat_scale_apply_kernel(
     math::CuVArray::View vel,
     const unsigned* __restrict__ group_index,
@@ -118,6 +157,23 @@ void gpu::launch_group_velocity_reduce(math::CuVArray::View vel,
     const unsigned blocks = num_blocks_for(num_atoms);
     group_velocity_reduce_kernel<<<blocks, kThreadsPerBlock, 0, stream>>>(
         vel, mass, group_index, num_atoms, sums);
+}
+
+void gpu::launch_group_velocity_reduce_dual(math::CuVArray::View new_vel,
+                                             math::CuVArray::View old_vel,
+                                             const float* mass,
+                                             const unsigned* group_index,
+                                             unsigned num_atoms,
+                                             unsigned num_groups,
+                                             double* new_sums,
+                                             double* old_sums,
+                                             cudaStream_t stream) {
+    const size_t sums_bytes = 5ull * num_groups * sizeof(double);
+    cudaMemsetAsync(new_sums, 0, sums_bytes, stream);
+    cudaMemsetAsync(old_sums, 0, sums_bytes, stream);
+    const unsigned blocks = num_blocks_for(num_atoms);
+    group_velocity_reduce_dual_kernel<<<blocks, kThreadsPerBlock, 0, stream>>>(
+        new_vel, old_vel, mass, group_index, num_atoms, new_sums, old_sums);
 }
 
 void gpu::launch_thermostat_scale_apply(math::CuVArray::View vel,

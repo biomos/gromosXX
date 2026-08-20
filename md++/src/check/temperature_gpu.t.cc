@@ -198,6 +198,13 @@ namespace {
       std::cerr << label << ": Temperature_Calculation::apply() failed" << std::endl;
       return 1;
     }
+    // gpu_tcalc's apply() only launches the reduction kernels -- the
+    // per-bath bookkeeping (bath.ekin, conf.old().energies.*) is
+    // deferred to finalize_gpu_step(), normally resolved by
+    // Algorithm_Sequence::run() (see Algorithm::finalize_gpu_step()'s
+    // doc comment). This standalone test drives apply() directly, so
+    // it must call it explicitly before reading the result below.
+    gpu_tcalc.finalize_gpu_step(gpu_s.topo, gpu_s.conf, gpu_s.sim);
     flush_messages("temperature_calculation apply");
 
     errors += compare_energies(cpu_s, gpu_s, (std::string(label) + " (temperature)").c_str(), tol);

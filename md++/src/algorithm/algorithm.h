@@ -101,6 +101,45 @@ namespace algorithm
     virtual unsigned gpu_mirror_touches() const { return gpu::MIRROR_ALL; }
 
     /**
+     * @brief Does this algorithm's apply() need any *other* algorithm's
+     * GPU-deferred work (see finalize_gpu_step() below) resolved on the
+     * CPU before it runs? Default false. Algorithm_Sequence::run()
+     * checks this before each apply() and flushes any pending deferred
+     * work first -- e.g. Energy_Calculation reads conf.old().energies.
+     * kinetic_energy (calculate_totals()), which Temperature_
+     * Calculation<gpuBackend> may have only queued asynchronously on
+     * the GPU rather than finished computing on the host yet.
+     */
+    virtual bool needs_finalized_gpu_state() const { return false; }
+
+    /**
+     * @brief Did this algorithm's most recent apply() leave GPU work
+     * queued (kernels launched, no CPU sync) whose result some later
+     * algorithm this same step might need? Default false -- the
+     * overwhelming majority of algorithms either don't touch the GPU at
+     * all or already sync within their own apply(). Only an algorithm
+     * that overrides this to possibly return true needs finalize_gpu_
+     * step() to do real work; Algorithm_Sequence::run() uses this to
+     * decide which algorithms to add to (and later flush from) its
+     * per-step pending list, without needing to call finalize_gpu_step()
+     * unconditionally on everything every step.
+     */
+    virtual bool has_pending_gpu_finalize() const { return false; }
+
+    /**
+     * @brief Resolve GPU work this algorithm's apply() left queued
+     * (sync + whatever host-side bookkeeping depends on the result).
+     * Called by Algorithm_Sequence::run(): once before any later
+     * algorithm in the same step whose needs_finalized_gpu_state() is
+     * true, and once more, unconditionally, as a safety net at the very
+     * end of run() (so nothing is ever silently left unresolved just
+     * because no consumer happened to run this step). Default no-op.
+     */
+    virtual void finalize_gpu_step(topology::Topology &,
+                                    configuration::Configuration &,
+                                    simulation::Simulation &) {}
+
+    /**
      * name of the algorithm
      */
     std::string name;

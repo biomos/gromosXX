@@ -87,6 +87,27 @@ namespace {
     return static_cast<unsigned>(topo.temperature_groups().size()) - 1;
   }
 
+  /**
+   * State shared between apply() (producer: launches the reductions,
+   * no sync) and finalize_gpu_step_impl() (consumer: syncs + does the
+   * per-bath host math) -- see Algorithm::finalize_gpu_step()'s doc
+   * comment for why this is split across two calls instead of one.
+   * Function-local static (own stream, own buffers), same lifetime
+   * rationale as atom_temp_group() above.
+   */
+  struct PendingReduction {
+    cudaStream_t stream = 0;
+    gpu::cuvector<double> new_sums, old_sums;
+    unsigned num_groups = 0;
+    bool pending = false;
+  };
+
+  PendingReduction & pending_reduction() {
+    static PendingReduction p;
+    if (p.stream == 0) cudaStreamCreate(&p.stream);
+    return p;
+  }
+
 }
 
 template<>
@@ -116,11 +137,10 @@ int algorithm::Temperature_Calculation<util::gpuBackend>
   const unsigned num_groups = num_temperature_groups(topo);
   const gpu::cuvector<unsigned> & group_index = atom_temp_group(topo);
 
-  // Own stream: both reductions (new_sums from current().vel, old_sums
-  // from old().vel) queue on it back-to-back with no CPU involvement
-  // between them, then one stream-scoped (not device-wide) wait below.
-  static cudaStream_t stream = 0;
-  if (stream == 0) cudaStreamCreate(&stream);
+  PendingReduction & pr = pending_reduction();
+  pr.num_groups = num_groups;
+  if (pr.new_sums.size() < 5u * num_groups) pr.new_sums.resize(5u * num_groups);
+  if (pr.old_sums.size() < 5u * num_groups) pr.old_sums.resize(5u * num_groups);
 
   // MIRROR_VEL freshness covers current()+old() together (mark_gpu_dirty
   // always moves both, matching copy_pos_vel_to_device()'s own
@@ -132,20 +152,51 @@ int algorithm::Temperature_Calculation<util::gpuBackend>
   // conf.old().vel holds too. This replaces what used to be a per-atom
   // host upload loop (old_vel_gpu) every single call.
   gpu::Configuration::View conf_view =
-      sim.cuda().configuration_view(conf, gpu::MIRROR_VEL, stream);
+      sim.cuda().configuration_view(conf, gpu::MIRROR_VEL, pr.stream);
   const gpu::Topology::View topo_view = sim.cuda().topology_view(topo);
 
-  static gpu::cuvector<double> new_sums, old_sums;
-  if (new_sums.size() < 5u * num_groups) new_sums.resize(5u * num_groups);
-  if (old_sums.size() < 5u * num_groups) old_sums.resize(5u * num_groups);
+  // Single merged launch (both current().vel and old().vel reduced in
+  // one kernel), no sync -- the per-bath host math that consumes new_
+  // sums/old_sums moves to finalize_gpu_step_impl() below, deferred
+  // until Energy_Calculation (or the end-of-step safety net) actually
+  // needs it. See Algorithm::finalize_gpu_step()'s doc comment for why.
+  gpu::launch_group_velocity_reduce_dual(
+      conf_view.current().vel, conf_view.old().vel, topo_view.mass,
+      group_index.data(), num_atoms, num_groups,
+      pr.new_sums.data(), pr.old_sums.data(), pr.stream);
+  pr.pending = true;
 
-  gpu::launch_group_velocity_reduce(conf_view.current().vel, topo_view.mass,
-                                     group_index.data(), num_atoms, num_groups,
-                                     new_sums.data(), stream);
-  gpu::launch_group_velocity_reduce(conf_view.old().vel, topo_view.mass,
-                                     group_index.data(), num_atoms, num_groups,
-                                     old_sums.data(), stream);
-  cudaStreamSynchronize(stream);
+  m_timer.stop();
+  return 0;
+}
+
+template<>
+bool algorithm::Temperature_Calculation<util::gpuBackend>
+::has_pending_gpu_finalize_impl() const {
+  return pending_reduction().pending;
+}
+
+template<>
+void algorithm::Temperature_Calculation<util::gpuBackend>
+::finalize_gpu_step_impl(topology::Topology & topo,
+                          configuration::Configuration & conf,
+                          simulation::Simulation & sim) {
+  PendingReduction & pr = pending_reduction();
+  if (!pr.pending) return;
+
+  m_timer.start(sim);
+
+  // The one sync this algorithm ever does, moved as late as this
+  // step's sequence allows (see Algorithm_Sequence::run()) -- by the
+  // time a consumer actually needs the result, the reduction kernel
+  // launched back in apply() has often already finished on its own,
+  // so this is frequently a near-free status check rather than an
+  // active wait.
+  cudaStreamSynchronize(pr.stream);
+
+  const unsigned num_groups = pr.num_groups;
+  const gpu::cuvector<double> & new_sums = pr.new_sums;
+  const gpu::cuvector<double> & old_sums = pr.old_sums;
 
   unsigned ir_bath = 0, com_bath = 0;
 
@@ -180,8 +231,8 @@ int algorithm::Temperature_Calculation<util::gpuBackend>
         conf.old().energies.com_kinetic_energy[i] +
         conf.old().energies.ir_kinetic_energy[i];
 
+  pr.pending = false;
   m_timer.stop();
-  return 0;
 }
 
 // explicit instantiation for linker
