@@ -274,9 +274,22 @@ namespace gpu {
              * the coarse-grained copy). Freshly synced fields are
              * marked fresh afterwards. Builds the mirror (full sync) on
              * first call for a given conf.id().
+             *
+             * `stream`, if non-null: fields that are already fresh (no
+             * CPU resync needed) but were produced by a GPU kernel on a
+             * *different* stream (recorded by mark_gpu_dirty() below)
+             * get a cudaStreamWaitEvent(stream, ...) inserted instead of
+             * being silently trusted -- this is what makes cross-
+             * algorithm ordering safe without a CPU-blocking sync when
+             * two GPU-native algorithms run on separate streams (e.g.
+             * NonBonded writing MIRROR_FORCE on its own stream, then
+             * Leap_Frog_Velocity reading it on its own). Omit (or pass
+             * nullptr/0) for legacy/CPU-side callers -- behaves exactly
+             * as before, no event bookkeeping.
              */
             gpu::Configuration::View configuration_view(configuration::Configuration & conf,
-                                                          unsigned read_fields);
+                                                          unsigned read_fields,
+                                                          cudaStream_t stream = 0);
 
             /**
              * @brief The caller just wrote `fields` into the
@@ -290,8 +303,23 @@ namespace gpu {
              * Algorithm_Sequence::run() doesn't immediately undo the
              * fresh bit via invalidate_gpu_mirror() right after it
              * returns.
+             *
+             * `stream`, if non-null: records one cudaEvent_t (ordering
+             * only, cudaEventDisableTiming) marking "everything this
+             * call's kernels enqueued on `stream` up to now is done,"
+             * and appends it to each written field's producer-event
+             * list (gpu::Configuration::field_producer_events) instead
+             * of clearing prior entries -- multiple GPU writers can
+             * touch the same field across a step (e.g. every bonded
+             * term plus NonBonded all write MIRROR_FORCE, each on its
+             * own stream) and a later reader must wait on all of them.
+             * The list is cleared only at well-defined "this field
+             * starts fresh" points: zero_mirror_force(),
+             * invalidate_gpu_mirror(), and any CPU->GPU resync inside
+             * configuration_view() -- never accumulates across steps.
              */
-            void mark_gpu_dirty(configuration::Configuration & conf, unsigned fields);
+            void mark_gpu_dirty(configuration::Configuration & conf, unsigned fields,
+                                 cudaStream_t stream = 0);
 
             /**
              * @brief Publish the GPU mirror's current positions/velocities
@@ -307,6 +335,22 @@ namespace gpu {
              */
             void sync_configuration_from_device(configuration::Configuration & conf);
 #endif
+
+            /**
+             * @brief Swap the GPU mirror's own current/old halves
+             * (gpu::Configuration::exchange_state(), an O(1) struct/
+             * pointer swap -- no data movement), at the exact same
+             * logical point conf.exchange_state() (CPU) is called: both
+             * backends of Leap_Frog_Velocity::apply(), nowhere else.
+             * Without this, the mirror's `current`/`old` labels never
+             * track which physical state each currently holds, since
+             * they're never swapped -- only the CPU-authoritative
+             * configuration::Configuration was. Declared unconditionally
+             * (like zero_mirror_force()) since Leap_Frog_Velocity<
+             * cpuBackend>::apply() compiles in CPU-only builds too;
+             * genuine no-op there. No-op if `conf` has no mirror yet.
+             */
+            void exchange_mirror_state(configuration::Configuration & conf);
 
             /**
              * @brief Zero the GPU mirror's current().force (and

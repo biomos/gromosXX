@@ -78,6 +78,19 @@ gpu::Topology::View gpu::CudaManager::topology_view(const topology::Topology & t
 }
 
 namespace {
+    // Destroy and clear every producer event guarding the bits in
+    // `fields` -- called at every "this field starts fresh again" point
+    // (CPU->GPU resync, zero_mirror_force(), invalidate_gpu_mirror())
+    // so the per-field event lists never accumulate across steps or
+    // outlive the write they were guarding.
+    void clear_producer_events(gpu::Configuration & mirror, unsigned fields) {
+        for (unsigned bit = 0; bit < 6; ++bit) {
+            if (!(fields & (1u << bit))) continue;
+            for (cudaEvent_t e : mirror.field_producer_events[bit]) cudaEventDestroy(e);
+            mirror.field_producer_events[bit].clear();
+        }
+    }
+
     // Shared by configuration_view()'s two lookup paths: decide which
     // upload granularity covers `missing` (fields requested but not
     // already marked fresh), run it, and update the freshness bitmask.
@@ -102,19 +115,47 @@ namespace {
             }
             mirror.copy_to_device(conf);
             mirror.gpu_fresh_fields = gpu::MIRROR_ALL;
+            // Every field just got overwritten from the CPU side -- any
+            // GPU producer event still pending for them is now
+            // irrelevant (this resync already waited out/ superseded
+            // whatever it was guarding via the cudaDeviceSynchronize()
+            // inside copy_pos_vel_from_device() above, when that ran).
+            clear_producer_events(mirror, gpu::MIRROR_ALL);
         } else {
             mirror.copy_pos_vel_to_device(conf);
             mirror.gpu_fresh_fields |= gpu::MIRROR_POS | gpu::MIRROR_VEL;
+            clear_producer_events(mirror, gpu::MIRROR_POS | gpu::MIRROR_VEL);
+        }
+    }
+
+    // Insert cudaStreamWaitEvent() on `stream` for every producer event
+    // guarding a field in `fields` that's already fresh (not part of
+    // `missing` -- those were just handled, synchronously, by
+    // resync_missing_fields() above). Pure GPU-side ordering, no CPU
+    // blocking; a no-op if `stream` is null (legacy/CPU-side caller) or
+    // a field has no registered producer (e.g. it became fresh via a
+    // CPU upload, not a GPU kernel).
+    void wait_on_fresh_producers(gpu::Configuration & mirror, unsigned read_fields,
+                                  unsigned missing, cudaStream_t stream) {
+        if (stream == 0) return;
+        const unsigned already_fresh = read_fields & ~missing;
+        for (unsigned bit = 0; bit < 6; ++bit) {
+            if (!(already_fresh & (1u << bit))) continue;
+            for (cudaEvent_t e : mirror.field_producer_events[bit])
+                cudaStreamWaitEvent(stream, e, 0);
         }
     }
 }
 
 gpu::Configuration::View gpu::CudaManager::configuration_view(configuration::Configuration & conf,
-                                                                unsigned read_fields) {
+                                                                unsigned read_fields,
+                                                                cudaStream_t stream) {
     const std::size_t id = conf.id();
 
     if (id == m_last_conf_id && m_last_conf_gpu) {
-        resync_missing_fields(*m_last_conf_gpu, conf, read_fields & ~m_last_conf_gpu->gpu_fresh_fields);
+        const unsigned missing = read_fields & ~m_last_conf_gpu->gpu_fresh_fields;
+        resync_missing_fields(*m_last_conf_gpu, conf, missing);
+        wait_on_fresh_producers(*m_last_conf_gpu, read_fields, missing, stream);
         return m_last_conf_gpu->view();
     }
 
@@ -124,7 +165,9 @@ gpu::Configuration::View gpu::CudaManager::configuration_view(configuration::Con
         it->second->copy_to_device(conf); // full sync on first creation
         it->second->gpu_fresh_fields = gpu::MIRROR_ALL;
     } else {
-        resync_missing_fields(*it->second, conf, read_fields & ~it->second->gpu_fresh_fields);
+        const unsigned missing = read_fields & ~it->second->gpu_fresh_fields;
+        resync_missing_fields(*it->second, conf, missing);
+        wait_on_fresh_producers(*it->second, read_fields, missing, stream);
     }
 
     m_last_conf_id  = id;
@@ -132,19 +175,33 @@ gpu::Configuration::View gpu::CudaManager::configuration_view(configuration::Con
     return it->second->view();
 }
 
-void gpu::CudaManager::mark_gpu_dirty(configuration::Configuration & conf, unsigned fields) {
+void gpu::CudaManager::mark_gpu_dirty(configuration::Configuration & conf, unsigned fields,
+                                       cudaStream_t stream) {
+    gpu::Configuration * mirror = nullptr;
     const std::size_t id = conf.id();
 
     if (id == m_last_conf_id && m_last_conf_gpu) {
-        m_last_conf_gpu->gpu_fresh_fields |= fields;
-        m_last_conf_gpu->gpu_dirty_fields |= fields;
-        return;
+        mirror = m_last_conf_gpu;
+    } else {
+        auto it = m_configurations.find(id);
+        if (it != m_configurations.end()) mirror = it->second.get();
     }
+    if (!mirror) return;
 
-    auto it = m_configurations.find(id);
-    if (it != m_configurations.end()) {
-        it->second->gpu_fresh_fields |= fields;
-        it->second->gpu_dirty_fields |= fields;
+    mirror->gpu_fresh_fields |= fields;
+    mirror->gpu_dirty_fields |= fields;
+    if (stream == 0) return;
+
+    // One event per written bit (never one event shared across several
+    // bits' vectors -- each vector owns and destroys its own handles,
+    // so sharing would double-destroy). All recorded at the same stream
+    // position, so they're functionally simultaneous.
+    for (unsigned bit = 0; bit < 6; ++bit) {
+        if (!(fields & (1u << bit))) continue;
+        cudaEvent_t ev;
+        cudaEventCreateWithFlags(&ev, cudaEventDisableTiming);
+        cudaEventRecord(ev, stream);
+        mirror->field_producer_events[bit].push_back(ev);
     }
 }
 
@@ -189,17 +246,22 @@ void gpu::CudaManager::flush_gpu_dirty(configuration::Configuration & conf, unsi
 }
 
 void gpu::CudaManager::invalidate_gpu_mirror(configuration::Configuration & conf, unsigned fields) {
+    gpu::Configuration * mirror = nullptr;
     const std::size_t id = conf.id();
 
     if (id == m_last_conf_id && m_last_conf_gpu) {
-        m_last_conf_gpu->gpu_fresh_fields &= ~fields;
-        return;
+        mirror = m_last_conf_gpu;
+    } else {
+        auto it = m_configurations.find(id);
+        if (it != m_configurations.end()) mirror = it->second.get();
     }
+    if (!mirror) return;
 
-    auto it = m_configurations.find(id);
-    if (it != m_configurations.end()) {
-        it->second->gpu_fresh_fields &= ~fields;
-    }
+    mirror->gpu_fresh_fields &= ~fields;
+    // No longer fresh -- any producer event still pending for these
+    // bits is stale; the next writer re-populates when it calls
+    // mark_gpu_dirty() again.
+    clear_producer_events(*mirror, fields);
 }
 
 void gpu::CudaManager::sync_configuration_from_device(configuration::Configuration & conf) {
@@ -216,6 +278,30 @@ void gpu::CudaManager::sync_configuration_from_device(configuration::Configurati
         it->second->copy_pos_vel_from_device(conf);
         it->second->gpu_dirty_fields &= ~(gpu::MIRROR_POS | gpu::MIRROR_VEL);
     }
+}
+
+void gpu::CudaManager::exchange_mirror_state(configuration::Configuration & conf) {
+    gpu::Configuration * mirror = nullptr;
+    const std::size_t id = conf.id();
+
+    if (id == m_last_conf_id && m_last_conf_gpu) {
+        mirror = m_last_conf_gpu;
+    } else {
+        auto it = m_configurations.find(id);
+        if (it != m_configurations.end()) mirror = it->second.get();
+    }
+    if (!mirror) return; // no mirror yet -- nothing to swap
+
+    mirror->exchange_state();
+    // The producer-event lists are indexed by field bit, not by
+    // current/old -- current.force's events described current's
+    // contents, which is now old's. Field_producer_events tracks
+    // "who last wrote MIRROR_FORCE" regardless of which half that was,
+    // so no bookkeeping change is needed here beyond the struct swap
+    // itself: a consumer requesting MIRROR_FORCE still finds the right
+    // (now current) events pending, since gpu_fresh_fields/
+    // gpu_dirty_fields and field_producer_events are per-mirror, not
+    // per-half.
 }
 
 void gpu::CudaManager::zero_mirror_force(configuration::Configuration & conf) {
@@ -237,6 +323,12 @@ void gpu::CudaManager::zero_mirror_force(configuration::Configuration & conf) {
     if (mirror->current.virial_tensor) {
         cudaMemset(mirror->current.virial_tensor, 0, sizeof(FPL9_TYPE));
     }
+    // Fresh step: every producer event guarding last step's FORCE value
+    // is now meaningless (the buffer was just zeroed by this call, on
+    // the default stream -- see this method's ordering note below).
+    // Each Interaction's own mark_gpu_dirty(MIRROR_FORCE, its_stream)
+    // this step re-populates it.
+    clear_producer_events(*mirror, gpu::MIRROR_FORCE);
 }
 
 int * gpu::CudaManager::constraint_error_flag_slot(unsigned slot) {

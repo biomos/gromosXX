@@ -85,6 +85,7 @@ int algorithm::Leap_Frog_Velocity<util::cpuBackend>::apply(
     this->m_timer.start(sim);
 
     conf.exchange_state();
+    sim.cuda().exchange_mirror_state(conf);
     conf.current().box = conf.old().box;
 
     const int    num_atoms = topo.num_atoms();

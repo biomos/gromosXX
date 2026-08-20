@@ -67,18 +67,22 @@ int algorithm::Leap_Frog_Velocity<util::gpuBackend>::apply(
     this->m_timer.start(sim);
 
     conf.exchange_state();
+    // Mirror's own current/old halves swap at the exact same point the
+    // CPU-authoritative conf's do -- without this, view.old().force/
+    // .old().vel below would not actually refer to the buffer Forcefield/
+    // the previous step's velocity write just filled (see CudaManager::
+    // exchange_mirror_state()'s doc comment).
+    sim.cuda().exchange_mirror_state(conf);
     conf.current().box = conf.old().box;
 
-    // Requesting FORCE/BOX forces configuration_view()'s coarse full
-    // upload path (no dedicated per-field routine covers them) -- the
-    // integrator needs old().force fresh, unlike the pairlist path
-    // which only ever needs pos. Freshness tracking (not a hand-picked
-    // boolean) decides whether that upload actually happens: on a
-    // normal step it will, since the nonbonded interaction's own
-    // per-step force sync-back to the CPU was invalidated by
-    // Algorithm_Sequence::run() right after Forcefield::apply() ran.
+    // MIRROR_BOX deliberately not requested: launch_leap_frog_velocity()
+    // takes no box argument at all (confirmed against leap_frog_kernels.h)
+    // -- it was dead weight in this mask, and forced configuration_view()'s
+    // coarse full-upload path every step (no per-field upload routine
+    // covers BOX), silently masking the fact that view.old().force wasn't
+    // actually being kept correct any other way (fixed above).
     gpu::Configuration::View view = sim.cuda().configuration_view(
-        conf, gpu::MIRROR_POS | gpu::MIRROR_VEL | gpu::MIRROR_FORCE | gpu::MIRROR_BOX);
+        conf, gpu::MIRROR_POS | gpu::MIRROR_VEL | gpu::MIRROR_FORCE);
     const gpu::Topology::View topo_view = sim.cuda().topology_view(topo);
 
     const unsigned num_atoms = static_cast<unsigned>(topo.num_atoms());

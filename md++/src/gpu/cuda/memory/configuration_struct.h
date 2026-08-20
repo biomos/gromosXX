@@ -27,6 +27,7 @@
 #pragma once
 
 #include <utility>
+#include <vector>
 #include "types.h"
 #include "cuvector.h"
 
@@ -107,6 +108,56 @@ namespace gpu {
         ~ConfigurationState() {
             if (box) cudaFree(box);
             if (tensors_block) cudaFree(tensors_block);
+        }
+
+        // Move-only: box/tensors_block/virial_tensor/kinetic_energy_
+        // tensor/pressure_tensor are raw cudaMalloc'd pointers with no
+        // RAII wrapper. A user-declared destructor (above) suppresses
+        // the implicitly-generated move ctor/assignment, so without
+        // these, std::swap(current, old) (used by Configuration::
+        // exchange_state()) would silently fall back to copy+temporary,
+        // and the temporary's destructor would free memory `current`/
+        // `old` still point at -- a real double-free/use-after-free,
+        // caught via a segfault inside a later, unrelated cudaMemcpy
+        // once exchange_state() was actually wired up to something.
+        ConfigurationState(const ConfigurationState&) = delete;
+        ConfigurationState& operator=(const ConfigurationState&) = delete;
+
+        ConfigurationState(ConfigurationState&& other) noexcept
+            : pos(std::move(other.pos)), vel(std::move(other.vel)),
+              force(std::move(other.force)),
+              constraint_force(std::move(other.constraint_force)),
+              box(other.box), virial_tensor(other.virial_tensor),
+              kinetic_energy_tensor(other.kinetic_energy_tensor),
+              pressure_tensor(other.pressure_tensor),
+              tensors_block(other.tensors_block) {
+            other.box = nullptr;
+            other.virial_tensor = nullptr;
+            other.kinetic_energy_tensor = nullptr;
+            other.pressure_tensor = nullptr;
+            other.tensors_block = nullptr;
+        }
+
+        ConfigurationState& operator=(ConfigurationState&& other) noexcept {
+            if (this != &other) {
+                if (box) cudaFree(box);
+                if (tensors_block) cudaFree(tensors_block);
+                pos = std::move(other.pos);
+                vel = std::move(other.vel);
+                force = std::move(other.force);
+                constraint_force = std::move(other.constraint_force);
+                box = other.box;
+                virial_tensor = other.virial_tensor;
+                kinetic_energy_tensor = other.kinetic_energy_tensor;
+                pressure_tensor = other.pressure_tensor;
+                tensors_block = other.tensors_block;
+                other.box = nullptr;
+                other.virial_tensor = nullptr;
+                other.kinetic_energy_tensor = nullptr;
+                other.pressure_tensor = nullptr;
+                other.tensors_block = nullptr;
+            }
+            return *this;
         }
 
         /**
@@ -297,6 +348,34 @@ namespace gpu {
             return { current.pos.data(), current.vel.data(),
                      current.force.data(), current.constraint_force.data(),
                      current.box };
+        }
+
+        /**
+         * @brief Per-MirrorField-bit list of GPU events marking "the
+         * last write(s) to this field have been enqueued, wait on
+         * these before touching it from another stream." Indexed by
+         * bit position (0..5, see gpu::MirrorField) -- a plain array of
+         * vectors rather than a map, since the bit count is small and
+         * fixed. Several fields (e.g. MIRROR_FORCE, written by every
+         * bonded term plus NonBonded, each on its own stream) can have
+         * more than one live producer event at once; a single field
+         * with one producer is the common case (one-element vector).
+         *
+         * CudaManager owns all reads/writes of this (mark_gpu_dirty()
+         * records+stores an event per field here instead of blocking
+         * the calling stream/host; configuration_view() inserts
+         * cudaStreamWaitEvent() calls against these instead of a CPU
+         * sync when the requesting stream isn't the producer's own).
+         * Events are recorded with cudaEventDisableTiming (ordering
+         * only, no timing overhead) and destroyed/replaced whenever the
+         * field they guard is next written or explicitly invalidated --
+         * never accumulate unboundedly across steps.
+         */
+        std::vector<cudaEvent_t> field_producer_events[6];
+
+        ~Configuration() {
+            for (std::vector<cudaEvent_t> & events : field_producer_events)
+                for (cudaEvent_t e : events) cudaEventDestroy(e);
         }
     };
 }
