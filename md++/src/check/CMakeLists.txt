@@ -162,6 +162,9 @@ if(USE_CUDA)
     list(APPEND EXEC_NAMES pressure_barostat_gpu)
     add_executable(pressure_barostat_gpu pressure_barostat_gpu.t.cc)
 
+    list(APPEND EXEC_NAMES special_force_after_gpu_bonded)
+    add_executable(special_force_after_gpu_bonded special_force_after_gpu_bonded.t.cc)
+
     list(APPEND EXEC_NAMES solute_shake_gpu)
     add_executable(solute_shake_gpu solute_shake_gpu.t.cc)
 

@@ -79,24 +79,39 @@ namespace interaction
 				       simulation::Simulation & sim) = 0;
 
     /**
-     * @brief Does this Interaction read the *already-accumulated*
-     * conf.current().force (e.g. to derive a correction term) before
-     * computing/adding its own? Default false -- the overwhelming
-     * majority of Interactions (bonded terms, NonBonded, restraint/
-     * special forces) only ever += their own contribution, so they
-     * don't care whether the array currently holds a CPU-fresh value or
-     * is lagging behind an as-yet-unpublished GPU-resident write.
-     * Molecular_Virial_Interaction is the one exception (it needs the
-     * true per-atom total to correct atomic virial to molecular virial)
-     * -- Forcefield::calculate_interactions() checks this flag and
-     * publishes the GPU mirror's force before calling such an
-     * Interaction, since GPU-native force writers (CUDA_Angle_
-     * Interaction, CUDA_Nonbonded_Interaction, etc.) leave force
-     * GPU-resident (gpu::MIRROR_FORCE marked dirty via mark_gpu_dirty(),
-     * not synced back every call) until something downstream actually
-     * needs the CPU-side value.
+     * @brief Does this Interaction touch conf.current().force through
+     * the plain CPU array (conf.current().force(i) += ..., a read-
+     * modify-write, whether or not it explicitly reads the total first)
+     * rather than writing into the GPU-resident mirror itself? Default
+     * true -- the overwhelming majority of Interactions (every special/
+     * restraint force, QMMM, every non-GPU-native bonded term, and
+     * Molecular_Virial_Interaction's correction) fall into this
+     * category. Forcefield::calculate_interactions() checks this flag
+     * and publishes the GPU mirror's force before calling such an
+     * Interaction -- without it, a CPU-side += would silently operate
+     * on a stale/zero array (GPU-native terms leave force GPU-resident,
+     * gpu::MIRROR_FORCE marked dirty via mark_gpu_dirty(), not synced
+     * back every call), and worse, that addition would later be wiped
+     * out entirely when the mirror's force is eventually published
+     * (flush_gpu_dirty() *overwrites* conf.current().force from the
+     * mirror, it doesn't merge). Found the hard way: POSITIONRES active
+     * alongside GPU-native bonded/nonbonded silently dropped the
+     * position-restraint contribution every step, producing a slow,
+     * escalating LINCS-rotation divergence over thousands of steps that
+     * a short/step-0-only test never caught.
+     *
+     * Only the known GPU-native force writers override this to false:
+     * CUDA_Angle_Interaction, CUDA_Dihedral_Interaction, CUDA_Improper_
+     * Dihedral_Interaction, CUDA_Quartic_Bond_Interaction, CUDA_
+     * Nonbonded_Interaction -- each atomicAdd's into the mirror
+     * directly and must NOT trigger a flush before its own call (that
+     * would force a premature, wasteful publish of whatever an earlier
+     * GPU-native term already wrote this step, defeating GPU
+     * residency). Deliberately the minority list: new CPU-only
+     * Interactions need no changes to be safe by default; only a new
+     * GPU-native force writer needs to remember to opt out.
      */
-    virtual bool needs_fresh_cpu_force() const { return false; }
+    virtual bool needs_fresh_cpu_force() const { return true; }
 
     /**
      * timing information.

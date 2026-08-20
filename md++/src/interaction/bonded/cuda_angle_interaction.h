@@ -53,6 +53,14 @@ namespace interaction {
                                         configuration::Configuration & conf,
                                         simulation::Simulation & sim);
 
+    // Writes force directly into the GPU-resident mirror via
+    // mark_gpu_dirty(MIRROR_FORCE) -- must NOT trigger Forcefield::
+    // calculate_interactions()'s default pre-call flush (Interaction::
+    // needs_fresh_cpu_force()'s doc comment), or every bonded/nonbonded
+    // term after the first would force a premature CPU publish of
+    // whatever the previous one just wrote.
+    virtual bool needs_fresh_cpu_force() const override { return false; }
+
   private:
     gpu::cuvector<unsigned> m_angle_i;
     gpu::cuvector<unsigned> m_angle_j;

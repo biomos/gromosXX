@@ -54,6 +54,9 @@ namespace interaction {
                                         configuration::Configuration & conf,
                                         simulation::Simulation & sim);
 
+    // See cuda_angle_interaction.h's identical override for why.
+    virtual bool needs_fresh_cpu_force() const override { return false; }
+
   private:
     gpu::cuvector<unsigned> m_dihedral_i;
     gpu::cuvector<unsigned> m_dihedral_j;

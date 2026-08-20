@@ -138,6 +138,13 @@ namespace interaction {
       return 1;
     }
 
+    // Writes force directly into the GPU-resident mirror via
+    // mark_gpu_dirty(MIRROR_FORCE) -- see cuda_angle_interaction.h's
+    // identical override for why this must be false (avoids a
+    // premature CPU publish of whatever the bonded terms already wrote
+    // this step, since NonBonded always runs after them).
+    virtual bool needs_fresh_cpu_force() const override { return false; }
+
   private:
     gpu::LJParams m_gpu_lj;
     gpu::NbSimParams m_nb;
