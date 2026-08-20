@@ -36,6 +36,9 @@
 #include "../../interaction/interaction_types.h"
 
 #include "../../interaction/special/position_restraint_interaction.h"
+#ifdef USE_CUDA
+#include "../../interaction/special/cuda_position_restraint_interaction.h"
+#endif
 #include "../../interaction/special/distance_restraint_interaction.h"
 #include "../../interaction/special/distance_field_interaction.h"
 #include "../../interaction/special/angle_restraint_interaction.h"
@@ -90,11 +93,19 @@ int interaction::create_special(interaction::Forcefield & ff,
     if(!quiet)
       os <<"\tPosition restraints\n";
 
-    interaction::Position_Restraint_Interaction *pr =
-      new interaction::Position_Restraint_Interaction;
+    // Same accelerator dispatch as create_bonded.cc's GPU-native terms
+    // -- no perturbation gate needed here (Position_Restraint_
+    // Interaction has no perturbed counterpart at all, see cuda_
+    // position_restraint_interaction.h's doc comment).
+#ifdef USE_CUDA
+    if (param.gpu.accelerator == simulation::gpu_cuda) {
+      ff.push_back(new interaction::CUDA_Position_Restraint_Interaction());
+    } else
+#endif
+    {
+      ff.push_back(new interaction::Position_Restraint_Interaction());
+    }
 
-    ff.push_back(pr);
-    
     if (param.pcouple.virial == math::atomic_virial)
       io::messages.add("Position restraints with atomic virial ill defined",
 		       "create_special", io::message::warning);

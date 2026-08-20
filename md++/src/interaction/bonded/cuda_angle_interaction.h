@@ -60,6 +60,7 @@ namespace interaction {
     // term after the first would force a premature CPU publish of
     // whatever the previous one just wrote.
     virtual bool needs_fresh_cpu_force() const override { return false; }
+    virtual bool is_gpu_native() const override { return true; }
 
   private:
     gpu::cuvector<unsigned> m_angle_i;

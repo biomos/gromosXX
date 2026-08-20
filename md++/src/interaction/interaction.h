@@ -103,15 +103,30 @@ namespace interaction
      * Only the known GPU-native force writers override this to false:
      * CUDA_Angle_Interaction, CUDA_Dihedral_Interaction, CUDA_Improper_
      * Dihedral_Interaction, CUDA_Quartic_Bond_Interaction, CUDA_
-     * Nonbonded_Interaction -- each atomicAdd's into the mirror
-     * directly and must NOT trigger a flush before its own call (that
-     * would force a premature, wasteful publish of whatever an earlier
-     * GPU-native term already wrote this step, defeating GPU
-     * residency). Deliberately the minority list: new CPU-only
-     * Interactions need no changes to be safe by default; only a new
-     * GPU-native force writer needs to remember to opt out.
+     * Nonbonded_Interaction, CUDA_Position_Restraint_Interaction --
+     * each atomicAdd's into the mirror directly and must NOT trigger a
+     * flush before its own call (that would force a premature,
+     * wasteful publish of whatever an earlier GPU-native term already
+     * wrote this step, defeating GPU residency). Deliberately the
+     * minority list: new CPU-only Interactions need no changes to be
+     * safe by default; only a new GPU-native force writer needs to
+     * remember to opt out.
      */
     virtual bool needs_fresh_cpu_force() const { return true; }
+
+    /**
+     * @brief Does this Interaction have a real GPU-native implementation
+     * (writes force directly into the GPU-resident mirror, no per-call
+     * CPU round trip)? Default false. Used only for diagnostics --
+     * Forcefield::init() warns once, when the run's accelerator is
+     * gpu_cuda, about every child Interaction that returns false here,
+     * so a mixed CPU/GPU configuration (e.g. a restraint type with no
+     * CUDA port yet) is visible up front instead of only showing up as
+     * an unexplained slowdown (or, before needs_fresh_cpu_force()
+     * above existed, silently wrong dynamics). Override to true in the
+     * same classes that override needs_fresh_cpu_force() to false.
+     */
+    virtual bool is_gpu_native() const { return false; }
 
     /**
      * timing information.

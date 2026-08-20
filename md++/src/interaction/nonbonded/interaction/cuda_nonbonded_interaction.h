@@ -144,6 +144,7 @@ namespace interaction {
     // premature CPU publish of whatever the bonded terms already wrote
     // this step, since NonBonded always runs after them).
     virtual bool needs_fresh_cpu_force() const override { return false; }
+    virtual bool is_gpu_native() const override { return true; }
 
   private:
     gpu::LJParams m_gpu_lj;

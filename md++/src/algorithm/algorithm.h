@@ -27,6 +27,7 @@
 
 #include "simulation/simulation.h"
 #include "gpu/mirror_fields.h"
+#include "io/message.h"
 
 namespace configuration
 {
@@ -170,6 +171,27 @@ namespace algorithm
       ;
   };
 
+  namespace detail {
+    /**
+     * @brief Mixed CPU/GPU diagnostic (see Interaction::is_gpu_native()'s
+     * doc comment for the Interaction-side equivalent): a single warning,
+     * emitted once at construction, when GPU acceleration is active but
+     * this particular Algorithm has no GPU backend at all and is running
+     * on CPU instead. Shared by every make_algorithm/make_unique_algorithm
+     * overload below rather than duplicated at each one.
+     */
+    inline void warn_if_cpu_fallback(const simulation::Simulation & sim,
+                                      const std::string & name) {
+      if (sim.param().gpu.accelerator == simulation::gpu_cuda) {
+        io::messages.add(
+            "Algorithm '" + name + "' has no GPU implementation and will "
+            "run on CPU -- if it reads or writes positions/velocities/"
+            "force, this adds extra CPU<->GPU synchronization every step.",
+            "make_algorithm", io::message::warning);
+      }
+    }
+  }
+
   /**
    * @brief Create a backend-aware algorithm instance (GPU if available and supported, otherwise CPU)
    *
@@ -178,7 +200,7 @@ namespace algorithm
    * @return Algorithm*
    */
   template <template <typename> class AlgT, typename... Args>
-  Algorithm* make_algorithm(const simulation::Simulation & sim, 
+  Algorithm* make_algorithm(const simulation::Simulation & sim,
                             Args&&... args) {
     static_assert(std::is_base_of_v<Algorithm, AlgT<util::cpuBackend>>,
                   "AlgT must derive from Algorithm");
@@ -187,21 +209,27 @@ namespace algorithm
         return new AlgT<util::gpuBackend>(std::forward<Args>(args)...);
       }
     }
-    return new AlgT<util::cpuBackend>(std::forward<Args>(args)...);
+    Algorithm * alg = new AlgT<util::cpuBackend>(std::forward<Args>(args)...);
+    detail::warn_if_cpu_fallback(sim, alg->name);
+    return alg;
   }
 
   /**
-   * @brief Legacy version of make_algorithm for non-templated classes
-   * 
+   * @brief Legacy version of make_algorithm for non-templated classes --
+   * these have no Backend parameter at all, so under GPU acceleration
+   * they unconditionally warn (see detail::warn_if_cpu_fallback()).
+   *
    * @tparam Alg The algorithm class
    * @param sim Simulation object
    * @param args Arguments to be passed to the constructor
-   * @return Alg* 
+   * @return Alg*
    */
   template <class Alg, typename... Args>
-  Alg* make_algorithm(const simulation::Simulation & sim, 
+  Alg* make_algorithm(const simulation::Simulation & sim,
                       Args&&... args) {
-    return new Alg(std::forward<Args>(args)...);
+    Alg * alg = new Alg(std::forward<Args>(args)...);
+    detail::warn_if_cpu_fallback(sim, alg->name);
+    return alg;
   }
 
   /**
@@ -213,13 +241,15 @@ namespace algorithm
    */
   template <template <typename> class AlgT, typename... Args>
   std::unique_ptr<Algorithm> make_unique_algorithm(
-                            simulation::Simulation & sim, 
+                            simulation::Simulation & sim,
                             Args&&... args) {
     if constexpr (util::has_gpu_backend_v<AlgT>) {
       if (sim.param().gpu.accelerator == simulation::gpu_cuda) {
         return std::make_unique<AlgT<util::gpuBackend>>(std::forward<Args>(args)...);
       }
     }
-    return std::make_unique<AlgT<util::cpuBackend>>(std::forward<Args>(args)...);
+    std::unique_ptr<Algorithm> alg = std::make_unique<AlgT<util::cpuBackend>>(std::forward<Args>(args)...);
+    detail::warn_if_cpu_fallback(sim, alg->name);
+    return alg;
   }
 }

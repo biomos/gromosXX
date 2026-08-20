@@ -60,12 +60,29 @@ int interaction::Forcefield
   
   int i = 0;
 
+  // Mixed CPU/GPU diagnostic (see Interaction::is_gpu_native()'s doc
+  // comment): with GPU acceleration active, an Interaction with no CUDA
+  // port at all silently falls back to reading/writing conf.current().
+  // force through the plain CPU array -- correct (needs_fresh_cpu_force()
+  // handles that), but each such Interaction incurs a GPU-mirror publish
+  // it wouldn't otherwise need. One warning per Interaction, not per
+  // step -- this is init(), called once.
+  const bool gpu_run = sim.param().gpu.accelerator == simulation::gpu_cuda;
+
   for(iterator it = begin(), to = end();
       it != to;
       ++it){
 
     DEBUG(8, "init " << (*it)->name);
     i += (*it)->init(topo, conf, sim, os, quiet);
+
+    if (gpu_run && !(*it)->is_gpu_native()) {
+      io::messages.add(
+          "Interaction '" + (*it)->name + "' has no GPU implementation and "
+          "will run on CPU -- if it reads or writes positions/velocities/"
+          "force, this adds extra CPU<->GPU synchronization every step.",
+          "Forcefield", io::message::warning);
+    }
   }
 
   return i;

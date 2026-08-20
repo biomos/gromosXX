@@ -60,6 +60,7 @@ namespace interaction {
 
     // See cuda_angle_interaction.h's identical override for why.
     virtual bool needs_fresh_cpu_force() const override { return false; }
+    virtual bool is_gpu_native() const override { return true; }
 
   private:
     gpu::cuvector<unsigned> m_bond_i;
