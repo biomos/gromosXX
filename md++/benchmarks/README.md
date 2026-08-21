@@ -65,8 +65,9 @@ commit in the timeline or the timeline stops measuring the code. The manifest
 records a sha256 per file and is verified before every run.
 
 ```sh
-python tools/stage_systems.py            # stage into /local/gromos/bench_systems
-python tools/stage_systems.py --verify   # re-check against the manifest
+python3 -m pip install --target /local/gromos/bench_tools asv virtualenv
+python3 tools/stage_systems.py           # stage into /local/gromos/bench_systems
+python3 tools/stage_systems.py --verify  # re-check against the manifest
 ```
 
 The upstream protein set lives on shared storage and is read *only* by this
@@ -74,18 +75,31 @@ staging step. Everything else reads the local cache.
 
 ## Running
 
-Run asv from *this* directory. The build hooks are located via `{conf_dir}`,
-which asv resolves from the current working directory rather than from the
-location of `asv.conf.json`, so running from elsewhere breaks the build step
-even when `--config` points here.
+Use the `./asv` wrapper in this directory:
 
 ```sh
 cd md++/benchmarks
-asv machine --yes                        # once per machine
-asv run HEAD^!                           # benchmark one commit
-asv run NEW                              # anything not yet benchmarked
-asv run 284700de..master --steps 20      # a sampled timeline
-asv publish && asv preview               # browsable results
+./asv machine --yes                      # once per machine
+./asv run HEAD^!                         # benchmark one commit
+./asv run NEW                            # anything not yet benchmarked
+./asv run 284700de..master --steps 20    # a sampled timeline
+./asv publish && ./asv preview           # browsable results at :8080
+./asv show                               # which commits have results
+./asv compare <commit1> <commit2>        # side by side, flags regressions
+```
+
+The wrapper exists for two reasons. asv is installed with `pip --target` into a
+directory of its own, so it is not on `PATH` and needs `PYTHONPATH` set. And asv
+resolves the `{conf_dir}` that locates the build hooks from the *current working
+directory*, not from where `asv.conf.json` lives, so it must run from here --
+the wrapper cds itself, and works when called by absolute path from anywhere.
+
+If you would rather call `asv` directly:
+
+```sh
+export PYTHONPATH=/local/gromos/bench_tools
+export PATH=/local/gromos/bench_tools/bin:$PATH
+cd md++/benchmarks    # still required, see above
 ```
 
 ### Cost
@@ -104,15 +118,15 @@ ccache warm. The other is the large system's initialisation -- reading its 29 MB
 input costs 54 s *per run*, which every repeat pays again; at 15 runs per variant
 that is ~13 min of pure I/O before any physics happens.
 
-So do not benchmark every commit. Use `asv run NEW` or `--steps N` for a sampled
+So do not benchmark every commit. Use `./asv run NEW` or `--steps N` for a sampled
 timeline, and narrow the scope for routine checks:
 
 ```sh
 # fast smoke check
-GROMOS_BENCH_TIERS=tiny GROMOS_BENCH_THREADS=4 GROMOS_BENCH_REPEATS=1 asv run HEAD^!
+GROMOS_BENCH_TIERS=tiny GROMOS_BENCH_THREADS=4 GROMOS_BENCH_REPEATS=1 ./asv run HEAD^!
 
 # nightly: one variant, full scaling curve
-GROMOS_VARIANT=omp asv run NEW
+GROMOS_VARIANT=omp ./asv run NEW
 ```
 
 ### Machine-specific paths
@@ -170,9 +184,10 @@ GROMOS_MD_BINARY=../BUILD/program/md python tools/calibrate.py --all
 ## Layout
 
 ```
+asv                     wrapper: sets PYTHONPATH and runs from this directory
 asv.conf.json           asv configuration and the build-variant matrix
-scripts/asv_build.sh   cmake configure/build/install into asv's build cache
-scripts/asv_install.sh install a cached build into an asv environment
+scripts/asv_build.sh    cmake configure/build/install into asv's build cache
+scripts/asv_install.sh  install a cached build into an asv environment
 benchmarks/_imd.py      block-aware GROMOS imd reader/patcher
 benchmarks/_omd.py      omd timing parser
 benchmarks/_runner.py   variant dispatch, pinning, repeats
