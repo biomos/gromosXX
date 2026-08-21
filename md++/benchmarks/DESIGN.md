@@ -86,7 +86,7 @@ Each module below `md_bench.py` is independently usable, which is what
 | File | Lines | Role |
 |---|---|---|
 | `asv.conf.json` | 64 | asv configuration; the four-variant build matrix |
-| `nightly.conf.json` | 59 | the same, restricted to one variant, for timelines |
+| `quick.conf.json` | 59 | the same, restricted to one variant, for timelines |
 | `asv` | 44 | wrapper supplying `PYTHONPATH` and the working directory |
 | `scripts/asv_build.sh` | 161 | cmake build, variant flags, build-time guards |
 | `scripts/asv_install.sh` | 26 | copy the install prefix into an asv environment |
@@ -251,9 +251,12 @@ whitespace. `unaccounted time` is skipped — it is bookkeeping, not an algorith
 The exported metrics, and two deliberate choices:
 
 - **`track_sim_walltime` uses `Wall time simulation`, never `total`.** For the
-  large system, reading the 29 MB input coordinates takes about four times
-  longer than the simulation being measured, so total wall time would be
-  dominated by I/O unrelated to the integrator.
+  large system, initialisation takes about four times longer than the
+  simulation being measured, so total wall time would be dominated by setup
+  unrelated to the integrator. Initialisation is tracked separately as
+  `track_init_walltime`: it scales far worse than the simulation (14.5x the
+  atoms costs 15.4x per step but 159x initialisation), so setup code is
+  somewhere a regression could hide while every simulation metric stays flat.
 - **`track_ns_per_day` is informational only.** asv's regression detection
   assumes lower-is-better, so on a higher-is-better series every genuine speedup
   would be reported as a regression.
@@ -366,7 +369,7 @@ asv source:
 - **asv chdirs to the directory containing the config file** (`asv/main.py`) and
   resolves `repo`, `benchmark_dir`, `env_dir`, `results_dir`, `html_dir` and
   `{conf_dir}` relative to *that*, not to where you invoked it. This is what lets
-  every path in the config be relative, and why `nightly.conf.json` must sit
+  every path in the config be relative, and why `quick.conf.json` must sit
   beside `asv.conf.json`. A config kept elsewhere needs absolute paths
   throughout.
 - **`-E/--environment` selects only the environment type and Python version.**

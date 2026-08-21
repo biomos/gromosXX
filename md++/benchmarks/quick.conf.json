@@ -1,0 +1,58 @@
+// Reduced configuration, for routine tracking.
+//
+// Differs from asv.conf.json in one way: the build matrix is restricted to the
+// omp variant, so a commit is built once instead of four times.
+//
+// Thread counts are deliberately NOT set here. asv puts every matrix variable
+// into the environment name (asv/environment.py, get_env_name), so a config
+// that pinned thread counts would produce a differently-named environment and
+// its results would form a separate series, not comparable with the full run's
+// on the same graph. Narrow the thread counts from the shell instead, which
+// keeps the environment identical:
+//
+//     GROMOS_BENCH_THREADS="1 4 16" GROMOS_BENCH_TIERS="tiny medium" \
+//       ./asv run --config quick.conf.json --skip-existing-successful NEW
+//
+// The parameter grid itself stays fixed either way, so the combinations left
+// out are recorded as skipped and results from a narrow run remain directly
+// comparable with those from a full one.
+//
+// Keep this beside asv.conf.json: asv chdirs to the config's directory and
+// resolves every path relative to it.
+//
+{
+    "version": 1,
+    "project": "gromosXX",
+    "project_url": "https://www.gromos.net",
+    "repo": "../..",
+    "branches": [
+        "master",
+        "asv-benchmarks"
+    ],
+    "dvcs": "git",
+    "benchmark_dir": "benchmarks",
+    "env_dir": ".asv/env",
+    "results_dir": ".asv/results",
+    "html_dir": ".asv/html",
+    "environment_type": "virtualenv",
+    "pythons": [
+        "3.10"
+    ],
+    "build_command": [
+        "{conf_dir}/scripts/asv_build.sh {build_dir} {build_cache_dir}"
+    ],
+    "install_command": [
+        "{conf_dir}/scripts/asv_install.sh {build_cache_dir} {env_dir}"
+    ],
+    "uninstall_command": [],
+    "build_cache_size": 8,
+    "install_timeout": 3600,
+    "matrix": {
+        "env": {
+            "GROMOS_VARIANT": [
+                "omp"
+            ]
+        }
+    },
+    "benchmark_time_limit": 7200
+}

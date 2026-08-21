@@ -26,6 +26,8 @@ so each configuration runs *once* and many metrics are scraped from the output:
 * `track_ms_per_step` -- wall time per step, comparable across systems
 * `track_nonbonded`, `track_pairlist`, `track_nonbonded_shortrange`,
   `track_nonbonded_longrange`, `track_shake` -- per-algorithm breakdown
+* `track_init_walltime` -- setup before step one; scales far worse than
+  the simulation does, so worth watching separately
 * `track_ns_per_day` -- throughput, informational only
 
 The per-algorithm series are the point: they turn "this commit got slower" into
@@ -110,7 +112,7 @@ paths for all three, or the build hooks will not be found.
 ### Timelines
 
 A timeline over the full matrix builds md++ four times per commit, which is
-rarely what routine tracking needs. `nightly.conf.json` is the same
+rarely what routine tracking needs. `quick.conf.json` is the same
 configuration restricted to the `omp` variant -- asv's `-E` flag selects only
 the environment type and Python version, so a separate config is the only way to
 pick a single build variant.
@@ -118,11 +120,11 @@ pick a single build variant.
 ```sh
 # five commits sampled from the last eight on master, one variant
 GROMOS_BENCH_TIERS=tiny GROMOS_BENCH_THREADS=4 \
-  ./asv run --config nightly.conf.json --bench "PlainMD.track_" \
+  ./asv run --config quick.conf.json --bench "PlainMD.track_" \
             --steps 5 master~7..master
 
 # the normal nightly invocation: whatever is not yet benchmarked
-./asv run --config nightly.conf.json --skip-existing-successful NEW
+./asv run --config quick.conf.json --skip-existing-successful NEW
 
 ./asv publish && ./asv preview
 ```
@@ -135,29 +137,73 @@ visible.
 
 ### Cost
 
-Be deliberate here -- the full matrix is expensive:
+All figures below are measured on this machine, not estimated.
 
-| Scope | Time per commit |
+| Scope (per commit) | Time |
 |---|---|
-| Full matrix (3 systems x 5 thread counts x 4 variants x 3 repeats) | **~2.7 h** |
-| One variant, all systems | ~50 min |
-| `tiny` only, all variants | ~38 min |
-| `tiny` only, one variant, 1 repeat | ~3 min |
+| Full matrix: 4 variants, 3 systems, 5 thread counts, 3 repeats | **2.8 h** |
+| One variant, 3 systems, 5 thread counts, 3 repeats | 49 min |
+| One variant, `tiny`+`medium`, 5 thread counts, 3 repeats | 25 min |
+| One variant, `tiny`+`medium`, 5 thread counts, 2 repeats | 17 min |
+| One variant, `tiny` only, 5 thread counts, 3 repeats | 12 min |
 
-Two things drive this. Builds are one: roughly 230 translation units, so keep
-ccache warm. The other is the large system's initialisation -- reading its 29 MB
-input costs 54 s *per run*, which every repeat pays again; at 15 runs per variant
-that is ~13 min of pure I/O before any physics happens.
+Where the time actually goes, for the full matrix:
 
-So do not benchmark every commit. Use `./asv run NEW` or `--steps N` for a sampled
-timeline, and narrow the scope for routine checks:
+| Stage | Time | Share |
+|---|---|---|
+| Builds (4 x 65 s, ccache warm) | 4.2 min | 2.5% |
+| Initialisation | 46.9 min | 28.3% |
+| Simulation -- the part being measured | 114.8 min | 69.2% |
+
+**Builds are not the bottleneck.** They dominate only a narrow smoke check; at
+full scope they are 2.5% of the total. Simulation is most of it, and
+*initialisation is more than a quarter* -- almost all of that the `large`
+system, which spends 54 s on setup before its first MD step, and pays it again
+on every repeat.
+
+That is because initialisation scales far worse than simulation does:
+
+| System | Atoms | Initialisation | Per MD step |
+|---|---|---|---|
+| `tiny` | 11,904 | 0.34 s | 8.2 ms |
+| `medium` | 45,530 | 4.24 s | 33.9 ms |
+| `large` | 172,541 | 54.05 s | 136.8 ms |
+
+14.5x the atoms costs 15.4x per step -- essentially linear -- but **159x the
+initialisation**. `track_init_walltime` exists to keep an eye on it.
+
+So the levers, in order of value:
+
+1. **Drop the `large` tier** for routine runs. Half the cost of a one-variant
+   sweep, and most of that is setup you are not measuring. Run it weekly.
+2. **Use `quick.conf.json`** -- one variant instead of four.
+3. **Fewer repeats.** 3 -> 2 costs some robustness against an unlucky run; the
+   metric is the minimum, so it degrades gracefully.
+4. **`--skip-existing-successful`** so repeat invocations do not redo work.
+
+What *not* to do:
+
+* **Do not shorten NSTLIM to save time.** Measured spread over five runs of the
+  `tiny` system: 0.55% at 4000 steps, 1.13% at 250, 3.73% at 125. Longer runs
+  average out noise, which is the whole point of the step count. Shorten the
+  scope, never the measurement.
+* **Do not use `asv --parallel`.** Concurrent runs contend for cores. A single
+  build running alongside a benchmark inflated one measurement here by 11%, and
+  another by 54%.
 
 ```sh
 # fast smoke check
-GROMOS_BENCH_TIERS=tiny GROMOS_BENCH_THREADS=4 GROMOS_BENCH_REPEATS=1 ./asv run HEAD^!
+GROMOS_BENCH_TIERS=tiny GROMOS_BENCH_THREADS=4 GROMOS_BENCH_REPEATS=1 \
+  ./asv run --config quick.conf.json HEAD^!
 
-# nightly: one variant, full scaling curve
-GROMOS_VARIANT=omp ./asv run NEW
+# routine sweep: coarse first, then fill in -- --skip-existing-successful
+# means the staged version costs no more than running the last pass alone,
+# but leaves a usable timeline at every stage
+export GROMOS_BENCH_TIERS="tiny medium" GROMOS_BENCH_REPEATS=2
+for s in 17 34 67 134; do
+  ./asv run --config quick.conf.json --skip-existing-successful \
+            --steps $s 023d27db..master
+done
 ```
 
 ### Paths
@@ -257,7 +303,7 @@ GROMOS_MD_BINARY=../BUILD/program/md python tools/calibrate.py --all
 ```
 asv                     wrapper: sets PYTHONPATH and runs from this directory
 asv.conf.json           asv configuration and the build-variant matrix
-nightly.conf.json       the same, restricted to one variant, for timelines
+quick.conf.json       the same, restricted to one variant, for timelines
 scripts/asv_build.sh    cmake configure/build/install into asv's build cache
 scripts/asv_install.sh  install a cached build into an asv environment
 benchmarks/_imd.py      block-aware GROMOS imd reader/patcher

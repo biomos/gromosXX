@@ -137,6 +137,20 @@ class PlainMD(object):
 
     track_sim_walltime.unit = "seconds"
 
+    def track_init_walltime(self, cache, system, threads):
+        """Initialisation: topology, coordinates and setup, before step one.
+
+        Not part of the headline metric -- that is deliberately simulation-only
+        -- but tracked because it is substantial and scales far worse than the
+        simulation does. Measured on this machine: 14.5x the atom count costs
+        15.4x per MD step but 159x initialisation (0.34 s at 11.9k atoms,
+        54.05 s at 172.5k). Setup code is therefore somewhere a regression can
+        hide while every simulation metric stays flat.
+        """
+        return self._get(cache, system, threads, "wall_initialisation")
+
+    track_init_walltime.unit = "seconds"
+
     def track_ms_per_step(self, cache, system, threads):
         """Wall time per MD step -- comparable across systems of different size."""
         return self._get(cache, system, threads, "ms_per_step")
