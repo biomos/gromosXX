@@ -159,10 +159,20 @@ int algorithm::Leap_Frog_Position<util::gpuBackend>::apply(
     gpu::launch_leap_frog_position(view.old().pos, view.current().vel,
                                     view.current().pos, num_atoms, dt, stream);
 
-    // The one sync-back per step: publish the GPU-computed pos/vel to
-    // the CPU-authoritative conf, since nothing else yet consumes
-    // GPU-resident state directly.
-    sim.cuda().sync_configuration_from_device(conf);
+    // Stay GPU-resident -- no eager sync-back. Vouch for the position
+    // we just wrote (mark_gpu_dirty(), no CPU round trip); the existing
+    // generic mechanism (Algorithm_Sequence::run()'s flush_gpu_dirty()
+    // before any algorithm whose gpu_mirror_touches() includes POS/VEL
+    // -- the default for every CPU-only algorithm) publishes it lazily,
+    // only when something genuinely needs it, same as every other
+    // GPU-native writer in this codebase. gpu_mirror_touches() == 0
+    // (below) keeps that same generic invalidation from immediately
+    // erasing the freshness this call just marked. The one remaining
+    // *unconditional* publish point is trajectory/checkpoint writing in
+    // program/md.cc, which lives outside any Algorithm_Sequence::run()
+    // this deferred mechanism could hook into -- see io::Out_
+    // Configuration::needs_gpu_mirror_flush().
+    sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_POS | gpu::MIRROR_VEL, stream);
 
     this->m_timer.stop();
     return 0;

@@ -97,6 +97,22 @@ namespace io {
             output_format const form = reduced);
 
     /**
+     * @brief Would write(conf, topo, sim, reduced) actually need
+     * GPU-mirrored position/velocity/force data this step (position/
+     * velocity/force trajectory cadence, or an NTWSE energy-minimum
+     * trigger)? Read-only -- unlike write() itself, does not update
+     * the minimum-energy tracking, so it's safe to call speculatively
+     * before deciding whether to publish the GPU mirror (e.g. from
+     * program/md.cc, which calls write() outside any Algorithm_
+     * Sequence::run() the GPU-resident integrators' own deferred-
+     * publish mechanism could hook into). Every trigger write()
+     * itself checks for `form == reduced`'s pos/vel/force branch is
+     * mirrored here -- see out_configuration.cc's write().
+     */
+    bool needs_gpu_mirror_flush(configuration::Configuration & conf,
+            simulation::Simulation const & sim) const;
+
+    /**
      * print out data (per time step).
      */
     void print(topology::Topology const & topo,

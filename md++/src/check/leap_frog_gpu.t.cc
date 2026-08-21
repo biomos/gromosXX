@@ -136,6 +136,15 @@ namespace {
       }
       flush_messages("gpu leap-frog apply");
 
+      // Leap_Frog_Position<gpuBackend> leaves pos/vel dirty-but-
+      // unpublished on the GPU mirror (mark_gpu_dirty(), no CPU round
+      // trip) -- in a real Algorithm_Sequence::run(), the next
+      // algorithm's flush_gpu_dirty() or io::Out_Configuration's gated
+      // publish would resolve this; this test reads conf.current()
+      // directly, so it must ask for the publish itself, same as
+      // temperature_gpu.t.cc's explicit finalize_gpu_step() call.
+      gpu_s.sim.cuda().flush_gpu_dirty(gpu_s.conf, gpu::MIRROR_POS | gpu::MIRROR_VEL);
+
       for (unsigned i = 0; i < num_atoms; ++i) {
         const math::Vec dv = cpu_s.conf.current().vel(i) - gpu_s.conf.current().vel(i);
         const math::Vec dx = cpu_s.conf.current().pos(i) - gpu_s.conf.current().pos(i);
@@ -268,6 +277,12 @@ namespace {
         break;
       }
       flush_messages("gpu thermostat-interleaved sequence");
+
+      // Leap_Frog_Position<gpuBackend> is the last algorithm in
+      // gpu_seq, so no subsequent algorithm's flush_gpu_dirty() ever
+      // publishes its mark_gpu_dirty()'d pos/vel -- see the identical
+      // comment in run_case() above.
+      gpu_s.sim.cuda().flush_gpu_dirty(gpu_s.conf, gpu::MIRROR_POS | gpu::MIRROR_VEL);
 
       for (unsigned i = 0; i < num_atoms; ++i) {
         const math::Vec dv = cpu_s.conf.current().vel(i) - gpu_s.conf.current().vel(i);

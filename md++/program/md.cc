@@ -199,6 +199,18 @@ int main(int argc, char *argv[]){
   const double init_time = util::now() - start;
   while(int(sim.steps()) < sim.param().step.number_of_steps && !exit_md){
       
+    // GPU-resident integrators (Leap_Frog_Position<gpuBackend> etc.)
+    // leave pos/vel/force on the GPU mirror and only mark it dirty, not
+    // published -- the generic per-algorithm flush inside Algorithm_
+    // Sequence::run() covers every other consumer, but trajectory
+    // writing happens out here, outside any run() this step. Only pay
+    // for the publish when write() is actually about to use it this
+    // step (see needs_gpu_mirror_flush()'s doc comment) -- calling
+    // flush_gpu_dirty() unconditionally every iteration would force
+    // the exact per-step sync this design is meant to avoid, since
+    // pos/vel are marked dirty every step regardless of write cadence.
+    if (traj.needs_gpu_mirror_flush(conf, sim))
+      sim.cuda().flush_gpu_dirty(conf, gpu::MIRROR_POS | gpu::MIRROR_VEL | gpu::MIRROR_FORCE);
     traj.write(conf, topo, sim, io::reduced);
 
     // run a step
@@ -264,6 +276,10 @@ int main(int argc, char *argv[]){
   } // main md loop
   
   std::cout << "writing final configuration" << std::endl;
+  // Unconditional: the final structure write must always reflect
+  // whatever GPU-resident integrators last wrote, regardless of write
+  // cadence.
+  sim.cuda().flush_gpu_dirty(conf, gpu::MIRROR_POS | gpu::MIRROR_VEL | gpu::MIRROR_FORCE);
   traj.write(conf, topo, sim, io::final);
   traj.print_final(topo, conf, sim);
     

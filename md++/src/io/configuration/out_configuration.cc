@@ -279,6 +279,31 @@ void io::Out_Configuration::init(io::Argument & args,
 
 }
 
+bool io::Out_Configuration::needs_gpu_mirror_flush(
+        configuration::Configuration & conf,
+        simulation::Simulation const & sim) const {
+  // Mirrors write()'s own form==reduced pos/vel/force triggers exactly
+  // (see below), read-only -- does not touch minimum_energy, so
+  // calling this doesn't change what a *real* write() call decides
+  // right after.
+  bool minimum_found = false;
+  if (sim.param().write.energy_index > 0) {
+    const double current_energy =
+        conf.old().energies.get_energy_by_index(sim.param().write.energy_index);
+    if (current_energy < minimum_energy) minimum_found = true;
+  }
+  if (sim.param().write.energy_index < 0) {
+    const double current_energy =
+        conf.old().energies.get_energy_by_index(-sim.param().write.energy_index);
+    if (fabs(current_energy) > sim.param().qmmm.nn.val_thresh) minimum_found = true;
+  }
+
+  return (m_every_pos && ((sim.steps() % m_every_pos) == 0 || minimum_found)) ||
+         (m_every_vel && (sim.steps() % m_every_vel) == 0) ||
+         (m_every_force &&
+          ((sim.steps() - sim.param().analyze.stride) % m_every_force) == 0);
+}
+
 void io::Out_Configuration::write(configuration::Configuration &conf,
         topology::Topology const &topo,
         simulation::Simulation const &sim,
