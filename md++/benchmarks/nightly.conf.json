@@ -1,0 +1,59 @@
+// Single-variant configuration for routine timeline runs.
+//
+// Identical to asv.conf.json except that the build matrix is restricted to the
+// omp variant. asv's -E flag selects only the environment type and Python
+// version, so a single build variant cannot be chosen from the command line;
+// this config is the supported way to do it.
+//
+// A timeline over the full four-variant matrix builds md++ four times per
+// commit, which is rarely what you want for a nightly run. Use this for the
+// scaling curve that matters day to day, and asv.conf.json when you need the
+// cross-variant comparison.
+//
+// Keep this in the same directory as asv.conf.json: asv chdirs to the config's
+// directory and resolves repo, benchmark_dir and the build hooks relative to it.
+//
+//     ./asv run --config nightly.conf.json NEW
+//
+{
+    "version": 1,
+    "project": "gromosXX",
+    "project_url": "https://www.gromos.net",
+    "repo": "../..",
+    "branches": [
+        "master",
+        "asv-benchmarks"
+    ],
+    "dvcs": "git",
+    "benchmark_dir": "benchmarks",
+    "env_dir": "/local/gromos/bench_asv/env",
+    "results_dir": "/local/gromos/bench_asv/results",
+    "html_dir": "/local/gromos/bench_asv/html",
+    "environment_type": "virtualenv",
+    "pythons": [
+        "3.10"
+    ],
+    "build_command": [
+        "{conf_dir}/scripts/asv_build.sh {build_dir} {build_cache_dir}"
+    ],
+    "install_command": [
+        "{conf_dir}/scripts/asv_install.sh {build_cache_dir} {env_dir}"
+    ],
+    "uninstall_command": [],
+    "build_cache_size": 8,
+    "install_timeout": 3600,
+    "matrix": {
+        "env": {
+            "GROMOS_VARIANT": [
+                "omp"
+            ],
+            "GROMOS_BENCH_SYSTEMS": [
+                "/local/gromos/bench_systems"
+            ],
+            "GROMOS_BENCH_SCRATCH": [
+                "/local/gromos/bench_scratch"
+            ]
+        }
+    },
+    "benchmark_time_limit": 7200
+}

@@ -107,6 +107,32 @@ the config file (`asv/main.py`) and resolves `repo`, `benchmark_dir` and the
 invoked it. A config placed outside this directory therefore needs absolute
 paths for all three, or the build hooks will not be found.
 
+### Timelines
+
+A timeline over the full matrix builds md++ four times per commit, which is
+rarely what routine tracking needs. `nightly.conf.json` is the same
+configuration restricted to the `omp` variant -- asv's `-E` flag selects only
+the environment type and Python version, so a separate config is the only way to
+pick a single build variant.
+
+```sh
+# five commits sampled from the last eight on master, one variant
+GROMOS_BENCH_TIERS=tiny GROMOS_BENCH_THREADS=4 \
+  ./asv run --config nightly.conf.json --bench "PlainMD.track_" \
+            --steps 5 master~7..master
+
+# the normal nightly invocation: whatever is not yet benchmarked
+./asv run --config nightly.conf.json --skip-existing-successful NEW
+
+./asv publish && ./asv preview
+```
+
+Add `--skip-existing-successful` to repeat invocations so commits already
+measured are not redone. Leave `GROMOS_BENCH_REPEATS` at its default of 3 for
+real tracking: a single repeat leaves a run-to-run spread of roughly 1.4% on
+this machine, which is the floor on what a regression has to exceed to be
+visible.
+
 ### Cost
 
 Be deliberate here -- the full matrix is expensive:
@@ -191,6 +217,7 @@ GROMOS_MD_BINARY=../BUILD/program/md python tools/calibrate.py --all
 ```
 asv                     wrapper: sets PYTHONPATH and runs from this directory
 asv.conf.json           asv configuration and the build-variant matrix
+nightly.conf.json       the same, restricted to one variant, for timelines
 scripts/asv_build.sh    cmake configure/build/install into asv's build cache
 scripts/asv_install.sh  install a cached build into an asv environment
 benchmarks/_imd.py      block-aware GROMOS imd reader/patcher
