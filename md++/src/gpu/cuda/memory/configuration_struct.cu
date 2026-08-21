@@ -117,6 +117,22 @@ void gpu::Configuration::copy_constraint_data_from_device(configuration::Configu
     conf.old().virial_tensor = fpl9_to_matrix(vt_o);
 }
 
+void gpu::Configuration::copy_lattice_shifts_to_device(const configuration::Configuration& conf) {
+    const size_t n = conf.special().lattice_shifts.size();
+    lattice_shifts.resize(n);
+    for (size_t i = 0; i < n; ++i)
+        lattice_shifts[i] = static_cast<FPL3_TYPE>(conf.special().lattice_shifts(i));
+}
+
+void gpu::Configuration::copy_lattice_shifts_from_device(configuration::Configuration& conf) {
+    CUDA_CHECK(cudaDeviceSynchronize());
+    const size_t n = lattice_shifts.size();
+    for (size_t i = 0; i < n; ++i) {
+        const FPL3_TYPE& s = lattice_shifts[i];
+        conf.special().lattice_shifts(i) = math::Vec(s.x, s.y, s.z);
+    }
+}
+
 void gpu::Configuration::copy_to_device(configuration::Configuration& conf) {
     CUDA_CHECK_ERROR("At gpu::Configuration::copy_to_device");
     const size_t num_atoms = conf.current().pos.size();
@@ -145,7 +161,10 @@ void gpu::Configuration::copy_to_device(configuration::Configuration& conf) {
     convert_and_copy(conf.old().force, old.force);
     convert_and_copy(conf.old().constraint_force, old.constraint_force);
 
-    
+    // Persistent, non-cycling (see configuration_struct.h's doc comment)
+    convert_and_copy(conf.special().lattice_shifts, lattice_shifts);
+
+
     CUDA_CHECK_ERROR("Before tensors");
     // Box is left as a raw memcpy (pre-existing, separate issue --
     // gpu::Box is also FPL_TYPE-based, so this has the same size-

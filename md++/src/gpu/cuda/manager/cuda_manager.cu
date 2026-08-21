@@ -84,7 +84,7 @@ namespace {
     // so the per-field event lists never accumulate across steps or
     // outlive the write they were guarding.
     void clear_producer_events(gpu::Configuration & mirror, unsigned fields) {
-        for (unsigned bit = 0; bit < 6; ++bit) {
+        for (unsigned bit = 0; bit < 7; ++bit) {
             if (!(fields & (1u << bit))) continue;
             for (cudaEvent_t e : mirror.field_producer_events[bit]) cudaEventDestroy(e);
             mirror.field_producer_events[bit].clear();
@@ -114,7 +114,11 @@ namespace {
                 mirror.gpu_dirty_fields &= ~(gpu::MIRROR_POS | gpu::MIRROR_VEL);
             }
             mirror.copy_to_device(conf);
-            mirror.gpu_fresh_fields = gpu::MIRROR_ALL;
+            // copy_to_device() also copies lattice_shifts (configuration_
+            // struct.cu) even though that bit isn't part of MIRROR_ALL --
+            // mark it fresh too, or the very next MIRROR_LATTICE_SHIFT
+            // request would think it's missing and redundantly re-copy.
+            mirror.gpu_fresh_fields = gpu::MIRROR_ALL | gpu::MIRROR_LATTICE_SHIFT;
             // Every field just got overwritten from the CPU side -- any
             // GPU producer event still pending for them is now
             // irrelevant (this resync already waited out/ superseded
@@ -125,6 +129,15 @@ namespace {
             mirror.copy_pos_vel_to_device(conf);
             mirror.gpu_fresh_fields |= gpu::MIRROR_POS | gpu::MIRROR_VEL;
             clear_producer_events(mirror, gpu::MIRROR_POS | gpu::MIRROR_VEL);
+        }
+        // LATTICE_SHIFT is independent of the POS/VEL/coarse branches
+        // above (a single persistent array, not part of either copy
+        // routine) -- handled separately so requesting it never
+        // triggers an unrelated full copy_to_device().
+        if (missing & gpu::MIRROR_LATTICE_SHIFT) {
+            mirror.copy_lattice_shifts_to_device(conf);
+            mirror.gpu_fresh_fields |= gpu::MIRROR_LATTICE_SHIFT;
+            clear_producer_events(mirror, gpu::MIRROR_LATTICE_SHIFT);
         }
     }
 
@@ -139,7 +152,7 @@ namespace {
                                   unsigned missing, cudaStream_t stream) {
         if (stream == 0) return;
         const unsigned already_fresh = read_fields & ~missing;
-        for (unsigned bit = 0; bit < 6; ++bit) {
+        for (unsigned bit = 0; bit < 7; ++bit) {
             if (!(already_fresh & (1u << bit))) continue;
             for (cudaEvent_t e : mirror.field_producer_events[bit])
                 cudaStreamWaitEvent(stream, e, 0);
@@ -163,7 +176,7 @@ gpu::Configuration::View gpu::CudaManager::configuration_view(configuration::Con
     if (it == m_configurations.end()) {
         it = m_configurations.emplace(id, std::make_unique<gpu::Configuration>()).first;
         it->second->copy_to_device(conf); // full sync on first creation
-        it->second->gpu_fresh_fields = gpu::MIRROR_ALL;
+        it->second->gpu_fresh_fields = gpu::MIRROR_ALL | gpu::MIRROR_LATTICE_SHIFT;
     } else {
         const unsigned missing = read_fields & ~it->second->gpu_fresh_fields;
         resync_missing_fields(*it->second, conf, missing);
@@ -196,7 +209,7 @@ void gpu::CudaManager::mark_gpu_dirty(configuration::Configuration & conf, unsig
     // bits' vectors -- each vector owns and destroys its own handles,
     // so sharing would double-destroy). All recorded at the same stream
     // position, so they're functionally simultaneous.
-    for (unsigned bit = 0; bit < 6; ++bit) {
+    for (unsigned bit = 0; bit < 7; ++bit) {
         if (!(fields & (1u << bit))) continue;
         cudaEvent_t ev;
         cudaEventCreateWithFlags(&ev, cudaEventDisableTiming);
@@ -240,6 +253,10 @@ void gpu::CudaManager::flush_gpu_dirty(configuration::Configuration & conf, unsi
         mirror->copy_forces_from_device(conf);
         mirror->gpu_dirty_fields &= ~gpu::MIRROR_FORCE;
     }
+    if (to_flush & gpu::MIRROR_LATTICE_SHIFT) {
+        mirror->copy_lattice_shifts_from_device(conf);
+        mirror->gpu_dirty_fields &= ~gpu::MIRROR_LATTICE_SHIFT;
+    }
     // BOX: nothing ever marks this dirty today, so there's no flush
     // routine needed for it yet -- add one here if a future writer
     // starts leaving it GPU-only too.
@@ -261,6 +278,21 @@ void gpu::CudaManager::invalidate_gpu_mirror(configuration::Configuration & conf
     // No longer fresh -- any producer event still pending for these
     // bits is stale; the next writer re-populates when it calls
     // mark_gpu_dirty() again.
+    clear_producer_events(*mirror, fields);
+}
+
+void gpu::CudaManager::clear_stale_producer_events(configuration::Configuration & conf, unsigned fields) {
+    gpu::Configuration * mirror = nullptr;
+    const std::size_t id = conf.id();
+
+    if (id == m_last_conf_id && m_last_conf_gpu) {
+        mirror = m_last_conf_gpu;
+    } else {
+        auto it = m_configurations.find(id);
+        if (it != m_configurations.end()) mirror = it->second.get();
+    }
+    if (!mirror) return;
+
     clear_producer_events(*mirror, fields);
 }
 

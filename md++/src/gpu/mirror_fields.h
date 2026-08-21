@@ -62,6 +62,27 @@ namespace gpu {
      * avoids one causing an unnecessary resync of the other.
      */
     MIRROR_VIRIAL           = 1u << 5,
+    /**
+     * conf.special().lattice_shifts -- unlike every other bit here,
+     * this doesn't cycle with current()/old() (it's a single
+     * persistent per-atom array, not part of either state) -- see
+     * gpu::Configuration's own `lattice_shifts` member (a sibling of
+     * `current`/`old`, not inside either). Written by
+     * Lattice_Shift_Tracker<gpuBackend> only, and read by nothing else
+     * anywhere in the codebase except the final trajectory write
+     * (io::Out_Configuration::_print_lattice_shifts(), form==final
+     * only). Deliberately NOT part of MIRROR_ALL: unlike CONSTRAINT_
+     * FORCE/VIRIAL (which other algorithms genuinely read), including
+     * it there would mean every ordinary default-MIRROR_ALL algorithm
+     * invalidates it every step -- since freshness invalidation forces
+     * a real O(num_atoms) re-upload the next time it's requested
+     * (unlike a true no-op), that turned Lattice_Shift_Tracker's own
+     * apply() into a real-transfer-every-step cost again (measured:
+     * 0.8s -> 17.5s over 10000 steps), defeating the entire point of
+     * this port. Left fully self-managed instead, same as POS in
+     * Lattice_Shift_Tracker<gpuBackend>'s own gpu_mirror_touches()==0.
+     */
+    MIRROR_LATTICE_SHIFT    = 1u << 6,
     MIRROR_ALL   = MIRROR_POS | MIRROR_VEL | MIRROR_FORCE | MIRROR_BOX |
                    MIRROR_CONSTRAINT_FORCE | MIRROR_VIRIAL,
   };

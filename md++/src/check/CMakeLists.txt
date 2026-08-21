@@ -162,6 +162,9 @@ if(USE_CUDA)
     list(APPEND EXEC_NAMES pressure_barostat_gpu)
     add_executable(pressure_barostat_gpu pressure_barostat_gpu.t.cc)
 
+    list(APPEND EXEC_NAMES lattice_shift_gpu)
+    add_executable(lattice_shift_gpu lattice_shift_gpu.t.cc)
+
     list(APPEND EXEC_NAMES position_restraint_gpu)
     add_executable(position_restraint_gpu position_restraint_gpu.t.cc)
 

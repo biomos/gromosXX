@@ -70,6 +70,25 @@ namespace algorithm
     // state()'s doc comment.
     virtual bool needs_finalized_gpu_state() const override { return true; }
 
+    /**
+     * apply() only touches conf.old().energies (already CPU-resident,
+     * populated by each force term's own energy readback -- never
+     * GPU-mirror-tracked) and conf.current().averages (plain CPU
+     * bookkeeping) -- confirmed by reading the code, not guessing, same
+     * as Pressure_Calculation's identical note. Narrowing away from the
+     * base class default (MIRROR_ALL) matters here specifically:
+     * Energy_Calculation runs every step, right after Berendsen_
+     * Barostat in create_md_sequence.cc, and the default mask was
+     * silently forcing a full POS publish+invalidate around it --
+     * invisible in Energy_Calculation's own (near-zero) TIMING line
+     * since flush_gpu_dirty()/invalidate_gpu_mirror() happen outside
+     * any algorithm's own m_timer scope, but real cost that resurfaced
+     * as a mysteriously expensive Lattice_Shift_Tracker<gpuBackend> one
+     * step later (it's the next algorithm that actually requests POS
+     * again) -- see PERFORMANCE.md's "Architecture direction" section.
+     */
+    virtual unsigned gpu_mirror_touches() const override { return 0u; }
+
   };
   
 } // algorithm

@@ -39,6 +39,7 @@ set(GPU_HEADERS
     cuda/interaction/nonbonded/kernels/one_four_kernels.h
     cuda/interaction/nonbonded/kernels/displacement.h
     cuda/algorithm/integration/leap_frog_kernels.h
+    cuda/algorithm/integration/lattice_shift_kernels.h
     cuda/algorithm/constraints/remove_com_motion_kernels.h
     cuda/algorithm/temperature/temperature_kernels.h
     cuda/interaction/bonded/quartic_bond_kernels.h
@@ -54,6 +55,7 @@ set(GPU_HEADERS
     cuda/memory/vec3_convert.h
     cuda/algorithm/temperature/atom_bath_arrays.h
     cuda/algorithm/temperature/thermostat_velocity_scale.h
+    cuda/algorithm/pressure/berendsen_barostat_kernels.h
     cuda/interaction/bonded/sparse_force_accumulate.h
 )
 
@@ -82,6 +84,7 @@ if(USE_CUDA)
         cuda/interaction/nonbonded/kernels/one_four_kernels.cu
         cuda/interaction/nonbonded/kernels/displacement.cu
         cuda/algorithm/integration/leap_frog_kernels.cu
+        cuda/algorithm/integration/lattice_shift_kernels.cu
         cuda/algorithm/constraints/remove_com_motion_kernels.cu
         cuda/algorithm/temperature/temperature_kernels.cu
         cuda/interaction/bonded/quartic_bond_kernels.cu
@@ -94,6 +97,7 @@ if(USE_CUDA)
         cuda/algorithm/constraints/lincs_kernels.cu
         cuda/algorithm/constraints/m_shake_kernels.cu
         cuda/algorithm/constraints/velocity_from_delta_kernels.cu
+        cuda/algorithm/pressure/berendsen_barostat_kernels.cu
     )
 
     add_library(grocuda STATIC ${GPU_SOURCES})

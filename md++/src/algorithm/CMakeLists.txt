@@ -11,7 +11,7 @@ set(ALGO_CC
     temperature/berendsen_thermostat_cpu.cc
     temperature/nosehoover_thermostat_cpu.cc
     pressure/pressure_calculation.cc
-    pressure/berendsen_barostat.cc
+    pressure/berendsen_barostat_cpu.cc
     constraints/create_constraints.cc
     constraints/position_constraints.cc
     algorithm/algorithm_sequence.cc
@@ -24,7 +24,7 @@ set(ALGO_CC
     temperature/berendsen_thermostat_cpu.cc
     temperature/nosehoover_thermostat_cpu.cc
     pressure/pressure_calculation.cc
-    pressure/berendsen_barostat.cc
+    pressure/berendsen_barostat_cpu.cc
     constraints/create_constraints.cc
     constraints/position_constraints.cc
     constraints/remove_com_motion_cpu.cc
@@ -55,8 +55,10 @@ if (USE_CUDA)
     list(APPEND ALGO_CC
     constraints/remove_com_motion_gpu.cc
     integration/leap_frog_gpu.cc
+    integration/lattice_shift_gpu.cc
     temperature/temperature_calculation_gpu.cc
     temperature/berendsen_thermostat_gpu.cc
+    pressure/berendsen_barostat_gpu.cc
     constraints/cuda_shake.cc
     constraints/cuda_settle.cc
     constraints/cuda_lincs.cc

@@ -114,6 +114,11 @@ namespace {
     const double cpu_ekin_trans = cpu_rcom.remove_com_translation(cpu_s.topo, cpu_s.conf, cpu_s.sim, true);
     const double gpu_ekin_trans = gpu_rcom.remove_com_translation(gpu_s.topo, gpu_s.conf, gpu_s.sim, true);
     flush_messages("gpu remove_com_translation");
+    // remove_com_translation() leaves VEL dirty-but-unpublished on the
+    // GPU mirror (mark_gpu_dirty(), no CPU round trip) -- this test
+    // reads conf.current().vel directly, so it must ask for the
+    // publish itself, same as leap_frog_gpu.t.cc's identical fix.
+    gpu_s.sim.cuda().flush_gpu_dirty(gpu_s.conf, gpu::MIRROR_VEL);
     if (std::abs(cpu_ekin_trans - gpu_ekin_trans) > tol * std::max(1.0, std::abs(cpu_ekin_trans))) {
       std::cerr << label << ": ekin_trans mismatch: cpu=" << cpu_ekin_trans
                 << " gpu=" << gpu_ekin_trans << std::endl;
@@ -125,6 +130,7 @@ namespace {
     const double cpu_ekin_rot = cpu_rcom.remove_com_rotation(cpu_s.topo, cpu_s.conf, cpu_s.sim, true);
     const double gpu_ekin_rot = gpu_rcom.remove_com_rotation(gpu_s.topo, gpu_s.conf, gpu_s.sim, true);
     flush_messages("gpu remove_com_rotation");
+    gpu_s.sim.cuda().flush_gpu_dirty(gpu_s.conf, gpu::MIRROR_POS | gpu::MIRROR_VEL);
     if (std::abs(cpu_ekin_rot - gpu_ekin_rot) > tol * std::max(1.0, std::abs(cpu_ekin_rot))) {
       std::cerr << label << ": ekin_rot mismatch: cpu=" << cpu_ekin_rot
                 << " gpu=" << gpu_ekin_rot << std::endl;
@@ -181,6 +187,9 @@ namespace {
       return 1;
     }
     flush_messages("apply");
+    // Same as above -- apply() defers the publish; ask for it before
+    // reading conf.current().vel directly.
+    gpu_s.sim.cuda().flush_gpu_dirty(gpu_s.conf, gpu::MIRROR_POS | gpu::MIRROR_VEL);
 
     const int errors = compare_velocities(cpu_s, gpu_s, label, 1e-4);
     if (errors) {

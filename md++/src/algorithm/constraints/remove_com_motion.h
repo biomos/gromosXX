@@ -107,7 +107,27 @@ namespace algorithm
 			    configuration::Configuration & conf,
 			    simulation::Simulation & sim,
 			    math::Vec com_L);
-    
+
+    // gpuBackend: remove_com_translation()/remove_com_rotation() manage
+    // POS/VEL freshness themselves (configuration_view()/mark_gpu_dirty()
+    // in remove_com_motion_gpu.cc) -- narrowing to 0 stops Algorithm_
+    // Sequence::run()'s default before/after hooks from forcing an
+    // eager publish on every step (this is the FIRST algorithm in
+    // create_md_sequence.cc's sequence; leaving it at the base class
+    // default MIRROR_ALL forced a full mirror round-trip every single
+    // step regardless of comtransrot's skip-step cadence or of what any
+    // downstream deferred-sync algorithm had managed to avoid -- see
+    // PERFORMANCE.md's "Architecture direction" section). On the
+    // (common) steps where apply() is a no-op (skip_step not due),
+    // this mask means the framework does nothing around it at all, not
+    // even an unnecessary no-op flush check. cpuBackend: matches the
+    // base class default (MIRROR_ALL).
+    virtual unsigned gpu_mirror_touches() const override {
+      if constexpr (std::is_same_v<Backend, util::gpuBackend>)
+        return 0u;
+      else
+        return gpu::MIRROR_ALL;
+    }
 
   protected:
     std::ostream & os;

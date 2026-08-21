@@ -241,6 +241,32 @@ namespace gpu {
             void invalidate_gpu_mirror(configuration::Configuration & conf,
                                         unsigned fields = gpu::MIRROR_ALL);
 
+            /**
+             * @brief Discard `fields`' accumulated producer events
+             * (gpu::Configuration::field_producer_events) WITHOUT
+             * touching freshness/dirty bits -- unlike invalidate_gpu_
+             * mirror(), which also clears gpu_fresh_fields (forcing the
+             * next configuration_view() request to think the field is
+             * missing and re-upload it from CPU). For a field with no
+             * other "starts fresh" point in its lifecycle (e.g.
+             * gpu::MIRROR_LATTICE_SHIFT, deliberately excluded from
+             * MIRROR_ALL -- see mirror_fields.h -- so nothing generic
+             * ever invalidates it), the writer must call this itself
+             * once per write, right after its own configuration_view()
+             * call has already resynced/waited on whatever was
+             * pending, or field_producer_events grows by one entry per
+             * step forever -- every future wait_on_fresh_producers()
+             * call then has to cudaStreamWaitEvent() the entire ever-
+             * growing list, an O(steps^2) cost invisible in short runs
+             * (found via a 10000-step benchmark going from 0.8s to
+             * 17.5s on this one algorithm's own TIMING line before this
+             * method existed). Declared unconditionally like invalidate_
+             * gpu_mirror() (empty-body no-op in the non-CUDA .cc); no-op
+             * if `conf` has no mirror yet.
+             */
+            void clear_stale_producer_events(configuration::Configuration & conf,
+                                              unsigned fields);
+
 #ifdef USE_CUDA
             /**
              * @brief Identity-keyed GPU mirror cache for topology::Topology

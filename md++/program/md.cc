@@ -278,8 +278,11 @@ int main(int argc, char *argv[]){
   std::cout << "writing final configuration" << std::endl;
   // Unconditional: the final structure write must always reflect
   // whatever GPU-resident integrators last wrote, regardless of write
-  // cadence.
-  sim.cuda().flush_gpu_dirty(conf, gpu::MIRROR_POS | gpu::MIRROR_VEL | gpu::MIRROR_FORCE);
+  // cadence. LATTICE_SHIFT included since _print_lattice_shifts() is
+  // only ever called for this final write, never the periodic one --
+  // see io::Out_Configuration::_print_lattice_shifts()'s call site.
+  sim.cuda().flush_gpu_dirty(conf, gpu::MIRROR_POS | gpu::MIRROR_VEL |
+                                    gpu::MIRROR_FORCE | gpu::MIRROR_LATTICE_SHIFT);
   traj.write(conf, topo, sim, io::final);
   traj.print_final(topo, conf, sim);
     

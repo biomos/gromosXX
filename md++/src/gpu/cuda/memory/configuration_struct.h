@@ -194,28 +194,41 @@ namespace gpu {
         using StateView = ConfigurationStateView;
         /**
          * @brief view of current state
-         * 
+         *
          */
         StateView m_current;
 
         /**
          * @brief view of old state
-         * 
+         *
          */
         StateView m_old;
 
         /**
+         * @brief view of the persistent (non-cycling) lattice_shifts
+         * array -- see gpu::Configuration::lattice_shifts's doc
+         * comment. Not part of either StateView since it isn't
+         * current/old data.
+         */
+        math::CuVArray::View m_lattice_shifts;
+
+        /**
          * @brief get current state from host, or device
-         * 
+         *
          */
         HOSTDEVICE StateView& current() { return m_current; }
 
 
         /**
          * @brief get old state from host, or device
-         * 
+         *
          */
         HOSTDEVICE StateView& old() { return m_old; }
+
+        /**
+         * @brief get the lattice_shifts view
+         */
+        HOSTDEVICE math::CuVArray::View& lattice_shifts() { return m_lattice_shifts; }
     };
 
     /**
@@ -264,15 +277,27 @@ namespace gpu {
 
         /**
          * @brief The current state
-         * 
+         *
          */
         State current;
 
         /**
          * @brief The old state
-         * 
+         *
          */
         State old;
+
+        /**
+         * @brief conf.special().lattice_shifts -- a single persistent
+         * per-atom array, deliberately NOT inside State/current/old:
+         * it doesn't cycle with the leap-frog step (unlike pos/vel/
+         * force), so exchange_state()'s std::swap(current, old) must
+         * never touch it. Written only by Lattice_Shift_Tracker<
+         * gpuBackend> (gpu/cuda/algorithm/integration/lattice_shift_
+         * kernels.cu); resized/copied alongside current/old in
+         * resize()/copy_to_device() below, but otherwise independent.
+         */
+        mutable math::CuVArray lattice_shifts;
 
         /**
          * @brief Copy all arrays from CPU configuration to GPU (full sync).
@@ -316,9 +341,28 @@ namespace gpu {
         void copy_constraint_data_from_device(configuration::Configuration& conf);
 
         /**
+         * @brief Copy conf.special().lattice_shifts to the GPU (once,
+         * at mirror creation / first request -- Lattice_Shift_Tracker<
+         * gpuBackend> accumulates into it in place afterwards, never
+         * re-uploads).
+         */
+        void copy_lattice_shifts_to_device(const configuration::Configuration& conf);
+
+        /**
+         * @brief Publish the GPU-accumulated lattice_shifts back to
+         * conf.special().lattice_shifts. Calls cudaDeviceSynchronize()
+         * internally, same as the other copy_*_from_device() routines.
+         * Only actually needed once, at the final structure write (see
+         * io::Out_Configuration::_print_lattice_shifts(), only called
+         * for form==final) -- program/md.cc's unconditional pre-final-
+         * write flush is what triggers this in practice.
+         */
+        void copy_lattice_shifts_from_device(configuration::Configuration& conf);
+
+        /**
          * @brief Allow to exchange states efficiently
          * Views are exchanged implicitly as well
-         * 
+         *
          */
         void exchange_state() {
             std::swap(current, old);
@@ -326,12 +370,13 @@ namespace gpu {
 
         /**
          * @brief resize the arrays
-         * 
-         * @param num_atoms 
+         *
+         * @param num_atoms
          */
         void resize(size_t num_atoms) {
             current.resize(num_atoms);
             old.resize(num_atoms);
+            lattice_shifts.resize(num_atoms);
         }
 
         /**
@@ -339,7 +384,7 @@ namespace gpu {
          *
          * @return View
          */
-        View view() { return View{current.view(), old.view()}; }
+        View view() { return View{current.view(), old.view(), lattice_shifts.view()}; }
 
         /**
          * @brief Raw device pointers of the current state, for direct kernel use.
@@ -371,7 +416,7 @@ namespace gpu {
          * field they guard is next written or explicitly invalidated --
          * never accumulate unboundedly across steps.
          */
-        std::vector<cudaEvent_t> field_producer_events[6];
+        std::vector<cudaEvent_t> field_producer_events[7];
 
         ~Configuration() {
             for (std::vector<cudaEvent_t> & events : field_producer_events)

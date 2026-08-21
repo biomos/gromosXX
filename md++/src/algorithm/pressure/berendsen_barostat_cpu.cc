@@ -19,8 +19,10 @@
  */
 
 /**
- * @file berendsen_barostat.cc
- * methods of the berendsen barostat.
+ * @file berendsen_barostat_cpu.cc
+ * methods of the berendsen barostat (util::cpuBackend specialisation --
+ * unchanged from before this class was templated; see berendsen_
+ * barostat_gpu.cc for the GPU-native counterpart).
  */
 
 #include "../../stdheader.h"
@@ -46,7 +48,8 @@
 #include "../../util/debug.h"
 #include "../../math/transformation.h"
 
-int algorithm::Berendsen_Barostat
+template<>
+int algorithm::Berendsen_Barostat<util::cpuBackend>
 ::apply(topology::Topology & topo,
         configuration::Configuration & conf,
         simulation::Simulation & sim) {
@@ -332,3 +335,5 @@ int algorithm::Berendsen_Barostat
   return 0;
 
 }
+
+template class algorithm::Berendsen_Barostat<util::cpuBackend>;

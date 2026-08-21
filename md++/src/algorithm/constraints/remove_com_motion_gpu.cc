@@ -151,7 +151,11 @@ double algorithm::Remove_COM_Motion<util::gpuBackend>
 
   if (remove_trans) {
     gpu::launch_com_translation_apply(conf_view.current().vel, com_v_x, com_v_y, com_v_z, num_atoms, stream);
-    sim.cuda().sync_configuration_from_device(conf);
+    // Stay GPU-resident -- no eager sync-back. gpu_mirror_touches()
+    // (remove_com_motion.h) excludes VEL from the framework's default
+    // post-apply() invalidation, so this freshness survives; a later
+    // consumer publishes it lazily.
+    sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_VEL, stream);
   }
 
   return ekin_trans;
@@ -249,7 +253,9 @@ double algorithm::Remove_COM_Motion<util::gpuBackend>
     gpu::launch_com_rotation_apply(
         conf_view.current().pos, conf_view.current().vel, dt,
         com_r_x, com_r_y, com_r_z, com_O(0), com_O(1), com_O(2), num_atoms, stream);
-    sim.cuda().sync_configuration_from_device(conf);
+    // Stay GPU-resident -- no eager sync-back, same reasoning as
+    // remove_com_translation() above.
+    sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_POS | gpu::MIRROR_VEL, stream);
   }
 
   return ekin_rot;

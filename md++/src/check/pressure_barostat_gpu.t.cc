@@ -20,25 +20,19 @@
 
 /**
  * @file pressure_barostat_gpu.t.cc
- * Pressure_Calculation and Berendsen_Barostat (PLAN.md §10 step 16) are
- * plain host-side, O(9)/O(N) matrix and elementwise-scaling code with
- * no CUDA kernel of their own -- there's nothing to port. What this
- * test actually verifies is that they interoperate correctly with the
- * GPU-mirror freshness tracker (CudaManager::flush_gpu_dirty()/
- * invalidate_gpu_mirror(), gpu/mirror_fields.h) *without* either class
- * knowing anything about CUDA: since neither overrides
- * Algorithm::gpu_mirror_touches() (default gpu::MIRROR_ALL),
- * Algorithm_Sequence::run() should already (a) flush any GPU-resident
- * position/force/virial data to the host before either runs, and (b)
- * invalidate the GPU mirror's freshness afterwards, so a *later* GPU
- * force calculation re-uploads Berendsen_Barostat's host-scaled
- * positions instead of silently reusing a stale GPU-cached copy from
- * before the barostat ran. This drives exactly that interleaving --
+ * Pressure_Calculation (plain host-side, O(9) matrix code, no CUDA
+ * kernel of its own -- narrows gpu_mirror_touches() to MIRROR_VIRIAL,
+ * see pressure_calculation.h) and Berendsen_Barostat<gpuBackend> (O(9)
+ * mu/box computation on the host, O(num_atoms) position scaling as a
+ * real GPU kernel, GPU-resident -- see berendsen_barostat_gpu.cc) are
+ * both exercised here through a real Algorithm_Sequence::run(), and
+ * compared against the identical CPU-only sequence:
  * CUDA_Quartic_Bond_Interaction (GPU force calc) -> Pressure_Calculation
- * -> Berendsen_Barostat -> CUDA_Quartic_Bond_Interaction again -- via
- * the real Algorithm_Sequence::run(), and compares the end state
- * against the identical CPU-only sequence. Only USE_CUDA builds run
- * this.
+ * -> Berendsen_Barostat<gpuBackend> -> CUDA_Quartic_Bond_Interaction
+ * again. The second force calc must see the barostat's GPU-scaled
+ * positions (whether published to CPU yet or not -- configuration_view()
+ * resolves that transparently), not a stale pre-barostat copy. Only
+ * USE_CUDA builds run this.
  */
 
 #include "../stdheader.h"
@@ -115,7 +109,8 @@ namespace {
     gpu_ff.push_back(new interaction::CUDA_Quartic_Bond_Interaction());
 
     algorithm::Pressure_Calculation cpu_pcalc, gpu_pcalc;
-    algorithm::Berendsen_Barostat cpu_baro, gpu_baro;
+    algorithm::Berendsen_Barostat<util::cpuBackend> cpu_baro;
+    algorithm::Berendsen_Barostat<util::gpuBackend> gpu_baro;
 
     if (cpu_ff.init(cpu_s.topo, cpu_s.conf, cpu_s.sim, std::cout, quiet) != 0 ||
         gpu_ff.init(gpu_s.topo, gpu_s.conf, gpu_s.sim, std::cout, quiet) != 0) {
@@ -181,16 +176,28 @@ namespace {
     // the GPU mirror and mark_gpu_dirty()s it -- gpu_force_seq.run()
     // publishes it before the *next* algorithm in that same sequence
     // (there isn't one here), so this standalone comparison needs its
-    // own explicit publish (see angle_gpu.t.cc's comment).
-    gpu_s.sim.cuda().flush_gpu_dirty(gpu_s.conf, gpu::MIRROR_FORCE);
+    // own explicit publish (see angle_gpu.t.cc's comment). Same for
+    // Berendsen_Barostat<gpuBackend>'s POS write, deferred all the way
+    // through the second force calc (nothing in gpu_pressure_seq/
+    // gpu_force_seq ever needed a CPU-fresh copy) -- see leap_frog_gpu.
+    // t.cc's identical comment.
+    gpu_s.sim.cuda().flush_gpu_dirty(gpu_s.conf, gpu::MIRROR_FORCE | gpu::MIRROR_POS);
 
     const double tol = 5e-3; // see quartic_bond_gpu.t.cc's tolerance comment
+    // Berendsen_Barostat<gpuBackend>'s position-scaling kernel runs in
+    // FPL_TYPE (float under FP_PRECISION=2) -- mu itself is computed on
+    // the host in double and matches the CPU path exactly (see the box
+    // comparison below, still 1e-9), but pos(i) = mu * pos(i) loses
+    // precision to ~1e-7 in the multiply/store. 1e-9 (appropriate when
+    // this class was CPU-only on both sides) is too tight for that.
+    const double pos_tol = 1e-5;
     int errors = 0;
 
     const unsigned num_atoms = static_cast<unsigned>(cpu_s.topo.num_atoms());
     for (unsigned i = 0; i < num_atoms; ++i) {
       const math::Vec pos_diff = cpu_s.conf.current().pos(i) - gpu_s.conf.current().pos(i);
-      if (math::abs(pos_diff) > 1e-9) {
+      const double pos_scale = std::max(1.0, math::abs(cpu_s.conf.current().pos(i)));
+      if (math::abs(pos_diff) > pos_tol * pos_scale) {
         std::cerr << label << ": post-barostat pos mismatch at atom " << i
                   << ": cpu=" << math::v2s(cpu_s.conf.current().pos(i))
                   << " gpu=" << math::v2s(gpu_s.conf.current().pos(i)) << std::endl;

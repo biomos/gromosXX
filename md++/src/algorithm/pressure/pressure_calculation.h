@@ -52,7 +52,28 @@ namespace algorithm
     virtual int apply(topology::Topology & topo,
 		      configuration::Configuration & conf,
 		      simulation::Simulation & sim);
-        
+
+    /**
+     * Reads conf.old().virial_tensor/kinetic_energy_tensor and writes
+     * pressure_tensor -- all plain CPU-resident matrices computed by
+     * this class or Molecular_Virial_Interaction, never GPU-mirror
+     * pos/vel/force/box data. The one exception is virial_tensor's
+     * MIRROR_VIRIAL bit: GPU-native constraint algorithms (CUDA_Lincs/
+     * CUDA_M_Shake) write their constraint-virial contribution directly
+     * into the mirror and defer the publish (mark_gpu_dirty()), so this
+     * still needs that one field flushed before it reads virial_tensor.
+     * Narrowing away from the base class default (MIRROR_ALL) matters:
+     * this algorithm typically runs right after GPU-resident position
+     * integration/constraints in create_md_sequence.cc, and the default
+     * mask would otherwise force an unnecessary full POS/VEL/FORCE/BOX
+     * publish here -- exactly the kind of push this class doesn't need,
+     * muting the benefit of every deferred-sync fix upstream of it (see
+     * PERFORMANCE.md's "Architecture direction" section).
+     */
+    virtual unsigned gpu_mirror_touches() const override {
+      return gpu::MIRROR_VIRIAL;
+    }
+
     /**
      * init
      */

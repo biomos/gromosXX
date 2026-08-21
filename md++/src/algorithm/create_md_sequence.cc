@@ -283,7 +283,7 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
 
   //  pressure scaling
   if (sim.param().pcouple.scale != math::pcouple_off) {
-    algorithm::Berendsen_Barostat * pcoup = algorithm::make_algorithm<algorithm::Berendsen_Barostat>(sim);
+    algorithm::Algorithm * pcoup = algorithm::make_algorithm<algorithm::Berendsen_Barostat>(sim);
     md_seq.push_back(pcoup);
   }
 

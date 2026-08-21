@@ -68,6 +68,9 @@ void gpu::CudaManager::flush_gpu_dirty(configuration::Configuration & conf, unsi
 void gpu::CudaManager::invalidate_gpu_mirror(configuration::Configuration & conf, unsigned fields) {
 }
 
+void gpu::CudaManager::clear_stale_producer_events(configuration::Configuration & conf, unsigned fields) {
+}
+
 void gpu::CudaManager::exchange_mirror_state(configuration::Configuration & conf) {
 }
 
