@@ -508,32 +508,67 @@ is scoped above; once it lands, re-measure whether `Energy_
 Calculation`'s narrowing is still the right call, or whether the
 tug-of-war disappears entirely and the mask choice stops mattering.
 
-### `Leap_Frog_Velocity`/`Forcefield` — narrowing attempted, reverted, open
+### `Leap_Frog_Velocity`/`Forcefield` — root-caused and fixed
 
-`Forcefield::gpu_mirror_touches()` (`forcefield.h`) still returns
-`MIRROR_ALL & ~(FORCE|VIRIAL)`, i.e. `POS|VEL|BOX|CONSTRAINT_FORCE` —
-despite its own doc comment stating outright that Forcefield never
-writes any of those. Tried narrowing to `0u` entirely (it's the very
-next default-`MIRROR_ALL` algorithm to touch POS/VEL before `Leap_Frog_
-Velocity`, which needs POS+VEL+FORCE immediately after — a plausible
-source of exactly the "unnecessary resync" pattern this whole session
-has been chasing). **Broke `CUDA_Shake` correctness**: `ubiquitin_gpu`
-failed with "SHAKE error, vectors orthogonal" by step 3. Root cause not
-understood: `CUDA_Shake::apply()` (`cuda_shake.cc`) uploads `conf.
-current()/old().pos` directly from the CPU array (`vec3_upload_fpl`,
-bypassing `configuration_view()` entirely) and has its own default
-`gpu_mirror_touches() == MIRROR_ALL`, which *should* independently
-guarantee that CPU array is fresh before it reads it, regardless of
-`Forcefield`'s mask — but bisection is unambiguous (bisected against
-the companion `Berendsen_Thermostat` fix too, to rule out an
-interaction effect: `Forcefield`'s narrowing alone, with the thermostat
-fix reverted, still reproduces the failure). Reverted rather than
-shipped with an unexplained correctness dependency. **Next step**: trace
-exactly which mirror-freshness state differs between the two mask
-values at the point `CUDA_Shake` reads `conf.current().pos` — likely
-needs instrumenting `gpu_fresh_fields`/`gpu_dirty_fields` directly
-rather than reasoning about it, since the reasoning above says this
-*shouldn't* depend on `Forcefield` at all and evidently does.
+`Forcefield::gpu_mirror_touches()` (`forcefield.h`) now returns `0u`.
+Previously it returned `MIRROR_ALL & ~(FORCE|VIRIAL)`, i.e.
+`POS|VEL|BOX|CONSTRAINT_FORCE`, despite its own doc comment stating
+outright that Forcefield never writes any of those — narrowing to `0u`
+eliminates a POS/VEL resync `Leap_Frog_Velocity<gpuBackend>` was paying
+for every step (~9.5s → ~24s across a 10000-step benchmark; see the
+tug-of-war section above).
+
+A previous pass in this investigation narrowed the mask the same way
+and hit a real correctness break: `ubiquitin_gpu` failed with "SHAKE
+error, vectors orthogonal" by step 3. That was reverted, undiagnosed,
+and left as an open item. Root-caused this pass via targeted tracing
+(temporary `GROMOS_DEBUG_MIRROR=1`-gated prints in `flush_gpu_dirty()`/
+`invalidate_gpu_mirror()`/`Algorithm_Sequence::run()`, since since removed):
+
+- `Lattice_Shift_Tracker<gpuBackend>` (`lattice_shift_gpu.cc`) writes
+  the periodic-image-corrected position into the GPU mirror's
+  `current.pos` and marks it GPU-dirty every step, via its own
+  `gpu_mirror_touches() == 0` (self-managed, same pattern as `Leap_Frog_
+  Velocity`/`Leap_Frog_Position`).
+- The *old* `Forcefield` mask happened to flush that dirty POS to the
+  CPU-authoritative `conf` (its own before-hook, running right after
+  `Lattice_Shift_Tracker` in the sequence) — and critically, this
+  happened *before* `Leap_Frog_Velocity<gpuBackend>::apply()`'s
+  `conf.exchange_state()`, a CPU-side pointer swap of `current`↔`old`.
+- Without that flush (the narrowed-mask case), the swap relocated the
+  *stale*, pre-lattice-shift CPU value into `conf.old()`, while the GPU
+  mirror's own swap (`sim.cuda().exchange_mirror_state()`, called right
+  after) relocated the *correct*, GPU-fresh value into its own `old()`
+  half — silently diverging `conf.old()` between CPU and GPU for any
+  atom whose chargegroup wrapped a periodic boundary that step.
+- `CUDA_Shake::apply()` (`cuda_shake.cc`) reads `conf.old().pos()`
+  **directly from the CPU array**, bypassing the mirror entirely — the
+  one algorithm directly exposed to that CPU/GPU divergence. A handful
+  of wrapped atoms was enough to corrupt its reference geometry into
+  "vectors orthogonal" within a few steps. (Earlier reasoning in this
+  file — "`CUDA_Shake`'s own default `MIRROR_ALL` hooks should already
+  cover this independent of `Forcefield`'s mask" — missed that
+  `CUDA_Shake`'s before-hook flush only ever publishes the *current*
+  half, via `copy_pos_vel_from_device()`, which has never copied `old`;
+  by the time `CUDA_Shake` runs, the damage to `conf.old()` was already
+  done, upstream, at the `exchange_state()` swap.)
+
+**Fixed at the actual source, not by leaning on `Forcefield`'s mask**:
+`Leap_Frog_Velocity<gpuBackend>::apply()` (`leap_frog_gpu.cc`) now
+calls `sim.cuda().flush_gpu_dirty(conf, MIRROR_POS | MIRROR_VEL)`
+itself, immediately before `conf.exchange_state()`. The invariant — no
+GPU-dirty POS/VEL survives across an `exchange_state()` swap — is now
+guaranteed locally, at the one call site that actually performs the
+swap, instead of as an accidental side effect of an unrelated
+algorithm's mask. This also makes `Forcefield`'s mask safely
+narrowable to `0u`, closing out the "unnecessary resync" this whole
+section was chasing.
+
+**Verified**: full `ctest` (31/32, only the pre-existing/documented
+`aladip_cuda` perturbation-gate failure), `compute-sanitizer --tool
+memcheck` clean (0 errors) on `ubiquitin_gpu` (100 steps, step-0 energy
+match against the CPU reference, no NaN/Inf, `.tre`/`.trc` sanity
+checks all pass).
 
 ## Verification note
 
@@ -550,8 +585,9 @@ checked unchanged across every benchmark run referenced in this file,
 CPU and GPU alike (confirmed identical in the direct CPU-vs-GPU
 comparison run this pass).
 
-The `Forcefield`/`Leap_Frog_Velocity` narrowing attempt (this pass) is
-the one exception to "every change here shipped tested": it was
-implemented, found to break `CUDA_Shake` on `ubiquitin_gpu`, and
-reverted before commit — the code as committed does not include that
-narrowing. See "`Leap_Frog_Velocity`/`Forcefield`" above.
+The `Forcefield`/`Leap_Frog_Velocity` narrowing is no longer an open
+exception: the `CUDA_Shake` break it previously caused has been
+root-caused and fixed at its actual source (`Leap_Frog_Velocity<
+gpuBackend>`'s own pre-swap flush), and `Forcefield::gpu_mirror_touches()
+== 0u` is shipped, tested, and committed. See "`Leap_Frog_Velocity`/
+`Forcefield`" above.

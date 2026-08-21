@@ -66,6 +66,24 @@ int algorithm::Leap_Frog_Velocity<util::gpuBackend>::apply(
 {
     this->m_timer.start(sim);
 
+    // Publish any GPU-dirty POS/VEL (e.g. Lattice_Shift_Tracker<gpuBackend>'s
+    // periodic-image correction, written into the mirror's current.pos and
+    // left GPU-resident via its own gpu_mirror_touches()==0) to the CPU-
+    // authoritative conf BEFORE the swap below relocates conf.current()
+    // into conf.old(). Without this, the swap would carry a *stale* CPU
+    // value into old() while the mirror's own swap (right after) carries
+    // the correct, GPU-fresh value into its old() half -- silently
+    // diverging conf.old() between CPU and GPU for exactly the atoms whose
+    // position wrapped this step. CUDA_Shake reads conf.old().pos()
+    // directly from the CPU array (bypassing the mirror entirely), so it's
+    // the one algorithm directly exposed to that divergence; a handful of
+    // wrapped atoms is enough to corrupt its reference geometry into a
+    // "vectors orthogonal" failure within a few steps. Previously this was
+    // only accidentally guaranteed by Forcefield::gpu_mirror_touches()
+    // including MIRROR_POS and running earlier in the sequence -- fixed
+    // here directly instead of depending on another algorithm's mask.
+    sim.cuda().flush_gpu_dirty(conf, gpu::MIRROR_POS | gpu::MIRROR_VEL);
+
     conf.exchange_state();
     // Mirror's own current/old halves swap at the exact same point the
     // CPU-authoritative conf's do -- without this, view.old().force/

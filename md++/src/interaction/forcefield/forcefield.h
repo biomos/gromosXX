@@ -108,30 +108,50 @@ namespace interaction
      * the mirror's shared force/virial buffers and leave them resident
      * (calculate_interactions() zeros them once via sim.cuda().
      * zero_mirror_force(), not per-Interaction) -- exempting FORCE/
-     * VIRIAL here keeps Algorithm_Sequence::run()'s default post-
-     * apply() invalidation from immediately erasing that freshness,
-     * letting Leap_Frog_Velocity<gpuBackend> read the accumulated
-     * force with zero extra round trip. Everything else (POS/VEL/BOX)
-     * keeps the default MIRROR_ALL behaviour -- Forcefield never
-     * writes those itself.
+     * VIRIAL here would have kept Algorithm_Sequence::run()'s default
+     * post-apply() invalidation from immediately erasing that
+     * freshness. Narrowed further, to 0, once the real dependency this
+     * mask was accidentally covering got fixed at its actual source
+     * (see below) -- Forcefield never writes POS/VEL/BOX/
+     * CONSTRAINT_FORCE/VIRIAL itself, so it has nothing to publish or
+     * invalidate on its own behalf.
      *
-     * Tried narrowing this to 0 entirely (PERFORMANCE.md's residual-
-     * resync-cost investigation: Leap_Frog_Velocity<gpuBackend> pays
-     * for a POS/VEL resync every step this mask forces, ~9.5s -> ~24s
-     * across a 10000-step benchmark) -- reverted. It broke CUDA_Shake
-     * (ubiquitin_gpu: "SHAKE error, vectors orthogonal" by step 3),
-     * which uploads conf.current()/old().pos directly from the CPU-
-     * side array (vec3_upload_fpl, cuda_shake.cc) rather than through
-     * configuration_view() -- some dependency on this mask keeping
-     * that CPU array genuinely fresh isn't yet understood (CUDA_
-     * Shake's own default MIRROR_ALL before/after hooks look like they
-     * should already cover this independent of Forcefield's mask, but
-     * bisection showed otherwise). Needs real investigation before
-     * attempting this narrowing again -- not worth risking silent
-     * position corruption for a performance win. See PERFORMANCE.md.
+     * History: narrowing this mask (PERFORMANCE.md's residual-resync-
+     * cost investigation -- Leap_Frog_Velocity<gpuBackend> paid for a
+     * POS/VEL resync every step the old mask forced, ~9.5s -> ~24s
+     * across a 10000-step benchmark) used to break CUDA_Shake
+     * (ubiquitin_gpu: "SHAKE error, vectors orthogonal" by step 3).
+     * Root-caused via GROMOS_DEBUG_MIRROR-instrumented tracing:
+     * Lattice_Shift_Tracker<gpuBackend> writes the periodic-image-
+     * corrected position into the GPU mirror's current.pos and leaves
+     * it GPU-dirty every step (its own gpu_mirror_touches() == 0). The
+     * old (POS-including) Forcefield mask happened to flush that dirty
+     * POS to the CPU-authoritative conf right before Leap_Frog_
+     * Velocity<gpuBackend>'s conf.exchange_state() (a CPU-side pointer
+     * swap of current<->old) -- without that flush, the swap relocated
+     * the *stale* pre-shift CPU value into conf.old() while the
+     * mirror's own swap (sim.cuda().exchange_mirror_state(), right
+     * after) relocated the correct GPU value into its own old() half,
+     * silently diverging conf.old() between CPU and GPU for any atom
+     * that wrapped that step. CUDA_Shake reads conf.old().pos()
+     * directly from the CPU array (bypassing the mirror), so it was
+     * the one algorithm directly exposed to that divergence -- a
+     * handful of wrapped atoms was enough to corrupt its reference
+     * geometry into "vectors orthogonal" within a few steps.
+     *
+     * Fixed at the actual source instead of leaning on this mask:
+     * Leap_Frog_Velocity<gpuBackend>::apply() (leap_frog_gpu.cc) now
+     * calls sim.cuda().flush_gpu_dirty(conf, MIRROR_POS | MIRROR_VEL)
+     * itself, immediately before conf.exchange_state() -- the
+     * invariant ("no dirty GPU POS/VEL survives across an
+     * exchange_state() swap") is now guaranteed locally, not as a
+     * side effect of an unrelated algorithm's mask. Verified: full
+     * ctest (31/32, only the known/documented aladip_cuda perturbation
+     * gate failing), compute-sanitizer --tool memcheck clean on
+     * ubiquitin_gpu (100 steps). See PERFORMANCE.md.
      */
     virtual unsigned gpu_mirror_touches() const override {
-      return gpu::MIRROR_ALL & ~(gpu::MIRROR_FORCE | gpu::MIRROR_VIRIAL);
+      return 0u;
     }
 
   protected:
