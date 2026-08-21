@@ -26,9 +26,9 @@
     ],
     "dvcs": "git",
     "benchmark_dir": "benchmarks",
-    "env_dir": "/local/gromos/bench_asv/env",
-    "results_dir": "/local/gromos/bench_asv/results",
-    "html_dir": "/local/gromos/bench_asv/html",
+    "env_dir": ".asv/env",
+    "results_dir": ".asv/results",
+    "html_dir": ".asv/html",
     "environment_type": "virtualenv",
     "pythons": [
         "3.10"
@@ -46,12 +46,6 @@
         "env": {
             "GROMOS_VARIANT": [
                 "omp"
-            ],
-            "GROMOS_BENCH_SYSTEMS": [
-                "/local/gromos/bench_systems"
-            ],
-            "GROMOS_BENCH_SCRATCH": [
-                "/local/gromos/bench_scratch"
             ]
         }
     },

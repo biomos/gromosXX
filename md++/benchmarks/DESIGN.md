@@ -364,9 +364,11 @@ asv source:
   `asv show` and `asv compare` ignore `branches` and read the results directory
   directly, so they still work for unlisted branches.
 - **asv chdirs to the directory containing the config file** (`asv/main.py`) and
-  resolves `repo`, `benchmark_dir` and `{conf_dir}` relative to *that*, not to
-  where you invoked it. A config kept elsewhere needs absolute paths for all
-  three. This is why `nightly.conf.json` sits beside `asv.conf.json`.
+  resolves `repo`, `benchmark_dir`, `env_dir`, `results_dir`, `html_dir` and
+  `{conf_dir}` relative to *that*, not to where you invoked it. This is what lets
+  every path in the config be relative, and why `nightly.conf.json` must sit
+  beside `asv.conf.json`. A config kept elsewhere needs absolute paths
+  throughout.
 - **`-E/--environment` selects only the environment type and Python version.**
   It cannot filter matrix variables, so restricting to one build variant
   requires a separate config file.

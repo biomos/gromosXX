@@ -160,18 +160,52 @@ GROMOS_BENCH_TIERS=tiny GROMOS_BENCH_THREADS=4 GROMOS_BENCH_REPEATS=1 ./asv run 
 GROMOS_VARIANT=omp ./asv run NEW
 ```
 
-### Machine-specific paths
+### Paths
 
-`asv.conf.json` points `env_dir`, `results_dir` and `html_dir` at
-`/local/gromos/bench_asv/...`, and the systems cache defaults to
-`/local/gromos/bench_systems`. These are deliberately outside the repository --
-asv checks project commits out into `env_dir`, and nesting that inside the
-repository being checked out invites confusion -- but they *are* specific to
-this machine. On another machine, either adjust the config or export
-`GROMOS_BENCH_SYSTEMS` and `GROMOS_BENCH_SCRATCH`.
+Everything asv writes lives under `.asv/` beside the config (gitignored), so the
+suite runs on any machine without editing:
 
-Expect `env_dir` to reach a few GB: each cached build is a ~55 MB binary and
-`build_cache_size` keeps 8 of them.
+```
+.asv/env       virtualenvs, project checkouts, cached builds
+.asv/results   the results database, one directory per machine
+.asv/html      the generated site
+```
+
+Expect `.asv/env` to reach several GB: a cached build is a ~55 MB binary,
+`build_cache_size` keeps 8 of them, and there is one environment per variant.
+
+Two paths are *not* in the config, because they must point at local disk that
+suits the machine rather than the repository:
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `GROMOS_BENCH_SYSTEMS` | `/local/gromos/bench_systems` | staged inputs (~39 MB) |
+| `GROMOS_BENCH_SCRATCH` | `/local/gromos/bench_scratch` | per-run working files |
+
+Set both on a machine without `/local/gromos`. They are deliberately kept out of
+the asv matrix so they do not become part of every environment's name and hash.
+
+### Running on another machine
+
+1. Clone the repository. Everything code-related is committed.
+2. Install the system dependencies (see [Prerequisites](#prerequisites)).
+3. Install asv:
+   `python3 -m pip install --target /local/gromos/bench_tools asv virtualenv`
+   (set `GROMOS_ASV_TOOLS` if you put it elsewhere).
+4. Provide the benchmark systems, either by staging them from the upstream set
+   with `python3 tools/stage_systems.py`, or by copying the cache across and
+   running `python3 tools/stage_systems.py --verify`. Verify either way:
+   identical inputs are what make two machines' results comparable.
+5. `./asv machine --yes`, then run as usual.
+
+Results from several machines can share one `results/` directory -- they are
+keyed by machine name and published as selectable series. `env/` is
+machine-local and must never be shared.
+
+Note that the compiler is part of the measurement. A second machine on a
+different gcc produces a series that is internally consistent but not
+comparable with this one; use `GROMOS_CXX` to force a match if you intend to
+read across them.
 
 ### Prerequisites
 

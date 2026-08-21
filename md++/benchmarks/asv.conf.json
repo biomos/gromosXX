@@ -12,10 +12,25 @@
     "branches": ["master", "asv-benchmarks"],
     "dvcs": "git",
 
+    // All paths are relative to this file's directory, so the suite runs on any
+    // machine without editing. asv chdirs here before resolving them.
+    //
+    // .asv/ is gitignored. Expect env/ to reach several GB: a cached build is a
+    // ~55 MB binary and build_cache_size keeps 8 of them, per variant.
+    //
+    // results/ is keyed by the name from `asv machine`, so results from several
+    // machines can be merged into one directory and published as selectable
+    // series. env/ is machine-local and must never be shared.
+    //
+    // The benchmark systems cache and the run scratch directory are not
+    // configured here: they default to /local/gromos/... in code and are
+    // overridden per machine with GROMOS_BENCH_SYSTEMS and GROMOS_BENCH_SCRATCH.
+    // Keeping them out of the matrix also keeps them out of every environment
+    // name and hash.
     "benchmark_dir": "benchmarks",
-    "env_dir": "/local/gromos/bench_asv/env",
-    "results_dir": "/local/gromos/bench_asv/results",
-    "html_dir": "/local/gromos/bench_asv/html",
+    "env_dir": ".asv/env",
+    "results_dir": ".asv/results",
+    "html_dir": ".asv/html",
 
     "environment_type": "virtualenv",
     "pythons": ["3.10"],
@@ -54,9 +69,7 @@
     // PATH, which is the common case; set it in the environment before running.
     "matrix": {
         "env": {
-            "GROMOS_VARIANT": ["serial", "omp", "cuda", "mpi"],
-            "GROMOS_BENCH_SYSTEMS": ["/local/gromos/bench_systems"],
-            "GROMOS_BENCH_SCRATCH": ["/local/gromos/bench_scratch"]
+            "GROMOS_VARIANT": ["serial", "omp", "cuda", "mpi"]
         }
     },
 
