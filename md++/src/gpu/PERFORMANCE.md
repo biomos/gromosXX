@@ -1,13 +1,15 @@
 # PERFORMANCE.md — CUDA port performance state
 
-Snapshot as of commit `25682dd72` (branch `cuda_claude_rf_excluded`).
+Snapshot as of commit `3c7d13684` (branch `cuda_claude_rf_excluded`).
 Written after a benchmarking/optimization pass covering the async
 stream-ordered redesign, the `POSITIONRES`-dropped-force bug fix, the
-mixed-CPU/GPU warning mechanism, the `Temperature_Calculation`
-deferred-sync fix, and the `Leap_Frog_Position` deferred-sync fix. See
-those commits' messages for full narrative detail; this file is the
-standing reference for "what's the current performance picture and
-what's next," updated as further optimization work lands.
+mixed-CPU/GPU warning mechanism, the `Temperature_Calculation` and
+`Leap_Frog_Position` deferred-sync fixes, and — this pass —
+`Berendsen_Barostat`'s GPU port plus `RemoveCOMMotion`/`Lattice_Shift_
+Tracker`'s deferred-sync fixes. See those commits' messages for full
+narrative detail; this file is the standing reference for "what's the
+current performance picture and what's next," updated as further
+optimization work lands.
 
 ## Benchmark setup
 
@@ -26,24 +28,40 @@ Headline numbers, most recent run:
 | CPU (this branch, `USE_CUDA=OFF`) | 2.208 ns/day | 782.7 s |
 | CPU (`master`, pre-CUDA-work) | 2.158 ns/day | 800.7 s |
 | CPU (this branch, `USE_CUDA=ON`, GPU unused at runtime) | 2.214 ns/day | 780.5 s |
-| **GPU (this branch, GPU active)** | **4.88 ns/day** | **343.9 s** |
+| **GPU (this branch, GPU active)** | **4.85 ns/day** | **345.3 s** |
 
 CPU performance is identical across `master`, CUDA-compiled-but-unused,
 and CUDA-disabled builds (within ~2% run-to-run noise) — confirmed by
 direct comparison, no CPU-path regression anywhere in this branch's
 history. GPU delivers a genuine **~2.2× speedup** over any CPU
 configuration. Full TIMING block for the current GPU run (after the
-`Leap_Frog_Position` deferred-sync fix, commit `25682dd72`):
+`Berendsen_Barostat`/`RemoveCOMMotion`/`Lattice_Shift_Tracker` work,
+commit `3c7d13684`):
+
+```
+RemoveCOMMotion                        0.249
+Lattice_Shift_Tracker                  0.103
+Angle                                 10.929
+ImproperDihedral                       7.525
+Dihedral                               3.863
+Crossdihedral                          0.003
+NonBonded                            165.440   (compute forces energies 53.912 / 32.59%, pairlist 111.139 / 67.18%)
+MolecularVirial                        4.370
+Leap_Frog_Velocity                    23.972
+BerendsenThermostat                   28.635
+Leap_Frog_Position                     0.082
+CUDA_Lincs                             0.279
+CUDA_M_Shake                          26.898
+TemperatureCalculation                32.778
+PressureCalculation                    0.003
+BerendsenBarostat                      0.079
+```
+
+Previous run (before this pass, commit `25682dd72`), for comparison:
 
 ```
 RemoveCOMMotion                        0.185
 Lattice_Shift_Tracker                  0.791
-Angle                                 31.345
-ImproperDihedral                       7.633
-Dihedral                               3.876
-Crossdihedral                          0.007
-NonBonded                            167.794   (compute forces energies 53.742 / 32.03%, pairlist 113.630 / 67.72%)
-MolecularVirial                        4.562
 Leap_Frog_Velocity                     9.617
 BerendsenThermostat                   29.172
 Leap_Frog_Position                     0.082
@@ -54,27 +72,20 @@ PressureCalculation                    0.003
 BerendsenBarostat                      0.279
 ```
 
-Previous run (before the `Leap_Frog_Position` fix, commit `48a6decc3`),
-for comparison — note `Leap_Frog_Position` 30.863 → 0.082s, and that
-~7.7s of that reappeared in `CUDA_M_Shake` (20.372 → 28.121) rather than
-vanishing, since `Berendsen_Barostat`'s default `gpu_mirror_touches()`
-already forced a publish every step regardless (see "Architecture
-direction" below):
-
-```
-Leap_Frog_Velocity                     9.591
-BerendsenThermostat                   29.059
-Leap_Frog_Position                    30.863
-CUDA_Lincs                             0.444
-CUDA_M_Shake                          20.372
-TemperatureCalculation                16.648
-PressureCalculation                    0.004
-BerendsenBarostat                      0.234
-```
-
-Total wall time 369.2s → 343.9s (**~6.9% faster**), muted by the
-barostat confound above — expect a larger effect on NVT-only runs or
-once a GPU-native barostat exists.
+`Lattice_Shift_Tracker` (0.79s → 0.10s) and `BerendsenBarostat` (0.28s →
+0.08s) both genuinely improved, and `RemoveCOMMotion` is now free on the
+~99% of steps it's a no-op. `Angle`/`ImproperDihedral`/`Dihedral` also
+dropped noticeably (31.3s → 10.9s for Angle) as a side effect — POS
+staying GPU-resident longer means their own energy/virial syncs less
+often collide with a coarse resync elsewhere; not separately
+attributed. But `Leap_Frog_Velocity` jumped 9.6s → 24.0s, and
+`TemperatureCalculation` 16.8s → 32.8s — both **absorbing a residual
+per-step POS-resync cost that moved rather than disappeared**. Net wall
+time: 343.9s (before *any* of this session's barostat/COM/lattice-shift
+work) → 345.3s — essentially flat, not a clean win, despite three
+individually-correct, individually-tested GPU ports. See "Architecture
+direction" below (the "residual resync tug-of-war" subsection) for the
+root cause this exposes and why it wasn't fixed further this session.
 
 ## The core finding: two distinct kinds of GPU cost
 
@@ -125,20 +136,21 @@ root cause.
 
 **Lower-risk runner-up, if a quick well-understood win is preferred
 instead:** `Berendsen_Thermostat<gpuBackend>`/`NoseHoover_Thermostat<gpuBackend>`
-(29.2s) — same bucket-2 shape `Temperature_Calculation` and
+(28.6s) — same bucket-2 shape `Temperature_Calculation` and
 `Leap_Frog_Position` were before their fixes, a single-pass reduction
 with no sequential-launch-parameter dependency, so the same
-`finalize_gpu_step()` deferral pattern should apply directly. Doing
-this *before* porting `Berendsen_Barostat` matters: as long as the
-barostat forces a full mirror publish every step (see "Architecture
-direction" below), any pos/vel-touching bucket-2 fix downstream of it
-in the sequence has its win partly absorbed by whichever algorithm
-next reads the mirror — `Leap_Frog_Position`'s fix (below) demonstrated
-this directly.
+`finalize_gpu_step()` deferral pattern should apply directly. **Read
+the "residual resync tug-of-war" subsection below first** — given what
+happened when `Berendsen_Barostat`/`RemoveCOMMotion`/`Lattice_Shift_
+Tracker` were fixed (a real per-algorithm win that mostly just
+relocated to `Leap_Frog_Velocity`/`Temperature_Calculation`), this fix
+may show the same "moves, doesn't vanish" pattern rather than a clean
+net win, unless done alongside real root-causing of *why* the residual
+POS resync costs ~15s/10000-steps wherever it lands.
 
-(`Leap_Frog_Position`'s own deferred-sync fix — previously listed here
-as the runner-up — is now done, commit `25682dd72`. See "Per-algorithm
-status" below for its result and the barostat-confound caveat.)
+(`Leap_Frog_Position`'s deferred-sync fix — commit `25682dd72` — and
+`Berendsen_Barostat`/`RemoveCOMMotion`/`Lattice_Shift_Tracker`'s — commit
+`3c7d13684` — are both done. See "Per-algorithm status" below.)
 
 ## Per-algorithm status
 
@@ -191,46 +203,65 @@ status" below for its result and the barostat-confound caveat.)
 
 ### `Algorithm`s (`Algorithm_Sequence` members)
 
-- **`Remove_COM_Motion<gpuBackend>`** — **solved:** own stream (not
-  device-wide sync), no per-atom host upload loops. **Partially solved:**
-  this is a genuinely different shape than the other bucket-2 cases —
-  its rotation-removal path needs *two sequential* reduction passes
-  where pass 2's kernel launch parameters are pass 1's host-computed
-  result (an inherent CPU-in-the-loop dependency, not just "nobody
-  downstream needs this yet"). Deferring past other algorithms doesn't
-  help the same way it did for `Temperature_Calculation`; a real fix
-  would need restructuring the reduction itself (e.g. a single kernel
-  that does both passes via a device-side sync primitive, or computing
-  the second pass's launch config independent of the first pass's
-  result). Not attempted. Currently cheap (0.3s) so low priority.
-- **`Lattice_Shift_Tracker`** — **cannot be solved without a real GPU
-  port.** Explicitly `static_assert`s against `gpuBackend` in its
-  constructor (`lattice_shift.h`) — always runs on CPU regardless of
-  accelerator, by original design, not an oversight. Cheap enough
-  (0.8s) that porting it likely isn't worth the effort.
-- **`Leap_Frog_Velocity<gpuBackend>`** — **solved this session:** fixed
-  the accidental coarse-full-resync-every-step bug (`MIRROR_BOX` never
-  tracked as fresh, silently forcing a full 8-array upload every call)
-  and the `gpu::Configuration` mirror current/old swap gap that was
-  hiding behind it. **Could be solved further:** no additional low-
-  hanging fruit identified yet at 9.6s; not investigated deeply.
-- **`Leap_Frog_Position<gpuBackend>`** — **solved this session:**
-  replaced the unconditional `sync_configuration_from_device()` with
+- **`Remove_COM_Motion<gpuBackend>`** — **solved this session (sync
+  deferral):** own stream (not device-wide sync), no per-atom host
+  upload loops (both pre-existing), plus `gpu_mirror_touches()` narrowed
+  to 0 and `sync_configuration_from_device()` replaced with
+  `mark_gpu_dirty()` — same pattern as `Leap_Frog_Position`. Matters
+  disproportionately here: this is the *first* algorithm in
+  `create_md_sequence.cc`'s sequence, so its old default `MIRROR_ALL`
+  forced a full mirror round-trip at the very top of every step,
+  regardless of `comtransrot`'s skip-step cadence. Now effectively free
+  (0.25s, all in the ~1% of steps that do real removal work).
+  **Partially solved still:** the rotation-removal path's inherent two-
+  sequential-reduction-pass shape (pass 2's launch parameters are pass
+  1's host-computed result) is unchanged — not a sync-deferral problem,
+  a genuine algorithmic dependency; only matters on real-removal steps,
+  low priority given those are now rare and each one is cheap anyway.
+- **`Lattice_Shift_Tracker<gpuBackend>`** — **solved this session (real
+  GPU port):** one thread per chargegroup, reuses `gpu::Topology`'s
+  existing chargegroup-offset array (`gpu::Periodicity<B>::put_into_box()`
+  for the wrap, self-contained kernel for the shift bookkeeping — see
+  `lattice_shift_kernels.cu`). `gpu_mirror_touches()==0`, deferred
+  publish, same as every other GPU-native writer. Own timer: 0.79s
+  (CPU) → 0.10s. Needed two follow-up fixes to actually land clean, both
+  documented in "Architecture direction" below: (1) the new
+  `MIRROR_LATTICE_SHIFT` field was initially included in `MIRROR_ALL`,
+  which made every ordinary algorithm's default touch force a real
+  re-upload (0.8s → 17.5s, worse than the CPU version, before this was
+  caught and fixed); (2) once excluded from `MIRROR_ALL`, the field had
+  no "starts fresh" point at all, so its producer-events list grew by
+  one entry every step forever — an O(steps²) cost invisible under
+  ~2000 steps, dominant by 10000 (11.5-17.5s) — fixed by adding
+  `CudaManager::clear_stale_producer_events()`. Only vacuum/rectangular
+  boundary supported (matches `CUDA_Pairlist_Algorithm`'s own scope);
+  `init()` hard-errors on triclinic/truncoct rather than silently
+  wrapping wrong. `full_anisotropic`-equivalent generality wasn't the
+  issue here (chargegroup wrap doesn't depend on pressure-coupling
+  mode) — this is purely a boundary-condition scope limit.
+- **`Leap_Frog_Velocity<gpuBackend>`** — (earlier session) fixed the
+  accidental coarse-full-resync-every-step bug (`MIRROR_BOX` never
+  tracked as fresh) and the mirror current/old swap gap hiding behind
+  it; stable at ~9.6s for several benchmark runs after that.
+  **Regressed this session, not yet root-caused:** 9.6s → 24.0s after
+  `Energy_Calculation`'s `gpu_mirror_touches()` was narrowed to 0 (see
+  "residual resync tug-of-war" below) — bisection confirmed this
+  specific change as the trigger (reverting it alone brings this back
+  to 9.2s), but reverting it also un-fixes `Lattice_Shift_Tracker`
+  (16.7s) for a worse net total, so the narrowing was kept. The
+  underlying question — why does *whichever* algorithm ends up doing
+  the first POS resync of the next step cost ~15s/10000-steps instead
+  of the ~0.1-0.3s a plain `copy_pos_vel_to_device()` should cost — is
+  open; needs real profiling (nsys or similar), not yet available in
+  this workflow.
+- **`Leap_Frog_Position<gpuBackend>`** — **solved:** replaced the
+  unconditional `sync_configuration_from_device()` with
   `mark_gpu_dirty(POS|VEL)`; publish now happens lazily via
   `gpu_mirror_touches()`/`flush_gpu_dirty()` for any in-sequence CPU
-  consumer, plus a new `io::Out_Configuration::needs_gpu_mirror_flush()`
-  gate wired into `program/md.cc` (trajectory writing lives outside
-  `Algorithm_Sequence::run()`, so needed its own hook — see
-  "Architecture direction" below). Own timer: 30.9s → 0.08s. **Caveat:**
-  in *this* benchmark `Berendsen_Barostat` (default `gpu_mirror_touches()
-  == MIRROR_ALL`) already forces a full publish every step regardless,
-  so ~7.7s of the saved cost reappeared in `CUDA_M_Shake` (20.4s →
-  28.1s, the next algorithm that reads position) rather than
-  disappearing; net wall time still improved (~6.9%) from the reduced
-  transfer volume/timer overhead itself, but the full architectural
-  benefit won't show until `Berendsen_Barostat` also stops forcing an
-  unconditional publish (NVT-only runs already see it, since there's no
-  barostat in the sequence at all).
+  consumer, plus `io::Out_Configuration::needs_gpu_mirror_flush()`
+  gating trajectory writes in `program/md.cc` (outside `Algorithm_
+  Sequence::run()`, needed its own hook). Own timer: 30.9s → 0.08s,
+  stable across this session's later changes too.
 - **`Berendsen_Thermostat<gpuBackend>` / `NoseHoover_Thermostat<gpuBackend>`**
   (share `thermostat_velocity_scale.h`) — **could be solved:** same
   bucket-2 shape as `Temperature_Calculation` before this session's fix
@@ -247,39 +278,53 @@ status" below for its result and the barostat-confound caveat.)
   (no per-step error-check sync at all, folded into the shared
   end-of-step array). **Could be solved further:** still does one
   `cudaStreamSynchronize()` per step to publish `constraint_force`/
-  `virial_tensor` (20.4s) — same category as the bonded terms' energy/
-  virial sync, not yet deferred.
+  `virial_tensor` (currently ~27s, drifted up from 20.4s across this
+  session's changes along with the same residual-resync pattern noted
+  under `Leap_Frog_Velocity` — not separately diagnosed) — same
+  category as the bonded terms' energy/virial sync, not yet deferred.
 - **`CUDA_Lincs`** — **solved, fully.** Zero blocking calls anywhere in
   its `calculate_interactions()` — the reference example of what
   "bucket 2 done right" looks like (0.44s for the same term count class
   as `CUDA_M_Shake`'s constraint work). Nothing left to do here.
-- **`Temperature_Calculation<gpuBackend>`** — **solved this session:**
-  deferred-sync + merged reduction kernel, 34.5s → 16.6s (2.07×). **Could
-  be solved further:** the remaining 16.6s suggests the gap before
-  `Energy_Calculation` (its only real consumer) still isn't long enough
-  to fully hide the kernel behind other work — `Pressure_Calculation`/
-  `Berendsen_Barostat` in between are themselves too cheap to provide
-  much cover. Deferring further (if anything later in the sequence could
-  serve as the flush point instead) or reducing the kernel count/size
-  further are both open, not yet explored.
-- **`Pressure_Calculation`** — **solved, trivially:** confirmed it never
-  touches the GPU mirror at all (verified by reading the code, not
-  guessing) — plain O(9) CPU matrix math from already-CPU-resident
-  `virial_tensor`/`kinetic_energy_tensor`. No GPU port needed, ever.
-- **`Berendsen_Barostat`** — **could be solved, scope-gated:** confirmed
-  free in *this* benchmark (0.23s) because pressure coupling's actual
-  per-atom position-scaling loop barely matters at this coupling
-  strength/frequency — but it's still a genuine CPU-only, O(num_atoms)
-  loop with no GPU backend at all (`Berendsen_Barostat` isn't even
-  `Backend`-templated). A real GPU port (isotropic case at minimum) was
-  scoped out earlier this session as bigger, multi-mode work not
-  justified without a benchmark that actually stresses it — would need
-  a system/config with stronger pressure coupling to know if it's worth
-  doing.
-- **`Energy_Calculation`** — **solved, trivially:** cheap enough it
-  doesn't even show as a separate nonzero `TIMING` line. No GPU work
-  needed; now doubles as the natural deferred-sync consumer for
-  `Temperature_Calculation`'s result.
+- **`Temperature_Calculation<gpuBackend>`** — deferred-sync + merged
+  reduction kernel from an earlier session (34.5s → 16.6s). **Regressed
+  this session, same root cause as `Leap_Frog_Velocity`:** 16.6s → 32.8s
+  after `Energy_Calculation`'s narrowing — this is its own deferred-
+  finalize consumer, so the two are directly coupled; not separately
+  bisected from the `Leap_Frog_Velocity` case, presumed same underlying
+  issue. See "residual resync tug-of-war" below.
+- **`Pressure_Calculation`** — **solved this session (narrowed):**
+  confirmed it only reads `conf.old().virial_tensor`/
+  `kinetic_energy_tensor` and writes `pressure_tensor` — plain CPU
+  matrices, never GPU-mirror pos/vel/force/box. `gpu_mirror_touches()`
+  narrowed from the base class default `MIRROR_ALL` to `MIRROR_VIRIAL`
+  (the one field it genuinely needs flushed, since GPU constraint
+  algorithms write constraint-virial there). This is the change that
+  first surfaced the "any default-`MIRROR_ALL` algorithm forces the
+  round-trip regardless of what upstream deferred" pattern — see
+  "Architecture direction" below.
+- **`Berendsen_Barostat<gpuBackend>`** — **solved this session (real GPU
+  port):** isotropic/anisotropic/semi-anisotropic all reduce to "scale
+  every position by a fixed 3x3 matrix," one generic kernel covers all
+  three (`berendsen_barostat_kernels.cu`); mu/box computed on the host
+  (O(9), cheap, identical to the CPU formulas). `full_anisotropic`
+  refused with an explicit error rather than silently replicating a
+  pre-existing CPU-only bug (the CPU reference's `case pcouple_full_
+  anisotropic` block has no `break;` before `case pcouple_semi_
+  anisotropic`, so it silently re-applies semi-anisotropic scaling on
+  top of its own result — not this branch's call to fix as a side
+  effect of a performance patch). Own timer: 0.28s → 0.08s.
+- **`Energy_Calculation`** — **narrowed this session, net-positive but
+  not clean:** confirmed it only touches `conf.old().energies`
+  (already CPU-resident) and `conf.current().averages` — narrowed
+  `gpu_mirror_touches()` from `MIRROR_ALL` to 0. Fixed `Lattice_Shift_
+  Tracker`'s cost (see above) but shifted a residual POS-resync cost
+  onto `Leap_Frog_Velocity`/`Temperature_Calculation` instead of
+  eliminating it — bisected and measured (see "residual resync
+  tug-of-war" below): keeping the narrowing gives 345.3s total,
+  reverting it gives 360.0s, so it's the better of the two known
+  options, but neither is a clean win. Still doubles as the deferred-
+  sync consumer for `Temperature_Calculation`'s result.
 
 ## Architecture direction: pull-based sync, and a possible step-schedule plan
 
@@ -346,12 +391,85 @@ the general scheduler before that, since the current per-algorithm
 fixes are exactly the ground-truth data a scheduler's cost model would
 need.
 
+### Two case studies from this pass: what "narrow the mask" can still get wrong
+
+**`MIRROR_LATTICE_SHIFT` in `MIRROR_ALL` (found and fixed).** Adding a
+new mirror-tracked field and including it in `MIRROR_ALL` "to be safe"
+(matching `MIRROR_CONSTRAINT_FORCE`/`MIRROR_VIRIAL`'s precedent) is
+*not* automatically safe the way it looks: `MIRROR_ALL` membership
+means every ordinary algorithm's default touch **invalidates** the
+field, and invalidation isn't a free no-op the way a same-value flush
+is — the next read has to pay a real re-upload. A field genuinely
+read by other code (like `MIRROR_VIRIAL`, which `Pressure_Calculation`
+needs) belongs in `MIRROR_ALL`; a field with exactly one writer and no
+other reader anywhere in the codebase (like `MIRROR_LATTICE_SHIFT`)
+does not, no matter how "safe" excluding it looks on first read of the
+diff. Lesson: check for *any* other consumer, not just "does this look
+like the same shape as an existing bit," before deciding `MIRROR_ALL`
+membership.
+
+**Producer-events list with no "starts fresh" point (found and
+fixed).** Every mirror-tracked field needs some point in its lifecycle
+where `field_producer_events[bit]` gets cleared — normally either
+`invalidate_gpu_mirror()` (generic, via `MIRROR_ALL` default touches)
+or an explicit per-algorithm equivalent (`zero_mirror_force()` for
+`MIRROR_FORCE`). A field excluded from `MIRROR_ALL` specifically
+*because* nothing else should invalidate it (the `MIRROR_LATTICE_SHIFT`
+fix above) loses that generic clearing point as a side effect — the
+writer must supply its own, or the list grows by one event every
+step forever, and every future `cudaStreamWaitEvent()` pass over that
+list gets slower every step (O(steps²) total). Added `CudaManager::
+clear_stale_producer_events()` (clears events without touching
+freshness/dirty bits, unlike `invalidate_gpu_mirror()`) for exactly
+this case; any future genuinely-single-writer field excluded from
+`MIRROR_ALL` will need the same treatment.
+
+### The residual resync tug-of-war (open, not yet root-caused)
+
+This pass's headline numbers (343.9s → 345.3s, essentially flat) expose
+something the "pull-based sync" principle above doesn't fully explain:
+**even after every writer defers correctly, *something* still has to
+do the first real resync of POS each step, and wherever that lands
+costs roughly 15s over 10000 steps — 30-50× more than a plain
+`copy_pos_vel_to_device()` should cost.** Concretely: with
+`Energy_Calculation` narrowed (this session's final state),
+`Leap_Frog_Velocity` pays it (9.6s → 24.0s) and `Lattice_Shift_Tracker`
+doesn't (0.8s → 0.1s); reverting `Energy_Calculation`'s narrowing flips
+this — `Lattice_Shift_Tracker` pays it (→ 16.7s) and `Leap_Frog_
+Velocity` doesn't (→ 9.2s). Bisected and measured both ways; the
+narrowed-`Energy_Calculation` configuration wins on net total (345.3s
+vs 360.0s) but neither is actually *fixing* the underlying cost, just
+choosing the cheaper place to pay it.
+
+Two live hypotheses, neither confirmed:
+1. **The "coarse" `copy_to_device()` path is doing more than it needs
+   to.** `resync_missing_fields()` (`cuda_manager.cu`) treats any
+   request touching `FORCE`/`BOX`/`CONSTRAINT_FORCE`/`VIRIAL` as
+   "coarse" and falls back to a full `copy_to_device()` — which now
+   also copies `lattice_shifts` (added this session) — instead of the
+   cheaper `copy_pos_vel_to_device()`. Whichever algorithm first
+   requests `FORCE` after it's gone stale (`Leap_Frog_Velocity` always
+   does) pays for the whole coarse copy, not just POS/VEL. Not yet
+   confirmed this is actually the coarse path firing here (would need
+   to log `resync_missing_fields()`'s branch choice, not yet done).
+2. **`math::CuVArray`'s resize()/element-copy path has some non-obvious
+   per-call cost** (e.g. real `cudaMalloc`/`cudaFree` on every
+   `resize()` even when the size is unchanged) that the coarse path's
+   9 full-array copies (pos/vel/force/constraint_force × current+old,
+   plus lattice_shifts) pay for repeatedly. Not investigated.
+
+Whichever it is, real profiling (`nsys`/`ncu`, not available in this
+session's iterate-and-benchmark workflow) is needed before attempting
+another fix here — guessing further risks repeating this session's
+"fixed one line, moved the cost, net flat" pattern a third time.
+
 ## Verification note
 
 Every "solved" entry above has a passing correctness test
-(`ctest`, 30/31 with only the pre-existing `aladip_cuda` perturbation-
+(`ctest`, 31/32 with only the pre-existing `aladip_cuda` perturbation-
 gate failure unrelated to any of this) and has been run under
 `compute-sanitizer --tool memcheck` with zero errors. "Could be solved"
 entries are diagnosed (root cause identified, usually via direct
 comparison against `CUDA_Lincs`'s zero-sync reference case) but not yet
-implemented.
+implemented. Step-0 `E_Total` (`-2.4963e+05`) has been checked unchanged
+across every benchmark run referenced in this file.
