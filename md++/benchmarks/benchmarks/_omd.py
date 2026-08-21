@@ -38,6 +38,13 @@ _MAINTIMER = re.compile(r"^\s{6,}([A-Za-z]\S*)\s+([0-9.]+)\s*(?:([0-9.]+)%)?\s*$
 
 SUCCESS_MARKER = "MD++ finished successfully"
 
+# md++ prints this banner (util::print_title) when it was compiled without
+# NDEBUG. Assertions and debug bookkeeping are then live and the binary is
+# several times slower, so any timing taken from it is meaningless -- and worse,
+# it would look like a huge regression on the timeline. Detect it from the
+# binary's own output rather than trusting the build flags.
+DEBUG_MARKER = "This is a debug code"
+
 
 class OmdError(RuntimeError):
     """The run did not finish successfully, or produced no usable timings."""
@@ -51,7 +58,17 @@ def parse(text):
       ``ns_per_day``                                                -- ns/day
       ``timer.<Algorithm>``                                         -- seconds
       ``subtimer.<Algorithm>.<sub name>``                           -- seconds
+
+    Raises :class:`OmdError` if the run failed, or if the binary was built with
+    debugging enabled.
     """
+    if DEBUG_MARKER in text:
+        raise OmdError(
+            "this md++ binary was built with debugging enabled and runs much "
+            "slower than an optimised one -- its timings are meaningless. "
+            "Build with -DCMAKE_BUILD_TYPE=Release (the benchmark build hook "
+            "does this by default).")
+
     if SUCCESS_MARKER not in text:
         raise OmdError(_failure_detail(text))
 

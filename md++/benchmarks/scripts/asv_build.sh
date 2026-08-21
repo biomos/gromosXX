@@ -20,6 +20,7 @@
 #   GROMOS_BUILD_JOBS   parallel build jobs (default: nproc)
 #   GROMOS_NVCC         path to nvcc, for the CUDA variant
 #   GROMOS_CUDA_HOST_COMPILER  host compiler nvcc drives (default: g++ on PATH)
+#   GROMOS_CUDA_LIB     dir holding libcudart (default: <nvcc>/../../lib)
 
 set -euo pipefail
 
@@ -48,6 +49,16 @@ CMAKE_ARGS=(
     -B "${BUILD_DIR}/_asvbuild"
     -DCMAKE_BUILD_TYPE=Release
     -DCMAKE_INSTALL_PREFIX="${PREFIX}"
+    # Keep the RPATH of external dependencies in the installed binary. cmake
+    # gives the build tree an RPATH covering everything it linked against, but
+    # strips it on install, so a binary that runs fine in the build tree dies
+    # immediately once asv installs it into an environment:
+    #
+    #   error while loading shared libraries: libcudart.so.12
+    #
+    # That bites whenever a dependency lives outside the default loader path --
+    # here the CUDA runtime, which comes from a conda environment.
+    -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON
 )
 
 # ccache makes neighbouring commits cheap to build, which matters because the
@@ -75,6 +86,23 @@ if [ -n "${GROMOS_NVCC:-}" ]; then
     CUDA_HOST_CXX="${GROMOS_CUDA_HOST_COMPILER:-$(command -v g++ || true)}"
     if [ -n "${CUDA_HOST_CXX}" ]; then
         CMAKE_ARGS+=(-DCMAKE_CUDA_HOST_COMPILER="${CUDA_HOST_CXX}")
+    fi
+
+    # Record where the CUDA runtime lives, so the installed binary can find it.
+    # CMAKE_INSTALL_RPATH_USE_LINK_PATH alone is not enough here: it only picks
+    # up libraries the link line names by full path, whereas the CUDA runtime
+    # arrives through a -L search path, so the installed binary ends up with no
+    # RPATH at all and dies with
+    #
+    #   error while loading shared libraries: libcudart.so.12
+    #
+    # even though the same binary runs fine inside the build tree.
+    CUDA_LIB="${GROMOS_CUDA_LIB:-$(dirname "$(dirname "${GROMOS_NVCC}")")/lib}"
+    if [ -d "${CUDA_LIB}" ]; then
+        CMAKE_ARGS+=(-DCMAKE_INSTALL_RPATH="${CUDA_LIB}")
+    else
+        echo "warning: CUDA library directory ${CUDA_LIB} not found;" \
+             "set GROMOS_CUDA_LIB if the installed binary cannot load libcudart" >&2
     fi
 fi
 
@@ -115,7 +143,19 @@ cmake "${CMAKE_ARGS[@]}" ${VARIANT_ARGS[@]+"${VARIANT_ARGS[@]}"} ${EXTRA[@]+"${E
 echo "=== build (-j ${JOBS})"
 cmake --build "${BUILD_DIR}/_asvbuild" -j "${JOBS}"
 
-echo "=== install -> ${PREFIX}"
+# Confirm the build really is optimised. CMAKE_BUILD_TYPE is set above, but
+# GROMOS_CMAKE_ARGS is appended last and could override it, and a debug build
+# runs several times slower -- which would show up on the timeline as an
+# enormous regression rather than as a mistake. md++ also gates its assertions
+# and debug bookkeeping on NDEBUG, which Release supplies.
+BUILT_TYPE=$(grep -E "^CMAKE_BUILD_TYPE:" "${BUILD_DIR}/_asvbuild/CMakeCache.txt" | cut -d= -f2)
+if [ "${BUILT_TYPE}" != "Release" ]; then
+    echo "refusing to install a '${BUILT_TYPE}' build -- benchmarks require" \
+         "Release (optimised, NDEBUG). Check GROMOS_CMAKE_ARGS." >&2
+    exit 1
+fi
+
+echo "=== install -> ${PREFIX} (${BUILT_TYPE})"
 cmake --install "${BUILD_DIR}/_asvbuild"
 
 ls "${PREFIX}/bin"

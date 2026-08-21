@@ -31,18 +31,20 @@ THREADS = [1, 2, 4, 8, 16]
 TIERS = list(_systems.TIERS)
 
 
-def _thread_counts():
+def _selected_threads():
+    """Thread counts to actually run, which may be a subset of the grid."""
     override = os.environ.get("GROMOS_BENCH_THREADS")
     if override:
         return [int(t) for t in override.replace(",", " ").split()]
-    return THREADS
+    return list(THREADS)
 
 
-def _tiers():
+def _selected_tiers():
+    """Systems to actually run, which may be a subset of the grid."""
     override = os.environ.get("GROMOS_BENCH_TIERS")
     if override:
         return [t.strip() for t in override.replace(",", " ").split()]
-    return TIERS
+    return list(TIERS)
 
 
 def _supported(var, nthreads, available):
@@ -61,7 +63,16 @@ def _supported(var, nthreads, available):
 class PlainMD(object):
     """Plain MD on protein-in-solvent systems of increasing size."""
 
-    params = [_tiers(), _thread_counts()]
+    # The parameter grid is fixed, never derived from the environment. asv keys
+    # results by position in this grid and records it in benchmarks.json, so a
+    # grid that changed shape between invocations would silently orphan every
+    # result recorded under a different one -- `asv publish` then emits empty
+    # graphs while reporting success.
+    #
+    # GROMOS_BENCH_TIERS / GROMOS_BENCH_THREADS therefore narrow what actually
+    # *runs*; the combinations left out are reported as skipped, and results
+    # from a narrow run stay comparable with those from a full one.
+    params = [list(TIERS), list(THREADS)]
     param_names = ["system", "threads"]
 
     # Generous: the large system on one thread, repeated, is slow.
@@ -86,8 +97,8 @@ class PlainMD(object):
         _systems.load_manifest()
 
         results = {}
-        for tier in _tiers():
-            for nthreads in _thread_counts():
+        for tier in _selected_tiers():
+            for nthreads in _selected_threads():
                 if not _supported(var, nthreads, available):
                     continue
                 results["%s/%d" % (tier, nthreads)] = _runner.run_best(tier, nthreads,
