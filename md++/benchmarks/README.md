@@ -177,6 +177,10 @@ Expect `env_dir` to reach a few GB: each cached build is a ~55 MB binary and
 
 * `nvcc` for the `cuda` variant. It is frequently not on `PATH`; set
   `GROMOS_NVCC` to its location.
+* FFTW, from the system packages. Note that the build deliberately uses the
+  system compiler even when a conda environment is active: a conda toolchain
+  does not see the system FFTW, and more importantly the compiler is part of
+  what the timeline measures. Set `GROMOS_CXX` to override.
 * For low-noise results, set the CPU governor to `performance`
   (`sudo cpupower frequency-set -g performance`). `tools/calibrate.py` warns
   when it is not.
@@ -202,6 +206,8 @@ explicit message rather than a confusing cmake error.
 | `GROMOS_BENCH_TRACE` | append one line per simulation to this file |
 | `GROMOS_MD_BINARY` | use a prebuilt binary (standalone runs, bypasses asv) |
 | `GROMOS_NVCC` | path to `nvcc` for the `cuda` variant |
+| `GROMOS_CXX` | C++ compiler (default: the system one, not conda's) |
+| `GROMOS_CUDA_LIB` | dir holding `libcudart` (default: `<nvcc>/../../lib`) |
 
 ## Standalone use
 

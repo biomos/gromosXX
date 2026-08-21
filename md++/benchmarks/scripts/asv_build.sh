@@ -17,6 +17,7 @@
 # Environment:
 #   GROMOS_VARIANT      serial | omp | cuda | mpi (selects the -D flags)
 #   GROMOS_CMAKE_ARGS   optional extra -D flags, appended last
+#   GROMOS_CXX          C++ compiler (default: the system one, not conda's)
 #   GROMOS_BUILD_JOBS   parallel build jobs (default: nproc)
 #   GROMOS_NVCC         path to nvcc, for the CUDA variant
 #   GROMOS_CUDA_HOST_COMPILER  host compiler nvcc drives (default: g++ on PATH)
@@ -60,6 +61,32 @@ CMAKE_ARGS=(
     # here the CUDA runtime, which comes from a conda environment.
     -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON
 )
+
+# Pin the C++ compiler instead of inheriting whatever the invoking shell offers.
+# Two reasons, and the second is the important one:
+#
+#  * An activated conda environment puts its own toolchain first, and that
+#    toolchain does not see the system FFTW, so configuration fails outright
+#    with "fftw3 library could not be found".
+#  * Far worse when it does not fail: the compiler is a property of the
+#    measurement. A timeline built partly with the system gcc and partly with a
+#    conda gcc compares compilers, not commits, and nothing in the results would
+#    reveal it.
+#
+# Prefer the system compiler; override deliberately with GROMOS_CXX (e.g. to
+# compare compilers on purpose, which is a legitimate thing to want).
+CXX_DEFAULT=/usr/bin/c++
+if [ ! -x "${CXX_DEFAULT}" ]; then
+    CXX_DEFAULT="$(command -v c++ || command -v g++ || true)"
+fi
+CXX_COMPILER="${GROMOS_CXX:-${CXX_DEFAULT}}"
+if [ -n "${CXX_COMPILER}" ]; then
+    CMAKE_ARGS+=(-DCMAKE_CXX_COMPILER="${CXX_COMPILER}")
+fi
+if [ -n "${CONDA_PREFIX:-}" ] && [ -z "${GROMOS_CXX:-}" ]; then
+    echo "note: conda environment ${CONDA_PREFIX} is active; building with" \
+         "${CXX_COMPILER} rather than its toolchain. Set GROMOS_CXX to override." >&2
+fi
 
 # ccache makes neighbouring commits cheap to build, which matters because the
 # build dominates: ~230 translation units versus about a minute of benchmarking.
@@ -134,7 +161,7 @@ EXTRA=(${GROMOS_CMAKE_ARGS:-})
 rm -rf "${PREFIX}"
 mkdir -p "${PREFIX}"
 
-echo "=== configure variant=${VARIANT} ${VARIANT_ARGS[*]:-} ${GROMOS_CMAKE_ARGS:-}"
+echo "=== configure variant=${VARIANT} cxx=${CXX_COMPILER} ${VARIANT_ARGS[*]:-} ${GROMOS_CMAKE_ARGS:-}"
 # No ":-" defaults here: on an empty array (the serial variant has no extra
 # flags) "${arr[@]:-}" expands to one empty word rather than to nothing, and
 # cmake reads that empty argument as a source directory.
