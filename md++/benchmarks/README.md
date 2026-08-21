@@ -88,19 +88,24 @@ cd md++/benchmarks
 ./asv compare <commit1> <commit2>        # side by side, flags regressions
 ```
 
-The wrapper exists for two reasons. asv is installed with `pip --target` into a
-directory of its own, so it is not on `PATH` and needs `PYTHONPATH` set. And asv
-resolves the `{conf_dir}` that locates the build hooks from the *current working
-directory*, not from where `asv.conf.json` lives, so it must run from here --
-the wrapper cds itself, and works when called by absolute path from anywhere.
+The wrapper exists because asv is installed with `pip --target` into a directory
+of its own, so it is not on `PATH` and needs `PYTHONPATH` set. It also cds to
+its own directory so that asv picks up the `asv.conf.json` next to it, which
+means it works when called by absolute path from anywhere.
 
 If you would rather call `asv` directly:
 
 ```sh
 export PYTHONPATH=/local/gromos/bench_tools
 export PATH=/local/gromos/bench_tools/bin:$PATH
-cd md++/benchmarks    # still required, see above
+cd md++/benchmarks     # or pass --config .../asv.conf.json
 ```
+
+A note if you ever run with `--config`: asv chdirs to the directory containing
+the config file (`asv/main.py`) and resolves `repo`, `benchmark_dir` and the
+`{conf_dir}` used by the build hooks relative to *that*, not to where you
+invoked it. A config placed outside this directory therefore needs absolute
+paths for all three, or the build hooks will not be found.
 
 ### Cost
 

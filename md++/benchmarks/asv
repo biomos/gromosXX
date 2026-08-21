@@ -4,9 +4,12 @@
 #
 # asv is installed with "pip install --target" into a directory of its own
 # rather than into the system or user site-packages, so it needs PYTHONPATH set
-# and is not on PATH. This wrapper supplies both, and runs from its own
-# directory because asv resolves the {conf_dir} used by the build hooks from the
-# current working directory rather than from the location of asv.conf.json.
+# and is not on PATH. This wrapper supplies both, and cds to its own directory
+# so that asv picks up the asv.conf.json sitting next to it.
+#
+# (asv itself chdirs to the directory holding the config file and resolves
+# repo, benchmark_dir and the {conf_dir} used by the build hooks relative to
+# that -- so a config kept anywhere else needs absolute paths for all three.)
 #
 # Usage: ./asv show | ./asv run HEAD^! | ./asv publish ...
 #

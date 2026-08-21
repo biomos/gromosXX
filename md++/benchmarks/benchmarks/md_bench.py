@@ -94,14 +94,23 @@ class PlainMD(object):
                                                                       var=var)
         return results
 
-    def _get(self, cache, system, threads, key):
-        entry = cache.get("%s/%d" % (system, threads))
-        if entry is None:
-            # asv's signal for "this parameter combination does not apply".
+    def setup(self, cache, system, threads):
+        """Skip parameter combinations that do not apply to this build.
+
+        NotImplementedError is asv's skip signal, but only when it comes from
+        a setup function: asv catches it in do_setup, whereas the same
+        exception raised inside a benchmark method is recorded as a failure.
+        So the check has to live here rather than at the point of use, or the
+        serial build reports a spurious failure for every thread count above
+        one.
+        """
+        if "%s/%d" % (system, threads) not in cache:
             raise NotImplementedError(
                 "%s at %d threads is not applicable to the %s build"
                 % (system, threads, _runner.variant()))
-        return entry.get(key)
+
+    def _get(self, cache, system, threads, key):
+        return cache["%s/%d" % (system, threads)].get(key)
 
     # -- headline -----------------------------------------------------------
 

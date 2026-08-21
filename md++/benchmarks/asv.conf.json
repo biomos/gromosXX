@@ -5,7 +5,11 @@
 
     // Repository root, relative to this file: md++/benchmarks -> repo root.
     "repo": "../..",
-    "branches": ["master"],
+    // Commits are only graphed if they are reachable from a listed branch.
+    // While this suite lives on an unmerged branch, that branch has to be
+    // listed too or `asv publish` silently produces no graphs ("Couldn't find
+    // <hash> in branches"). Drop the second entry once this merges to master.
+    "branches": ["master", "asv-benchmarks"],
     "dvcs": "git",
 
     "benchmark_dir": "benchmarks",
