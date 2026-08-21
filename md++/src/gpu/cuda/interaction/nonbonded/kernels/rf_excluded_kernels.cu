@@ -61,7 +61,7 @@ __global__ void rf_excluded_solute_kernel(
     const unsigned* __restrict__ atom_energy_group,
     gpu::NbSimParams nb,
     gpu::Periodicity<BOUNDARY> periodicity,
-    FPL3_TYPE* force,
+    FPH3_TYPE* force,
     double* e_crf_total,
     double* virial_total) {
 
@@ -102,9 +102,11 @@ __global__ void rf_excluded_solute_kernel(
             f_accum.x += fr.x;
             f_accum.y += fr.y;
             f_accum.z += fr.z;
-            atomicAdd(&force[j].x, -fr.x);
-            atomicAdd(&force[j].y, -fr.y);
-            atomicAdd(&force[j].z, -fr.z);
+            // fr stays FPL_TYPE (per-pair compute); only the atomicAdd
+            // into the shared per-atom accumulator needs FPH precision.
+            atomicAdd(&force[j].x, -static_cast<double>(fr.x));
+            atomicAdd(&force[j].y, -static_cast<double>(fr.y));
+            atomicAdd(&force[j].z, -static_cast<double>(fr.z));
 
             const unsigned eg_j = atom_energy_group[j];
             atomicAdd(&e_crf_total[eg_i * num_groups + eg_j], static_cast<double>(e_crf));
@@ -122,9 +124,9 @@ __global__ void rf_excluded_solute_kernel(
             atomicAdd(&virial_total[8], static_cast<double>(rvec.z * fr.z));
         }
 
-        atomicAdd(&force[i].x, f_accum.x);
-        atomicAdd(&force[i].y, f_accum.y);
-        atomicAdd(&force[i].z, f_accum.z);
+        atomicAdd(&force[i].x, static_cast<double>(f_accum.x));
+        atomicAdd(&force[i].y, static_cast<double>(f_accum.y));
+        atomicAdd(&force[i].z, static_cast<double>(f_accum.z));
     }
 }
 
@@ -196,7 +198,7 @@ void gpu::launch_rf_excluded(
     gpu::NbSimParams nb,
     math::boundary_enum boundary,
     math::Box box,
-    FPL3_TYPE* force,
+    FPH3_TYPE* force,
     double* e_crf_total,
     double* virial_total,
     cudaStream_t stream) {

@@ -58,7 +58,7 @@ namespace gpu {
       unsigned num_angles,
       math::boundary_enum boundary,
       math::Box box,
-      FPL3_TYPE* force,
+      FPH3_TYPE* force,
       double* angle_energy,
       double* virial,
       cudaStream_t stream = 0);

@@ -45,7 +45,7 @@ __global__ void position_restraint_kernel(
     const unsigned* __restrict__ atom_energy_group,
     unsigned num_restraints,
     gpu::Periodicity<BOUNDARY> periodicity,
-    FPL3_TYPE* force,
+    FPH3_TYPE* force,
     double* posrest_energy) {
 
   const unsigned idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -62,9 +62,9 @@ __global__ void position_restraint_kernel(
   const double f_y = -k * v_y;
   const double f_z = -k * v_z;
 
-  atomicAdd(&force[a].x, static_cast<FPL_TYPE>(f_x));
-  atomicAdd(&force[a].y, static_cast<FPL_TYPE>(f_y));
-  atomicAdd(&force[a].z, static_cast<FPL_TYPE>(f_z));
+  atomicAdd(&force[a].x, static_cast<FPH_TYPE>(f_x));
+  atomicAdd(&force[a].y, static_cast<FPH_TYPE>(f_y));
+  atomicAdd(&force[a].z, static_cast<FPH_TYPE>(f_z));
 
   const double e = 0.5 * k * (v_x*v_x + v_y*v_y + v_z*v_z);
   atomicAdd(&posrest_energy[atom_energy_group[idx]], e);
@@ -85,7 +85,7 @@ void gpu::launch_position_restraint(
     unsigned num_restraints,
     math::boundary_enum boundary,
     math::Box box,
-    FPL3_TYPE* force,
+    FPH3_TYPE* force,
     double* posrest_energy,
     cudaStream_t stream) {
 

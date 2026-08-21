@@ -48,7 +48,7 @@ namespace gpu {
    * calling this.
    */
   void launch_leap_frog_velocity(math::CuVArray::View old_vel,
-                                  math::CuVArray::View old_force,
+                                  math::CuVArrayH::View old_force,
                                   math::CuVArray::View new_vel,
                                   const float* mass,
                                   unsigned num_atoms,

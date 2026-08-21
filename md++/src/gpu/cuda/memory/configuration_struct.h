@@ -44,24 +44,31 @@ namespace gpu {
     struct ConfigurationStateView {
         math::CuVArray::View pos;
         math::CuVArray::View vel;
-        math::CuVArray::View force;
-        math::CuVArray::View constraint_force;
+        // force/constraint_force are FPH (high precision): each is a
+        // shared accumulator target written by many atomicAdd() calls
+        // (every bonded term + NonBonded for force; every constraint
+        // algorithm for constraint_force) converging on one value per
+        // atom -- summing many FPL/low contributions needs FPH/high
+        // precision at the summation point itself, not just a
+        // separately-kept double copy. See PERFORMANCE.md.
+        math::CuVArrayH::View force;
+        math::CuVArrayH::View constraint_force;
         Box* box;
-        FPL9_TYPE* virial_tensor;
-        FPL9_TYPE* kinetic_energy_tensor;
-        FPL9_TYPE* pressure_tensor;
+        FPH9_TYPE* virial_tensor;
+        FPH9_TYPE* kinetic_energy_tensor;
+        FPH9_TYPE* pressure_tensor;
 
         HOSTDEVICE ConfigurationStateView() = default;
 
         HOSTDEVICE ConfigurationStateView(
             math::CuVArray::View p,
             math::CuVArray::View v,
-            math::CuVArray::View f,
-            math::CuVArray::View cf,
+            math::CuVArrayH::View f,
+            math::CuVArrayH::View cf,
             Box* b = nullptr,
-            FPL9_TYPE* vt = nullptr,
-            FPL9_TYPE* ket = nullptr,
-            FPL9_TYPE* pt = nullptr)
+            FPH9_TYPE* vt = nullptr,
+            FPH9_TYPE* ket = nullptr,
+            FPH9_TYPE* pt = nullptr)
         : pos(p),
         vel(v),
         force(f),
@@ -81,13 +88,14 @@ namespace gpu {
         // GPU-side arrays
         mutable math::CuVArray pos;
         mutable math::CuVArray vel;
-        mutable math::CuVArray force;
-        mutable math::CuVArray constraint_force;
+        // FPH: see ConfigurationStateView's doc comment above.
+        mutable math::CuVArrayH force;
+        mutable math::CuVArrayH constraint_force;
 
         Box* box = nullptr;
-        FPL9_TYPE* virial_tensor = nullptr;
-        FPL9_TYPE* kinetic_energy_tensor = nullptr;
-        FPL9_TYPE* pressure_tensor = nullptr;
+        FPH9_TYPE* virial_tensor = nullptr;
+        FPH9_TYPE* kinetic_energy_tensor = nullptr;
+        FPH9_TYPE* pressure_tensor = nullptr;
         void* tensors_block = nullptr;
 
         ConfigurationState() {
@@ -100,9 +108,9 @@ namespace gpu {
             cudaMalloc(&tensors_block, tensors_bytes);
 
             char* base              = reinterpret_cast<char*>(tensors_block);
-            virial_tensor           = reinterpret_cast<FPL9_TYPE*>(base);
-            kinetic_energy_tensor   = reinterpret_cast<FPL9_TYPE*>(base += sizeof(FPL9_TYPE));
-            pressure_tensor         = reinterpret_cast<FPL9_TYPE*>(base += sizeof(FPL9_TYPE));
+            virial_tensor           = reinterpret_cast<FPH9_TYPE*>(base);
+            kinetic_energy_tensor   = reinterpret_cast<FPH9_TYPE*>(base += sizeof(FPH9_TYPE));
+            pressure_tensor         = reinterpret_cast<FPH9_TYPE*>(base += sizeof(FPH9_TYPE));
         }
 
         ~ConfigurationState() {
@@ -233,13 +241,16 @@ namespace gpu {
 
     /**
      * @brief Raw device pointers for passing directly to CUDA kernels.
-     * Use instead of ConfigurationStateView when the kernel needs FPL3_TYPE*.
+     * Use instead of ConfigurationStateView when the kernel needs raw
+     * pointers instead of a View wrapper. pos/vel are FPL3_TYPE*
+     * (per-atom state); force/constraint_force are FPH3_TYPE*
+     * (accumulator targets -- see ConfigurationStateView's doc comment).
      */
     struct ConfigurationRawPtrs {
         FPL3_TYPE* pos     = nullptr;
         FPL3_TYPE* vel     = nullptr;
-        FPL3_TYPE* force   = nullptr;
-        FPL3_TYPE* constraint_force = nullptr;
+        FPH3_TYPE* force   = nullptr;
+        FPH3_TYPE* constraint_force = nullptr;
         Box*       box     = nullptr;
     };
 

@@ -46,7 +46,7 @@ __global__ void quartic_bond_kernel(
     const unsigned* __restrict__ atom_energy_group,
     unsigned num_bonds,
     gpu::Periodicity<BOUNDARY> periodicity,
-    FPL3_TYPE* force,
+    FPH3_TYPE* force,
     double* bond_energy,
     double* virial) {
 
@@ -74,29 +74,34 @@ __global__ void quartic_bond_kernel(
   const double delta = dist2 - r02;
 
   const double coeff = -static_cast<double>(K[type]) * delta;
-  const FPL3_TYPE f = static_cast<FPL_TYPE>(coeff) * v;
+  // Keep the force components in double up to the atomicAdd itself --
+  // narrowing to FPL_TYPE first (as this used to) would throw away
+  // precision before it ever reaches the FPH accumulator.
+  const double f_x = coeff * static_cast<double>(v.x);
+  const double f_y = coeff * static_cast<double>(v.y);
+  const double f_z = coeff * static_cast<double>(v.z);
 
-  atomicAdd(&force[i].x, f.x);
-  atomicAdd(&force[i].y, f.y);
-  atomicAdd(&force[i].z, f.z);
-  atomicAdd(&force[j].x, -f.x);
-  atomicAdd(&force[j].y, -f.y);
-  atomicAdd(&force[j].z, -f.z);
+  atomicAdd(&force[i].x, f_x);
+  atomicAdd(&force[i].y, f_y);
+  atomicAdd(&force[i].z, f_z);
+  atomicAdd(&force[j].x, -f_x);
+  atomicAdd(&force[j].y, -f_y);
+  atomicAdd(&force[j].z, -f_z);
 
   const double e = 0.25 * static_cast<double>(K[type]) * delta * delta;
   atomicAdd(&bond_energy[atom_energy_group[idx]], e);
 
   // Unconditional atomic virial, exact CPU formula (quartic_bond_interaction.cc):
   // virial(a, c) += v(a) * f(c).
-  atomicAdd(&virial[0], static_cast<double>(v.x * f.x)); // (0,0)
-  atomicAdd(&virial[1], static_cast<double>(v.x * f.y)); // (0,1)
-  atomicAdd(&virial[2], static_cast<double>(v.x * f.z)); // (0,2)
-  atomicAdd(&virial[3], static_cast<double>(v.y * f.x)); // (1,0)
-  atomicAdd(&virial[4], static_cast<double>(v.y * f.y)); // (1,1)
-  atomicAdd(&virial[5], static_cast<double>(v.y * f.z)); // (1,2)
-  atomicAdd(&virial[6], static_cast<double>(v.z * f.x)); // (2,0)
-  atomicAdd(&virial[7], static_cast<double>(v.z * f.y)); // (2,1)
-  atomicAdd(&virial[8], static_cast<double>(v.z * f.z)); // (2,2)
+  atomicAdd(&virial[0], static_cast<double>(v.x) * f_x); // (0,0)
+  atomicAdd(&virial[1], static_cast<double>(v.x) * f_y); // (0,1)
+  atomicAdd(&virial[2], static_cast<double>(v.x) * f_z); // (0,2)
+  atomicAdd(&virial[3], static_cast<double>(v.y) * f_x); // (1,0)
+  atomicAdd(&virial[4], static_cast<double>(v.y) * f_y); // (1,1)
+  atomicAdd(&virial[5], static_cast<double>(v.y) * f_z); // (1,2)
+  atomicAdd(&virial[6], static_cast<double>(v.z) * f_x); // (2,0)
+  atomicAdd(&virial[7], static_cast<double>(v.z) * f_y); // (2,1)
+  atomicAdd(&virial[8], static_cast<double>(v.z) * f_z); // (2,2)
 }
 
 } // namespace gpu
@@ -112,7 +117,7 @@ void gpu::launch_quartic_bond(
     unsigned num_bonds,
     math::boundary_enum boundary,
     math::Box box,
-    FPL3_TYPE* force,
+    FPH3_TYPE* force,
     double* bond_energy,
     double* virial,
     cudaStream_t stream) {

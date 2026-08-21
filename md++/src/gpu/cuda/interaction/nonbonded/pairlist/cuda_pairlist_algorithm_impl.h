@@ -386,7 +386,7 @@ namespace interaction {
        * true -- never zeroed/touched otherwise, so a non-rebuild step's
        * call reuses whatever was last computed here.
        */
-      gpu::cuvector<FPL3_TYPE> m_longrange_force;
+      gpu::cuvector<FPH3_TYPE> m_longrange_force;
       gpu::cuvector<double> m_e_lj_long;
       gpu::cuvector<double> m_e_crf_long;
       gpu::cuvector<double> m_virial_long;

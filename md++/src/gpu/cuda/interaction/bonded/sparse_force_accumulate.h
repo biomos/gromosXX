@@ -69,7 +69,7 @@ namespace gpu {
    */
   template <typename ConfigurationT>
   void accumulate_sparse_forces(ConfigurationT & conf,
-                                 const FPL3_TYPE* force,
+                                 const FPH3_TYPE* force,
                                  const std::vector<unsigned> & touched_atoms) {
     for (unsigned i : touched_atoms) {
       conf.current().force(i) += math::Vec(force[i].x, force[i].y, force[i].z);

@@ -57,7 +57,7 @@ __global__ void one_four_kernel(
     gpu::NbSimParams nb,
     FPL_TYPE coulomb_scaling,
     gpu::Periodicity<BOUNDARY> periodicity,
-    FPL3_TYPE* force,
+    FPH3_TYPE* force,
     double* e_lj_total,
     double* e_crf_total,
     double* virial_total) {
@@ -101,9 +101,12 @@ __global__ void one_four_kernel(
             f_accum.x += fr.x;
             f_accum.y += fr.y;
             f_accum.z += fr.z;
-            atomicAdd(&force[j].x, -fr.x);
-            atomicAdd(&force[j].y, -fr.y);
-            atomicAdd(&force[j].z, -fr.z);
+            // fr itself stays FPL_TYPE (per-pair compute, throughput-
+            // critical); only the atomicAdd into the shared per-atom
+            // accumulator needs FPH precision.
+            atomicAdd(&force[j].x, -static_cast<double>(fr.x));
+            atomicAdd(&force[j].y, -static_cast<double>(fr.y));
+            atomicAdd(&force[j].z, -static_cast<double>(fr.z));
 
             const unsigned eg_j = atom_energy_group[j];
             const unsigned bucket = eg_i * num_groups + eg_j;
@@ -121,9 +124,9 @@ __global__ void one_four_kernel(
             atomicAdd(&virial_total[8], static_cast<double>(rvec.z * fr.z));
         }
 
-        atomicAdd(&force[i].x, f_accum.x);
-        atomicAdd(&force[i].y, f_accum.y);
-        atomicAdd(&force[i].z, f_accum.z);
+        atomicAdd(&force[i].x, static_cast<double>(f_accum.x));
+        atomicAdd(&force[i].y, static_cast<double>(f_accum.y));
+        atomicAdd(&force[i].z, static_cast<double>(f_accum.z));
     }
 }
 
@@ -142,7 +145,7 @@ void gpu::launch_one_four(
     FPL_TYPE coulomb_scaling,
     math::boundary_enum boundary,
     math::Box box,
-    FPL3_TYPE* force,
+    FPH3_TYPE* force,
     double* e_lj_total,
     double* e_crf_total,
     double* virial_total,

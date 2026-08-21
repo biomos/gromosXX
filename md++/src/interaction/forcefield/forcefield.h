@@ -114,6 +114,21 @@ namespace interaction
      * force with zero extra round trip. Everything else (POS/VEL/BOX)
      * keeps the default MIRROR_ALL behaviour -- Forcefield never
      * writes those itself.
+     *
+     * Tried narrowing this to 0 entirely (PERFORMANCE.md's residual-
+     * resync-cost investigation: Leap_Frog_Velocity<gpuBackend> pays
+     * for a POS/VEL resync every step this mask forces, ~9.5s -> ~24s
+     * across a 10000-step benchmark) -- reverted. It broke CUDA_Shake
+     * (ubiquitin_gpu: "SHAKE error, vectors orthogonal" by step 3),
+     * which uploads conf.current()/old().pos directly from the CPU-
+     * side array (vec3_upload_fpl, cuda_shake.cc) rather than through
+     * configuration_view() -- some dependency on this mask keeping
+     * that CPU array genuinely fresh isn't yet understood (CUDA_
+     * Shake's own default MIRROR_ALL before/after hooks look like they
+     * should already cover this independent of Forcefield's mask, but
+     * bisection showed otherwise). Needs real investigation before
+     * attempting this narrowing again -- not worth risking silent
+     * position corruption for a performance win. See PERFORMANCE.md.
      */
     virtual unsigned gpu_mirror_touches() const override {
       return gpu::MIRROR_ALL & ~(gpu::MIRROR_FORCE | gpu::MIRROR_VIRIAL);

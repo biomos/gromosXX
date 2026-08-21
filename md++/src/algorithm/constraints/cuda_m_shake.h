@@ -118,7 +118,7 @@ namespace algorithm {
     gpu::cuvector<FPL_TYPE> m_factor_dev;
     gpu::cuvector<FPL_TYPE> m_constr_length2_dev;
     gpu::cuvector<FPL_TYPE> m_mass_i_dev;
-    gpu::cuvector<FPL3_TYPE> m_constraint_force;
+    gpu::cuvector<FPH3_TYPE> m_constraint_force;
     gpu::cuvector<double> m_virial;
     // constrained_atoms(), uploaded once in init(), for the on-device
     // velocity_from_delta kernel -- contiguous here (the whole solvent

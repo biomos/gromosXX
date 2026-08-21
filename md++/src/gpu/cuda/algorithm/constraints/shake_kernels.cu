@@ -49,7 +49,7 @@ __global__ void shake_solvent_kernel(
     unsigned max_iterations,
     gpu::Periodicity<BOUNDARY> periodicity,
     FPL_TYPE dt2,
-    FPL3_TYPE* __restrict__ constraint_force,
+    FPH3_TYPE* __restrict__ constraint_force,
     double* __restrict__ virial,
     int* __restrict__ error_flag) {
 
@@ -156,7 +156,15 @@ __global__ void shake_solvent_kernel(
 
   for (unsigned a = 0; a < num_atoms_per_molecule; ++a) {
     pos[base + a] = local_pos[a];
-    constraint_force[base + a] += local_cf[a];
+    // local_cf accumulated in FPL_TYPE (per-molecule register/local
+    // memory, throughput-critical) -- widen to FPH only at this final
+    // write into the shared accumulator, same convention as every
+    // other atomicAdd site in this file. Not an atomicAdd itself: each
+    // thread owns a disjoint [base, base+num_atoms_per_molecule) range
+    // (one molecule per thread), so plain += is race-free here.
+    constraint_force[base + a].x += static_cast<double>(local_cf[a].x);
+    constraint_force[base + a].y += static_cast<double>(local_cf[a].y);
+    constraint_force[base + a].z += static_cast<double>(local_cf[a].z);
   }
 
   // Accumulated locally across every constraint/iteration this thread
@@ -185,7 +193,7 @@ void gpu::launch_shake_solvent(
     math::boundary_enum boundary,
     math::Box box,
     FPL_TYPE dt2,
-    FPL3_TYPE* constraint_force,
+    FPH3_TYPE* constraint_force,
     double* virial,
     int* error_flag,
     cudaStream_t stream) {
@@ -235,7 +243,7 @@ __global__ void shake_solute_round_kernel(
     gpu::Periodicity<BOUNDARY> periodicity,
     FPL_TYPE dt2,
     FPL3_TYPE* __restrict__ delta,
-    FPL3_TYPE* __restrict__ constraint_force,
+    FPH3_TYPE* __restrict__ constraint_force,
     double* __restrict__ virial,
     int* __restrict__ changed_flag,
     int* __restrict__ error_flag) {
@@ -265,12 +273,12 @@ __global__ void shake_solute_round_kernel(
   const FPL_TYPE lambda = diff / (sp * FPL_TYPE(2) * (inv_mass[i] + inv_mass[j]));
 
   const FPL3_TYPE cons_force = lambda * ref_r;
-  atomicAdd(&constraint_force[i].x, cons_force.x);
-  atomicAdd(&constraint_force[i].y, cons_force.y);
-  atomicAdd(&constraint_force[i].z, cons_force.z);
-  atomicAdd(&constraint_force[j].x, -cons_force.x);
-  atomicAdd(&constraint_force[j].y, -cons_force.y);
-  atomicAdd(&constraint_force[j].z, -cons_force.z);
+  atomicAdd(&constraint_force[i].x, static_cast<double>(cons_force.x));
+  atomicAdd(&constraint_force[i].y, static_cast<double>(cons_force.y));
+  atomicAdd(&constraint_force[i].z, static_cast<double>(cons_force.z));
+  atomicAdd(&constraint_force[j].x, -static_cast<double>(cons_force.x));
+  atomicAdd(&constraint_force[j].y, -static_cast<double>(cons_force.y));
+  atomicAdd(&constraint_force[j].z, -static_cast<double>(cons_force.z));
 
   const double inv_dt2 = static_cast<double>(lambda) / static_cast<double>(dt2);
   atomicAdd(&virial[0], static_cast<double>(ref_r.x) * static_cast<double>(ref_r.x) * inv_dt2);
@@ -319,7 +327,7 @@ void gpu::launch_shake_solute_round(
     math::Box box,
     FPL_TYPE dt2,
     FPL3_TYPE* delta,
-    FPL3_TYPE* constraint_force,
+    FPH3_TYPE* constraint_force,
     double* virial,
     int* changed_flag,
     int* error_flag,

@@ -43,8 +43,8 @@ namespace {
     // buffer into the GPU-resident mirror's force array -- one atomicAdd
     // triple per atom, since the mirror may also be receiving concurrent
     // atomicAdd writes from bonded terms running on their own streams.
-    __global__ void add_force_into_kernel(FPL3_TYPE * __restrict__ dst,
-                                           const FPL3_TYPE * __restrict__ src,
+    __global__ void add_force_into_kernel(FPH3_TYPE * __restrict__ dst,
+                                           const FPH3_TYPE * __restrict__ src,
                                            unsigned num_atoms) {
         const unsigned i = blockIdx.x * blockDim.x + threadIdx.x;
         if (i >= num_atoms) return;
@@ -53,7 +53,7 @@ namespace {
         atomicAdd(&dst[i].z, src[i].z);
     }
 
-    void launch_add_force_into(FPL3_TYPE * dst, const FPL3_TYPE * src,
+    void launch_add_force_into(FPH3_TYPE * dst, const FPH3_TYPE * src,
                                 unsigned num_atoms, cudaStream_t stream) {
         if (num_atoms == 0) return;
         const unsigned blocks = (num_atoms + NUM_THREADS_PER_BLOCK - 1) / NUM_THREADS_PER_BLOCK;
@@ -107,7 +107,7 @@ int interaction::CUDA_Pairlist_Algorithm_Impl::init(topology::Topology &topo,
     // back) since these are read every single call, but only written on
     // a recompute_long call -- the very first call, before any
     // classification has run, must see zero long-range contribution.
-    cudaMemset(m_longrange_force.data(), 0, sizeof(FPL3_TYPE) * num_atoms);
+    cudaMemset(m_longrange_force.data(), 0, sizeof(FPH3_TYPE) * num_atoms);
     cudaMemset(m_e_lj_long.data(),  0, sizeof(double) * num_buckets);
     cudaMemset(m_e_crf_long.data(), 0, sizeof(double) * num_buckets);
     cudaMemset(m_virial_long.data(), 0, sizeof(double) * 9);
@@ -772,7 +772,7 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::compute_forces_energies(
     // accumulated into the mirror this step.
     gpu::Configuration::View view = sim.cuda().configuration_view(conf, gpu::MIRROR_POS, m_stream);
     const math::CuVArray::View pos = view.current().pos;
-    FPL3_TYPE * const mirror_force = view.current().force.data();
+    FPH3_TYPE * const mirror_force = view.current().force.data();
     const math::boundary_enum boundary = conf.boundary_type;
     const math::Box box = conf.current().box;
 
@@ -833,7 +833,7 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::compute_forces_energies(
     // branch: zeroing unconditionally would wipe the frozen values a
     // non-rebuild step is supposed to reuse.
     if (recompute_long) {
-        cudaMemsetAsync(m_longrange_force.data(), 0, sizeof(FPL3_TYPE) * num_atoms, m_stream);
+        cudaMemsetAsync(m_longrange_force.data(), 0, sizeof(FPH3_TYPE) * num_atoms, m_stream);
         cudaMemsetAsync(m_e_lj_long.data(),  0, sizeof(double) * num_buckets, m_stream);
         cudaMemsetAsync(m_e_crf_long.data(), 0, sizeof(double) * num_buckets, m_stream);
         cudaMemsetAsync(m_virial_long.data(), 0, sizeof(double) * 9, m_stream);

@@ -139,7 +139,7 @@ namespace gpu {
       math::boundary_enum boundary,
       math::Box box,
       FPL_TYPE dt2,
-      FPL3_TYPE* constraint_force,
+      FPH3_TYPE* constraint_force,
       double* virial,
       int* error_flag,
       cudaStream_t stream = 0);
@@ -171,7 +171,7 @@ namespace gpu {
       math::Box box,
       FPL_TYPE dt2,
       FPL3_TYPE* delta,
-      FPL3_TYPE* constraint_force,
+      FPH3_TYPE* constraint_force,
       double* virial,
       int* changed_flag,
       int* error_flag,

@@ -124,7 +124,7 @@ namespace gpu {
       NbSimParams nb,
       math::boundary_enum boundary,
       math::Box box,
-      FPL3_TYPE* force,
+      FPH3_TYPE* force,
       double* e_lj_total,
       double* e_crf_total,
       double* virial_total,

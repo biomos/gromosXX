@@ -105,7 +105,7 @@ namespace gpu {
       unsigned max_iterations,
       FPL_TYPE dt2i,
       bool do_virial,
-      FPL3_TYPE* constraint_force,
+      FPH3_TYPE* constraint_force,
       double* virial,
       int* error_flag,
       cudaStream_t stream = 0);

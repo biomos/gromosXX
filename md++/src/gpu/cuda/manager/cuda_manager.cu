@@ -350,10 +350,10 @@ void gpu::CudaManager::zero_mirror_force(configuration::Configuration & conf) {
 
     if (mirror->current.force.size() > 0) {
         cudaMemset(mirror->current.force.data(), 0,
-                   mirror->current.force.size() * sizeof(FPL3_TYPE));
+                   mirror->current.force.size() * sizeof(FPH3_TYPE));
     }
     if (mirror->current.virial_tensor) {
-        cudaMemset(mirror->current.virial_tensor, 0, sizeof(FPL9_TYPE));
+        cudaMemset(mirror->current.virial_tensor, 0, sizeof(FPH9_TYPE));
     }
     // Fresh step: every producer event guarding last step's FORCE value
     // is now meaningless (the buffer was just zeroed by this call, on

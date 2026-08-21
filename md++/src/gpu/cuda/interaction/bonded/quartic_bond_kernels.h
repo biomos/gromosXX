@@ -62,7 +62,7 @@ namespace gpu {
       unsigned num_bonds,
       math::boundary_enum boundary,
       math::Box box,
-      FPL3_TYPE* force,
+      FPH3_TYPE* force,
       double* bond_energy,
       double* virial,
       cudaStream_t stream = 0);

@@ -97,6 +97,24 @@ namespace gpu {
                                           cudaStream_t stream = 0);
 
   /**
+   * @brief `com_v_per_group[g] = sums[5g+1..3] / sums[5g+0]` (or zero if
+   * that group's total mass is zero), for every group g -- the tiny
+   * O(num_groups) divide that used to require a `cudaStreamSynchronize()`
+   * + host loop between the reduction and thermostat_scale_apply
+   * kernels (Berendsen_Thermostat<gpuBackend>/NoseHoover_Thermostat<
+   * gpuBackend>, both going through gpu::apply_thermostat_velocity_
+   * scale(), thermostat_velocity_scale.h). Doing it on the GPU instead
+   * means both kernels can run back-to-back on the same stream with no
+   * host round trip at all -- same "merge the trivial host postprocess
+   * into a kernel" fix already applied to Temperature_Calculation<
+   * gpuBackend> this session.
+   */
+  void launch_group_com_velocity(const double* sums,
+                                  unsigned num_groups,
+                                  FPL3_TYPE* com_v_per_group,
+                                  cudaStream_t stream = 0);
+
+  /**
    * @brief `vel(i) = scale[com_bath_of_atom[i]] * com_v[group_index[i]]
    * + scale[ir_bath_of_atom[i]] * (vel(i) - com_v[group_index[i]])`,
    * for all atoms. In-place.

@@ -52,7 +52,7 @@ __global__ void m_shake_solvent_kernel(
     unsigned max_iterations,
     FPL_TYPE dt2i,
     bool do_virial,
-    FPL3_TYPE* __restrict__ constraint_force,
+    FPH3_TYPE* __restrict__ constraint_force,
     double* __restrict__ virial,
     int* __restrict__ error_flag) {
 
@@ -178,9 +178,18 @@ __global__ void m_shake_solvent_kernel(
       }
     }
 
-    constraint_force[base + 0] += cf0;
-    constraint_force[base + 1] += cf1;
-    constraint_force[base + 2] += cf2;
+    // cf0/cf1/cf2 accumulated in FPL_TYPE (register, throughput-
+    // critical); widen only at this final write into the shared FPH
+    // accumulator, same convention as shake_kernels.cu.
+    constraint_force[base + 0].x += static_cast<double>(cf0.x);
+    constraint_force[base + 0].y += static_cast<double>(cf0.y);
+    constraint_force[base + 0].z += static_cast<double>(cf0.z);
+    constraint_force[base + 1].x += static_cast<double>(cf1.x);
+    constraint_force[base + 1].y += static_cast<double>(cf1.y);
+    constraint_force[base + 1].z += static_cast<double>(cf1.z);
+    constraint_force[base + 2].x += static_cast<double>(cf2.x);
+    constraint_force[base + 2].y += static_cast<double>(cf2.y);
+    constraint_force[base + 2].z += static_cast<double>(cf2.z);
   }
 
   if (do_virial) {
@@ -212,7 +221,7 @@ void gpu::launch_m_shake_solvent(
     unsigned max_iterations,
     FPL_TYPE dt2i,
     bool do_virial,
-    FPL3_TYPE* constraint_force,
+    FPH3_TYPE* constraint_force,
     double* virial,
     int* error_flag,
     cudaStream_t stream) {

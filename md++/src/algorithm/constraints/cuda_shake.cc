@@ -198,7 +198,7 @@ int algorithm::CUDA_Shake::apply(
   // see vec3_convert.h's doc comment for why this can't be a memcpy.
   gpu::vec3_upload_fpl(m_pos.data(), &conf.current().pos(0), num_atoms);
   gpu::vec3_upload_fpl(m_old_pos.data(), &conf.old().pos(0), num_atoms);
-  cudaMemset(m_constraint_force.data(), 0, num_atoms * sizeof(FPL3_TYPE));
+  cudaMemset(m_constraint_force.data(), 0, num_atoms * sizeof(FPH3_TYPE));
   cudaMemset(m_virial.data(), 0, 9 * sizeof(double));
   m_error_flag[0] = 0;
 

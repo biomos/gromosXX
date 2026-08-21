@@ -61,7 +61,7 @@ namespace gpu {
       unsigned num_dihedrals,
       math::boundary_enum boundary,
       math::Box box,
-      FPL3_TYPE* force,
+      FPH3_TYPE* force,
       double* improper_energy,
       double* virial,
       cudaStream_t stream = 0);

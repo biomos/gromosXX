@@ -67,7 +67,7 @@ namespace gpu {
       unsigned num_restraints,
       math::boundary_enum boundary,
       math::Box box,
-      FPL3_TYPE* force,
+      FPH3_TYPE* force,
       double* posrest_energy,
       cudaStream_t stream = 0);
 

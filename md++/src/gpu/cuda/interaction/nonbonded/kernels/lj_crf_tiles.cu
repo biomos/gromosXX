@@ -94,7 +94,7 @@ __global__ void lj_crf_tile_kernel(
     gpu::LJParamView lj,
     gpu::NbSimParams nb,
     gpu::Periodicity<BOUNDARY> periodicity,
-    FPL3_TYPE* force,
+    FPH3_TYPE* force,
     double* e_lj_total,
     double* e_crf_total,
     double* virial_total) {
@@ -245,17 +245,17 @@ __global__ void lj_crf_tile_kernel(
                 cz += s_col_partial[w * gpu::BLOCK_SIZE * 3 + lane * 3 + 2];
             }
             if (col_valid) {
-                atomicAdd(&force[a2].x, cx);
-                atomicAdd(&force[a2].y, cy);
-                atomicAdd(&force[a2].z, cz);
+                atomicAdd(&force[a2].x, static_cast<double>(cx));
+                atomicAdd(&force[a2].y, static_cast<double>(cy));
+                atomicAdd(&force[a2].z, static_cast<double>(cz));
             }
         }
     } else {
         __syncwarp();
         if (col_valid) {
-            atomicAdd(&force[a2].x, col_force_reg.x);
-            atomicAdd(&force[a2].y, col_force_reg.y);
-            atomicAdd(&force[a2].z, col_force_reg.z);
+            atomicAdd(&force[a2].x, static_cast<double>(col_force_reg.x));
+            atomicAdd(&force[a2].y, static_cast<double>(col_force_reg.y));
+            atomicAdd(&force[a2].z, static_cast<double>(col_force_reg.z));
         }
     }
 
@@ -269,9 +269,13 @@ __global__ void lj_crf_tile_kernel(
     for (unsigned r = tid; r < gpu::BLOCK_SIZE; r += num_stride) {
         if ((row_block * gpu::BLOCK_SIZE + r) >= row_count) continue;
         const unsigned a1 = row_order[row_block * gpu::BLOCK_SIZE + r];
-        atomicAdd(&force[a1].x, s_row_force[r * 3 + 0]);
-        atomicAdd(&force[a1].y, s_row_force[r * 3 + 1]);
-        atomicAdd(&force[a1].z, s_row_force[r * 3 + 2]);
+        // Per-pair compute above stays FPL_TYPE (register/shared-memory
+        // reduction, throughput-critical over millions of pairs) --
+        // only this final atomicAdd into the global per-atom
+        // accumulator needs FPH precision, cast right here.
+        atomicAdd(&force[a1].x, static_cast<double>(s_row_force[r * 3 + 0]));
+        atomicAdd(&force[a1].y, static_cast<double>(s_row_force[r * 3 + 1]));
+        atomicAdd(&force[a1].z, static_cast<double>(s_row_force[r * 3 + 2]));
     }
 
     // One atomicAdd per bucket (not per pair) into the global energy/
@@ -300,7 +304,7 @@ void gpu::launch_lj_crf_tiles(
     gpu::NbSimParams nb,
     math::boundary_enum boundary,
     math::Box box,
-    FPL3_TYPE* force,
+    FPH3_TYPE* force,
     double* e_lj_total,
     double* e_crf_total,
     double* virial_total,

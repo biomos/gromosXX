@@ -105,7 +105,7 @@ namespace algorithm {
 
     gpu::cuvector<FPL3_TYPE> m_pos;
     gpu::cuvector<FPL3_TYPE> m_old_pos;
-    gpu::cuvector<FPL3_TYPE> m_constraint_force;
+    gpu::cuvector<FPH3_TYPE> m_constraint_force;
     gpu::cuvector<double> m_virial;
     gpu::cuvector<int> m_error_flag;
 

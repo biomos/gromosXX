@@ -47,7 +47,7 @@ __global__ void angle_kernel(
     const unsigned* __restrict__ atom_energy_group,
     unsigned num_angles,
     gpu::Periodicity<BOUNDARY> periodicity,
-    FPL3_TYPE* force,
+    FPH3_TYPE* force,
     double* angle_energy,
     double* virial) {
 
@@ -94,15 +94,15 @@ __global__ void angle_kernel(
   const double fj_y = -fi_y - fk_y;
   const double fj_z = -fi_z - fk_z;
 
-  atomicAdd(&force[i].x, static_cast<FPL_TYPE>(fi_x));
-  atomicAdd(&force[i].y, static_cast<FPL_TYPE>(fi_y));
-  atomicAdd(&force[i].z, static_cast<FPL_TYPE>(fi_z));
-  atomicAdd(&force[j].x, static_cast<FPL_TYPE>(fj_x));
-  atomicAdd(&force[j].y, static_cast<FPL_TYPE>(fj_y));
-  atomicAdd(&force[j].z, static_cast<FPL_TYPE>(fj_z));
-  atomicAdd(&force[k].x, static_cast<FPL_TYPE>(fk_x));
-  atomicAdd(&force[k].y, static_cast<FPL_TYPE>(fk_y));
-  atomicAdd(&force[k].z, static_cast<FPL_TYPE>(fk_z));
+  atomicAdd(&force[i].x, static_cast<FPH_TYPE>(fi_x));
+  atomicAdd(&force[i].y, static_cast<FPH_TYPE>(fi_y));
+  atomicAdd(&force[i].z, static_cast<FPH_TYPE>(fi_z));
+  atomicAdd(&force[j].x, static_cast<FPH_TYPE>(fj_x));
+  atomicAdd(&force[j].y, static_cast<FPH_TYPE>(fj_y));
+  atomicAdd(&force[j].z, static_cast<FPH_TYPE>(fj_z));
+  atomicAdd(&force[k].x, static_cast<FPH_TYPE>(fk_x));
+  atomicAdd(&force[k].y, static_cast<FPH_TYPE>(fk_y));
+  atomicAdd(&force[k].z, static_cast<FPH_TYPE>(fk_z));
 
   const double delta = cost - cos0d;
   const double e = 0.5 * Kd * delta * delta;
@@ -135,7 +135,7 @@ void gpu::launch_angle(
     unsigned num_angles,
     math::boundary_enum boundary,
     math::Box box,
-    FPL3_TYPE* force,
+    FPH3_TYPE* force,
     double* angle_energy,
     double* virial,
     cudaStream_t stream) {

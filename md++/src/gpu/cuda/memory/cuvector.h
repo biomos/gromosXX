@@ -142,8 +142,21 @@ namespace math
 
     /**
      * @brief CUDA-accessible variant of math::VArray
-     * 
-     * @tparam T 
+     *
+     * @tparam T
      */
     using CuVArray = CuVArrayT<FPL3_TYPE>;
+
+    /**
+     * @brief High-precision (FPH3_TYPE) variant of CuVArray -- for
+     * GPU-resident accumulator buffers written by many atomicAdd()
+     * calls converging on one value per element (force, constraint_
+     * force), where per-term compute stays FPL/low but the shared
+     * summation target needs FPH/high precision to avoid float
+     * accumulation error compounding across potentially hundreds of
+     * contributions per atom. Never used for pos/vel, which are
+     * per-atom *state* (not a reduction target) and correctly stay
+     * CuVArray/FPL3_TYPE.
+     */
+    using CuVArrayH = CuVArrayT<FPH3_TYPE>;
 }

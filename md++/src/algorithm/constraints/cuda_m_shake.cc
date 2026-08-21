@@ -187,7 +187,7 @@ int algorithm::CUDA_M_Shake::apply(
   const unsigned num_solvent_atoms = num_atoms - m_first_atom;
 
   cudaMemsetAsync(m_constraint_force.data() + m_first_atom, 0,
-                   num_solvent_atoms * sizeof(FPL3_TYPE), m_stream);
+                   num_solvent_atoms * sizeof(FPH3_TYPE), m_stream);
   cudaMemsetAsync(m_virial.data(), 0, 9 * sizeof(double), m_stream);
 
   const double dt = sim.time_step_size();

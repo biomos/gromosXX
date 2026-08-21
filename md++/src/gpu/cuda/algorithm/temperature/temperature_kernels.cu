@@ -113,6 +113,24 @@ __global__ void group_velocity_reduce_dual_kernel(
     }
 }
 
+__global__ void group_com_velocity_kernel(
+    const double* __restrict__ sums,
+    unsigned num_groups,
+    FPL3_TYPE* __restrict__ com_v_per_group) {
+    const unsigned g = blockIdx.x * blockDim.x + threadIdx.x;
+    if (g >= num_groups) return;
+
+    const double mass = sums[5u * g + 0];
+    if (mass > 0.0) {
+        com_v_per_group[g] = FPL3_TYPE{
+            static_cast<FPL_TYPE>(sums[5u * g + 1] / mass),
+            static_cast<FPL_TYPE>(sums[5u * g + 2] / mass),
+            static_cast<FPL_TYPE>(sums[5u * g + 3] / mass)};
+    } else {
+        com_v_per_group[g] = FPL3_TYPE{0, 0, 0};
+    }
+}
+
 __global__ void thermostat_scale_apply_kernel(
     math::CuVArray::View vel,
     const unsigned* __restrict__ group_index,
@@ -174,6 +192,15 @@ void gpu::launch_group_velocity_reduce_dual(math::CuVArray::View new_vel,
     const unsigned blocks = num_blocks_for(num_atoms);
     group_velocity_reduce_dual_kernel<<<blocks, kThreadsPerBlock, 0, stream>>>(
         new_vel, old_vel, mass, group_index, num_atoms, new_sums, old_sums);
+}
+
+void gpu::launch_group_com_velocity(const double* sums,
+                                     unsigned num_groups,
+                                     FPL3_TYPE* com_v_per_group,
+                                     cudaStream_t stream) {
+    const unsigned blocks = num_blocks_for(num_groups);
+    group_com_velocity_kernel<<<blocks, kThreadsPerBlock, 0, stream>>>(
+        sums, num_groups, com_v_per_group);
 }
 
 void gpu::launch_thermostat_scale_apply(math::CuVArray::View vel,

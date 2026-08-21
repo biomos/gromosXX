@@ -37,7 +37,7 @@ namespace {
 
 __global__ void leap_frog_velocity_kernel(
     math::CuVArray::View old_vel,
-    math::CuVArray::View old_force,
+    math::CuVArrayH::View old_force,
     math::CuVArray::View new_vel,
     const float* __restrict__ mass,
     unsigned num_atoms,
@@ -47,13 +47,16 @@ __global__ void leap_frog_velocity_kernel(
     if (i >= num_atoms) return;
 
     const FPL3_TYPE v = old_vel[i];
-    const FPL3_TYPE f = old_force[i];
+    // force is FPH (accumulator target, see configuration_struct.h) --
+    // this read is O(num_atoms), once per atom, not a reduction, so
+    // reading it at full precision costs nothing meaningful here.
+    const FPH3_TYPE f = old_force[i];
     const FPL_TYPE  m = static_cast<FPL_TYPE>(mass[i]);
 
     new_vel[i] = FPL3_TYPE{
-        v.x + f.x * dt / m,
-        v.y + f.y * dt / m,
-        v.z + f.z * dt / m
+        v.x + static_cast<FPL_TYPE>(f.x) * dt / m,
+        v.y + static_cast<FPL_TYPE>(f.y) * dt / m,
+        v.z + static_cast<FPL_TYPE>(f.z) * dt / m
     };
 }
 
@@ -80,7 +83,7 @@ __global__ void leap_frog_position_kernel(
 } // namespace
 
 void gpu::launch_leap_frog_velocity(math::CuVArray::View old_vel,
-                                     math::CuVArray::View old_force,
+                                     math::CuVArrayH::View old_force,
                                      math::CuVArray::View new_vel,
                                      const float* mass,
                                      unsigned num_atoms,

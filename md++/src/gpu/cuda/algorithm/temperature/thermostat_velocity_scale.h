@@ -53,12 +53,13 @@ namespace gpu {
     const unsigned num_baths  = static_cast<unsigned>(sim.multibath().size());
 
     // Own stream, function-local static (shared by every Thermostat-
-    // derived gpuBackend caller through this one function) -- the
-    // reduction's result (com_v_per_group, computed below) is a
-    // host-side input to launch_thermostat_scale_apply(), an inherent
-    // sequential dependency the event mechanism can't route around, but
-    // scoping the wait to this stream (not cudaDeviceSynchronize())
-    // keeps it from blocking whatever else is running concurrently.
+    // derived gpuBackend caller through this one function). No
+    // cudaStreamSynchronize() anywhere below anymore: the reduction ->
+    // group_com_velocity -> thermostat_scale_apply chain is three
+    // kernels on this one stream, each reading only what the previous
+    // one wrote on GPU -- ordinary intra-stream ordering handles the
+    // dependency, no host round trip needed (see launch_group_com_
+    // velocity()'s doc comment, temperature_kernels.h).
     static cudaStream_t stream = 0;
     if (stream == 0) cudaStreamCreate(&stream);
 
@@ -72,21 +73,10 @@ namespace gpu {
     gpu::launch_group_velocity_reduce(conf_view.current().vel, topo_view.mass,
                                        arrays.group_index.data(), num_atoms,
                                        num_groups, sums.data(), stream);
-    cudaStreamSynchronize(stream);
 
     static gpu::cuvector<FPL3_TYPE> com_v_per_group;
     if (com_v_per_group.size() < num_groups) com_v_per_group.resize(num_groups);
-    for (unsigned g = 0; g < num_groups; ++g) {
-      const double mass = sums[5u*g + 0];
-      if (mass > 0.0) {
-        com_v_per_group[g] = FPL3_TYPE{
-            static_cast<FPL_TYPE>(sums[5u*g+1] / mass),
-            static_cast<FPL_TYPE>(sums[5u*g+2] / mass),
-            static_cast<FPL_TYPE>(sums[5u*g+3] / mass)};
-      } else {
-        com_v_per_group[g] = FPL3_TYPE{0, 0, 0};
-      }
-    }
+    gpu::launch_group_com_velocity(sums.data(), num_groups, com_v_per_group.data(), stream);
 
     static gpu::cuvector<double> bath_scale;
     if (bath_scale.size() < num_baths) bath_scale.resize(num_baths);

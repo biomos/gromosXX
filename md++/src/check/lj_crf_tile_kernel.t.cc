@@ -244,9 +244,9 @@ namespace {
     tiles.resize(1);
     tiles[0] = host_tile;
 
-    gpu::cuvector<FPL3_TYPE> gpu_force;
+    gpu::cuvector<FPH3_TYPE> gpu_force;
     gpu_force.resize(num_atoms);
-    for (unsigned i = 0; i < num_atoms; ++i) gpu_force[i] = make_FPL3(FPL_TYPE(0));
+    for (unsigned i = 0; i < num_atoms; ++i) gpu_force[i] = FPH3_TYPE{0, 0, 0};
 
     gpu::cuvector<double> e_lj_total;
     e_lj_total.resize(1);

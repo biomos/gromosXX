@@ -62,7 +62,7 @@ void gpu::Configuration::copy_forces_from_device(configuration::Configuration& c
     CUDA_CHECK(cudaDeviceSynchronize());
     const size_t n = current.force.size();
     for (size_t i = 0; i < n; ++i) {
-        const FPL3_TYPE& f = current.force[i];
+        const FPH3_TYPE& f = current.force[i];
         conf.current().force(i) = math::Vec(f.x, f.y, f.z);
     }
 }
@@ -79,18 +79,22 @@ void gpu::Configuration::copy_pos_vel_from_device(configuration::Configuration& 
 }
 
 namespace {
-    // math::Matrix (9 doubles) <-> FPL9_TYPE (9 FPL_TYPE, float under
-    // FP_PRECISION 1/2) element-wise conversion -- a raw memcpy is
-    // wrong whenever FPL_TYPE != double (sizes differ), which is
-    // exactly the bug this replaces below.
-    FPL9_TYPE matrix_to_fpl9(const math::Matrix & m) {
-        FPL9_TYPE r;
+    // math::Matrix (9 doubles) <-> FPH9_TYPE element-wise conversion --
+    // a raw memcpy is wrong whenever FPH_TYPE != double (sizes differ,
+    // e.g. FP_PRECISION==1 where high==float too), which is exactly the
+    // bug this replaces below. virial_tensor/kinetic_energy_tensor/
+    // pressure_tensor are FPH9_TYPE (accumulator targets, see
+    // configuration_struct.h) -- under FP_PRECISION==2/3 this is a
+    // genuine double, matching math::Matrix exactly (no precision loss
+    // in this specific conversion, unlike the FPL9 case).
+    FPH9_TYPE matrix_to_fph9(const math::Matrix & m) {
+        FPH9_TYPE r;
         for (int i = 0; i < 3; ++i)
             for (int j = 0; j < 3; ++j)
-                r(i, j) = static_cast<FPL_TYPE>(m(i, j));
+                r(i, j) = static_cast<FPH_TYPE>(m(i, j));
         return r;
     }
-    math::Matrix fpl9_to_matrix(const FPL9_TYPE & r) {
+    math::Matrix fph9_to_matrix(const FPH9_TYPE & r) {
         math::Matrix m;
         for (int i = 0; i < 3; ++i)
             for (int j = 0; j < 3; ++j)
@@ -104,17 +108,17 @@ void gpu::Configuration::copy_constraint_data_from_device(configuration::Configu
 
     const size_t n = current.constraint_force.size();
     for (size_t i = 0; i < n; ++i) {
-        const FPL3_TYPE& cf_c = current.constraint_force[i];
-        const FPL3_TYPE& cf_o = old.constraint_force[i];
+        const FPH3_TYPE& cf_c = current.constraint_force[i];
+        const FPH3_TYPE& cf_o = old.constraint_force[i];
         conf.current().constraint_force(i) = math::Vec(cf_c.x, cf_c.y, cf_c.z);
         conf.old().constraint_force(i) = math::Vec(cf_o.x, cf_o.y, cf_o.z);
     }
 
-    FPL9_TYPE vt_c, vt_o;
-    CUDA_CHECK(cudaMemcpy(&vt_c, current.virial_tensor, sizeof(FPL9_TYPE), cudaMemcpyDeviceToHost));
-    CUDA_CHECK(cudaMemcpy(&vt_o, old.virial_tensor, sizeof(FPL9_TYPE), cudaMemcpyDeviceToHost));
-    conf.current().virial_tensor = fpl9_to_matrix(vt_c);
-    conf.old().virial_tensor = fpl9_to_matrix(vt_o);
+    FPH9_TYPE vt_c, vt_o;
+    CUDA_CHECK(cudaMemcpy(&vt_c, current.virial_tensor, sizeof(FPH9_TYPE), cudaMemcpyDeviceToHost));
+    CUDA_CHECK(cudaMemcpy(&vt_o, old.virial_tensor, sizeof(FPH9_TYPE), cudaMemcpyDeviceToHost));
+    conf.current().virial_tensor = fph9_to_matrix(vt_c);
+    conf.old().virial_tensor = fph9_to_matrix(vt_o);
 }
 
 void gpu::Configuration::copy_lattice_shifts_to_device(const configuration::Configuration& conf) {
@@ -140,29 +144,41 @@ void gpu::Configuration::copy_to_device(configuration::Configuration& conf) {
 
     static_assert(std::is_convertible<Vec, FPL3_TYPE>::value,
                   "Vec must be convertible to FPL3_TYPE");
+    static_assert(std::is_convertible<Vec, FPH3_TYPE>::value,
+                  "Vec must be convertible to FPH3_TYPE");
 
-    auto convert_and_copy = [num_atoms](const auto& src, auto& dst) {
+    // Two casts, not one: pos/vel/lattice_shifts are FPL (state, low
+    // precision is fine); force/constraint_force are FPH (accumulator
+    // targets -- see configuration_struct.h's doc comment on why).
+    auto convert_and_copy_low = [num_atoms](const auto& src, auto& dst) {
         CUDA_CHECK_ERROR("Before resize");
-        dst.resize(num_atoms);  // Resize already allocates GPU memory
+        dst.resize(num_atoms);
         CUDA_CHECK_ERROR("After resize");
         for (size_t i = 0; i < num_atoms; ++i)
-            dst[i] = static_cast<FPL3_TYPE>(src[i]);  // Copy/convert element-wise
+            dst[i] = static_cast<FPL3_TYPE>(src[i]);
+    };
+    auto convert_and_copy_high = [num_atoms](const auto& src, auto& dst) {
+        CUDA_CHECK_ERROR("Before resize");
+        dst.resize(num_atoms);
+        CUDA_CHECK_ERROR("After resize");
+        for (size_t i = 0; i < num_atoms; ++i)
+            dst[i] = static_cast<FPH3_TYPE>(src[i]);
     };
 
     // Current state
-    convert_and_copy(conf.current().pos, current.pos);
-    convert_and_copy(conf.current().vel, current.vel);
-    convert_and_copy(conf.current().force, current.force);
-    convert_and_copy(conf.current().constraint_force, current.constraint_force);
+    convert_and_copy_low(conf.current().pos, current.pos);
+    convert_and_copy_low(conf.current().vel, current.vel);
+    convert_and_copy_high(conf.current().force, current.force);
+    convert_and_copy_high(conf.current().constraint_force, current.constraint_force);
 
     // Old state
-    convert_and_copy(conf.old().pos, old.pos);
-    convert_and_copy(conf.old().vel, old.vel);
-    convert_and_copy(conf.old().force, old.force);
-    convert_and_copy(conf.old().constraint_force, old.constraint_force);
+    convert_and_copy_low(conf.old().pos, old.pos);
+    convert_and_copy_low(conf.old().vel, old.vel);
+    convert_and_copy_high(conf.old().force, old.force);
+    convert_and_copy_high(conf.old().constraint_force, old.constraint_force);
 
     // Persistent, non-cycling (see configuration_struct.h's doc comment)
-    convert_and_copy(conf.special().lattice_shifts, lattice_shifts);
+    convert_and_copy_low(conf.special().lattice_shifts, lattice_shifts);
 
 
     CUDA_CHECK_ERROR("Before tensors");
@@ -174,26 +190,26 @@ void gpu::Configuration::copy_to_device(configuration::Configuration& conf) {
     // KNOWN_ISSUES.md.
     CUDA_CHECK(cudaMemcpy(current.box, &conf.current().box, sizeof(Box), cudaMemcpyHostToDevice));
     // Element-wise convert, not a raw memcpy: math::Matrix is 9
-    // doubles (72 bytes), FPL9_TYPE is 9 FPL_TYPE (36 bytes under
-    // FP_PRECISION 1/2) -- a straight memcpy of sizeof(FPL9_TYPE)
-    // bytes from a math::Matrix source silently truncated/
-    // misinterpreted the data. Found while wiring the constraint
-    // algorithms onto this mirror's virial_tensor field, which made
-    // this bug live for the first time (previously nothing read these
-    // three tensor fields at all).
-    const FPL9_TYPE vt_c = matrix_to_fpl9(conf.current().virial_tensor);
-    const FPL9_TYPE ket_c = matrix_to_fpl9(conf.current().kinetic_energy_tensor);
-    const FPL9_TYPE pt_c = matrix_to_fpl9(conf.current().pressure_tensor);
-    CUDA_CHECK(cudaMemcpy(current.virial_tensor, &vt_c, sizeof(FPL9_TYPE), cudaMemcpyHostToDevice));
-    CUDA_CHECK(cudaMemcpy(current.kinetic_energy_tensor, &ket_c, sizeof(FPL9_TYPE), cudaMemcpyHostToDevice));
-    CUDA_CHECK(cudaMemcpy(current.pressure_tensor, &pt_c, sizeof(FPL9_TYPE), cudaMemcpyHostToDevice));
+    // doubles (72 bytes); FPH9_TYPE matches exactly under
+    // FP_PRECISION 2/3 (high==double) but would still mismatch under
+    // FP_PRECISION==1 (high==float, 36 bytes) -- a straight memcpy
+    // would silently truncate/misinterpret in that case. Found while
+    // wiring the constraint algorithms onto this mirror's virial_
+    // tensor field, which made this bug live for the first time
+    // (previously nothing read these three tensor fields at all).
+    const FPH9_TYPE vt_c = matrix_to_fph9(conf.current().virial_tensor);
+    const FPH9_TYPE ket_c = matrix_to_fph9(conf.current().kinetic_energy_tensor);
+    const FPH9_TYPE pt_c = matrix_to_fph9(conf.current().pressure_tensor);
+    CUDA_CHECK(cudaMemcpy(current.virial_tensor, &vt_c, sizeof(FPH9_TYPE), cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(current.kinetic_energy_tensor, &ket_c, sizeof(FPH9_TYPE), cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(current.pressure_tensor, &pt_c, sizeof(FPH9_TYPE), cudaMemcpyHostToDevice));
 
     CUDA_CHECK(cudaMemcpy(old.box, &conf.old().box, sizeof(Box), cudaMemcpyHostToDevice));
-    const FPL9_TYPE vt_o = matrix_to_fpl9(conf.old().virial_tensor);
-    const FPL9_TYPE ket_o = matrix_to_fpl9(conf.old().kinetic_energy_tensor);
-    const FPL9_TYPE pt_o = matrix_to_fpl9(conf.old().pressure_tensor);
-    CUDA_CHECK(cudaMemcpy(old.virial_tensor, &vt_o, sizeof(FPL9_TYPE), cudaMemcpyHostToDevice));
-    CUDA_CHECK(cudaMemcpy(old.kinetic_energy_tensor, &ket_o, sizeof(FPL9_TYPE), cudaMemcpyHostToDevice));
-    CUDA_CHECK(cudaMemcpy(old.pressure_tensor, &pt_o, sizeof(FPL9_TYPE), cudaMemcpyHostToDevice));
+    const FPH9_TYPE vt_o = matrix_to_fph9(conf.old().virial_tensor);
+    const FPH9_TYPE ket_o = matrix_to_fph9(conf.old().kinetic_energy_tensor);
+    const FPH9_TYPE pt_o = matrix_to_fph9(conf.old().pressure_tensor);
+    CUDA_CHECK(cudaMemcpy(old.virial_tensor, &vt_o, sizeof(FPH9_TYPE), cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(old.kinetic_energy_tensor, &ket_o, sizeof(FPH9_TYPE), cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(old.pressure_tensor, &pt_o, sizeof(FPH9_TYPE), cudaMemcpyHostToDevice));
     CUDA_CHECK_ERROR("After tensors");
 }
