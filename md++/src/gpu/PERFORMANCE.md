@@ -1,15 +1,20 @@
 # PERFORMANCE.md — CUDA port performance state
 
-Snapshot as of commit `3c7d13684` (branch `cuda_claude_rf_excluded`).
+Snapshot as of the latest commit (branch `cuda_claude_rf_excluded`).
 Written after a benchmarking/optimization pass covering the async
 stream-ordered redesign, the `POSITIONRES`-dropped-force bug fix, the
 mixed-CPU/GPU warning mechanism, the `Temperature_Calculation` and
-`Leap_Frog_Position` deferred-sync fixes, and — this pass —
-`Berendsen_Barostat`'s GPU port plus `RemoveCOMMotion`/`Lattice_Shift_
-Tracker`'s deferred-sync fixes. See those commits' messages for full
-narrative detail; this file is the standing reference for "what's the
-current performance picture and what's next," updated as further
-optimization work lands.
+`Leap_Frog_Position` deferred-sync fixes, `Berendsen_Barostat`'s GPU
+port plus `RemoveCOMMotion`/`Lattice_Shift_Tracker`'s deferred-sync
+fixes, and — this pass — switching force/constraint-force/virial/
+kinetic-energy/pressure-tensor accumulation to double precision
+(`FPH`), fixing `Berendsen_Thermostat`/`NoseHoover_Thermostat`'s
+per-step sync tax, and diagnosing (not yet fixing) the root cause of
+the "residual resync tug-of-war" from the previous pass — see
+"Diagnosed: Unified Memory is the real cost" below. See individual
+commits' messages for full narrative detail; this file is the standing
+reference for "what's the current performance picture and what's
+next," updated as further optimization work lands.
 
 ## Benchmark setup
 
@@ -21,71 +26,141 @@ isotropic Berendsen pressure coupling, reaction-field electrostatics.
 file used for CPU and GPU runs (only the `GPU` block differs). GPU: RTX
 50-series class card, confirmed idle (`nvidia-smi`) before each run.
 
-Headline numbers, most recent run:
+Headline numbers, most recent run (GPU with `FPH`-precision force/
+virial accumulation and the `Berendsen_Thermostat` sync fix; CPU
+run on the same binary, `NTGPU=0`, for a true apples-to-apples
+comparison):
 
 | | Performance | Wall time (sim) |
 |---|---|---|
-| CPU (this branch, `USE_CUDA=OFF`) | 2.208 ns/day | 782.7 s |
-| CPU (`master`, pre-CUDA-work) | 2.158 ns/day | 800.7 s |
-| CPU (this branch, `USE_CUDA=ON`, GPU unused at runtime) | 2.214 ns/day | 780.5 s |
-| **GPU (this branch, GPU active)** | **4.85 ns/day** | **345.3 s** |
+| CPU (this branch, `USE_CUDA=OFF`, or `NTGPU=0` on a `USE_CUDA=ON` build) | ~2.2-2.25 ns/day | ~769-783 s |
+| **GPU (this branch, GPU active, `FPH` accumulation)** | **4.60 ns/day** | **375.7 s** |
 
-CPU performance is identical across `master`, CUDA-compiled-but-unused,
-and CUDA-disabled builds (within ~2% run-to-run noise) — confirmed by
-direct comparison, no CPU-path regression anywhere in this branch's
-history. GPU delivers a genuine **~2.2× speedup** over any CPU
-configuration. Full TIMING block for the current GPU run (after the
-`Berendsen_Barostat`/`RemoveCOMMotion`/`Lattice_Shift_Tracker` work,
-commit `3c7d13684`):
+GPU delivers a genuine **~2.0-2.1× speedup** over CPU. This is down
+from the ~2.2-2.3× measured before this pass — see "The `FPH`
+precision tradeoff" below for why, and why it was still the right
+call. Full TIMING block for the current GPU run:
 
 ```
-RemoveCOMMotion                        0.249
-Lattice_Shift_Tracker                  0.103
-Angle                                 10.929
-ImproperDihedral                       7.525
-Dihedral                               3.863
+RemoveCOMMotion                        0.158
+Lattice_Shift_Tracker                  0.098
+Angle                                  9.116
+ImproperDihedral                       6.403
+Dihedral                               3.898
 Crossdihedral                          0.003
-NonBonded                            165.440   (compute forces energies 53.912 / 32.59%, pairlist 111.139 / 67.18%)
-MolecularVirial                        4.370
-Leap_Frog_Velocity                    23.972
-BerendsenThermostat                   28.635
-Leap_Frog_Position                     0.082
-CUDA_Lincs                             0.279
-CUDA_M_Shake                          26.898
-TemperatureCalculation                32.778
-PressureCalculation                    0.003
-BerendsenBarostat                      0.079
+NonBonded                            197.343   (compute forces energies 73.521 / 37.26%, pairlist 123.419 / 62.54%)
+MolecularVirial                        4.486
+Leap_Frog_Velocity                    24.380
+BerendsenThermostat                    0.285
+Leap_Frog_Position                     0.058
+CUDA_Lincs                             0.275
+CUDA_M_Shake                          36.651
+TemperatureCalculation                31.933
+PressureCalculation                    0.001
+BerendsenBarostat                      0.068
 ```
 
-Previous run (before this pass, commit `25682dd72`), for comparison:
+Same run, CPU-only (`NTGPU=0`, same binary/topology/config), for direct
+comparison — note the completely different cost shape (`NonBonded` is
+97% of CPU time; every "expensive on GPU" bucket-2 line above costs
+essentially nothing on CPU, since CPU has no fixed per-call sync tax to
+pay):
 
 ```
-RemoveCOMMotion                        0.185
-Lattice_Shift_Tracker                  0.791
-Leap_Frog_Velocity                     9.617
-BerendsenThermostat                   29.172
-Leap_Frog_Position                     0.082
-CUDA_Lincs                             0.313
-CUDA_M_Shake                          28.121
-TemperatureCalculation                16.768
-PressureCalculation                    0.003
-BerendsenBarostat                      0.279
+RemoveCOMMotion                        0.002
+Lattice_Shift_Tracker                  0.750
+Angle                                  0.358
+ImproperDihedral                       0.246
+Dihedral                               0.635
+Crossdihedral                          0.002
+NonBonded                            748.880   (shortrange solvent-solvent 313.763 / 41.90%, longrange solvent-solvent 263.991 / 35.25%, pairlist 137.355 / 18.34%)
+MolecularVirial                        3.939
+Leap_Frog_Velocity                     0.511
+BerendsenThermostat                    0.220
+Leap_Frog_Position                     0.362
+Lincs                                  1.325   (solute 1.171 / 88.41%)
+M_Shake                                7.442   (solvent 6.782 / 91.14%)
+TemperatureCalculation                 1.751
+PressureCalculation                    0.002
+BerendsenBarostat                      0.174
 ```
 
-`Lattice_Shift_Tracker` (0.79s → 0.10s) and `BerendsenBarostat` (0.28s →
-0.08s) both genuinely improved, and `RemoveCOMMotion` is now free on the
-~99% of steps it's a no-op. `Angle`/`ImproperDihedral`/`Dihedral` also
-dropped noticeably (31.3s → 10.9s for Angle) as a side effect — POS
-staying GPU-resident longer means their own energy/virial syncs less
-often collide with a coarse resync elsewhere; not separately
-attributed. But `Leap_Frog_Velocity` jumped 9.6s → 24.0s, and
-`TemperatureCalculation` 16.8s → 32.8s — both **absorbing a residual
-per-step POS-resync cost that moved rather than disappeared**. Net wall
-time: 343.9s (before *any* of this session's barostat/COM/lattice-shift
-work) → 345.3s — essentially flat, not a clean win, despite three
-individually-correct, individually-tested GPU ports. See "Architecture
-direction" below (the "residual resync tug-of-war" subsection) for the
-root cause this exposes and why it wasn't fixed further this session.
+`NonBonded` is where GPU wins decisively: 748.9s → 197.3s, a genuine
+**3.8× speedup** on real embarrassingly-parallel compute. Every other
+line is the "two buckets" model in miniature: cheap on CPU (no sync tax
+to pay), 10-100× more expensive in *absolute* terms on GPU purely from
+CPU↔GPU synchronization overhead — individually a rounding error
+against `NonBonded`'s 197s, but collectively enough to dilute a 3.8×
+per-kernel win down to ~2.0× overall.
+
+## The `FPH` precision tradeoff
+
+`force`, `constraint_force`, and the mirror's `virial_tensor`/
+`kinetic_energy_tensor`/`pressure_tensor` were `FPL` (low precision,
+float under this build's `FP_PRECISION=2`) — including the shared
+accumulator every bonded/nonbonded/constraint kernel `atomicAdd`s into.
+Summing hundreds of small float contributions per atom (nonbonded
+pairs, bonded terms, constraint corrections) into one shared total is
+exactly where float accumulation error compounds. Switched every such
+accumulator to `FPH` (double under `FP_PRECISION` 2/3): per-pair/
+per-term *compute* stays `FPL` (that's the bulk of the FLOP volume, and
+individual-term precision loss is fine), only the `atomicAdd`
+*destination* widened, with an explicit cast at the call site — see
+`gpu::CuVArrayH` (`cuvector.h`) and every bonded/nonbonded/constraint
+kernel's `force`/`constraint_force` parameter type.
+
+Cost: real, and it's exactly what you'd expect — `NonBonded`'s
+"compute forces energies" sub-line went 53.9s → 80.8s(ish, run-to-run)
+before the thermostat fix rebalanced other lines; double-precision
+`atomicAdd` runs at roughly half the throughput of float on this GPU
+generation (fewer FP64 ALUs than FP32), and `NonBonded` is by far the
+highest-volume accumulator target in the system (millions of pairwise
+contributions converging onto 22712 atoms' force buffer every step).
+Net effect on overall GPU-vs-CPU speedup: ~2.2-2.3× → ~2.0-2.1×. Judged
+worth it: this is a correctness fix (eliminating float-accumulation
+error in the physically-important quantities: total force, virial,
+kinetic energy, pressure), not a style preference, and GPU is still a
+clear win over CPU even with the cost paid.
+
+## Diagnosed: Unified Memory is the real cost behind bucket 2
+
+The previous pass's "residual resync tug-of-war" (whichever algorithm
+did the first POS resync of a step paid ~15s/10000-steps, and fixing
+one algorithm just moved the cost to whichever became "first" next)
+had two open hypotheses. It's now understood: **`math::CuVArray`/
+`gpu::cuvector` (`cuvector.h`) are backed by `cudaMallocManaged` --
+CUDA Unified/Managed Memory -- not plain `cudaMalloc`.** Every
+`copy_pos_vel_to_device()`/`copy_to_device()`/`copy_pos_vel_from_
+device()`-style routine (`configuration_struct.cu`) is a *host*
+`for`-loop touching these arrays element-by-element. Unified Memory
+pages migrate on demand based on which processor last touched them --
+if a page was last written by a GPU kernel and a host loop then reads/
+writes it, the CUDA driver faults, waits for outstanding GPU work on
+that memory to finish, and physically migrates the page over PCIe/
+NVLink. That's a real, host-blocking stall, entirely invisible in the
+source (no explicit `cudaMemcpy`/`cudaDeviceSynchronize` call to point
+at) and **not tied to which algorithm "logically" needed the sync** --
+only to whichever host loop happens to touch a GPU-resident page
+first. This is exactly why the cost moved between `Lattice_Shift_
+Tracker` and `Leap_Frog_Velocity` depending on `Energy_Calculation`'s
+mask in the previous pass: the mask changed *which* host loop was
+first to touch stale-on-GPU pages, not whether a migration had to
+happen.
+
+**The real fix, not yet implemented:** route the coarse `copy_*`
+paths through a persistent pinned (page-locked, `cuhvector`/
+`CuHAllocator`, already exists in this codebase) staging buffer instead
+of touching the Unified Memory arrays directly from the host. Splits
+into two independently-cheap steps: GPU array <-> pinned buffer (same
+precision both sides, so a pure `cudaMemcpyAsync` -- real DMA at
+near-peak bandwidth, no page faults, genuinely async) and pinned buffer
+<-> CPU `double` array (pure host-to-host cast, no device involvement,
+no driver synchronization, just a cache-friendly loop). Also worth
+reconsidering: do `pos`/`vel`/`force` need to be Unified Memory at all,
+if nothing legitimately needs to read/write them directly from the
+host anymore once the pinned-staging path exists? Not scoped or
+started this session -- flagged here as the next concrete piece of
+work, now that the "why" is understood rather than guessed at.
 
 ## The core finding: two distinct kinds of GPU cost
 
@@ -134,23 +209,17 @@ rebuild cadence? sort-bound?) before proposing a fix — I have not done
 that profiling yet, this is a "look here next" flag, not a diagnosed
 root cause.
 
-**Lower-risk runner-up, if a quick well-understood win is preferred
-instead:** `Berendsen_Thermostat<gpuBackend>`/`NoseHoover_Thermostat<gpuBackend>`
-(28.6s) — same bucket-2 shape `Temperature_Calculation` and
-`Leap_Frog_Position` were before their fixes, a single-pass reduction
-with no sequential-launch-parameter dependency, so the same
-`finalize_gpu_step()` deferral pattern should apply directly. **Read
-the "residual resync tug-of-war" subsection below first** — given what
-happened when `Berendsen_Barostat`/`RemoveCOMMotion`/`Lattice_Shift_
-Tracker` were fixed (a real per-algorithm win that mostly just
-relocated to `Leap_Frog_Velocity`/`Temperature_Calculation`), this fix
-may show the same "moves, doesn't vanish" pattern rather than a clean
-net win, unless done alongside real root-causing of *why* the residual
-POS resync costs ~15s/10000-steps wherever it lands.
+**Second pick, if the pairlist investigation isn't the priority:** the
+pinned-staging transfer fix ("Diagnosed: Unified Memory is the real
+cost" above) — this is the one fix that would validate or invalidate a
+lot of this session's "moves, doesn't vanish" findings at once
+(`Leap_Frog_Velocity`, `CUDA_M_Shake`, `Temperature_Calculation` all
+show the same shape). Higher confidence than the pairlist item since
+the root cause is now understood, not just flagged.
 
-(`Leap_Frog_Position`'s deferred-sync fix — commit `25682dd72` — and
-`Berendsen_Barostat`/`RemoveCOMMotion`/`Lattice_Shift_Tracker`'s — commit
-`3c7d13684` — are both done. See "Per-algorithm status" below.)
+(`Leap_Frog_Position`, `Berendsen_Barostat`/`RemoveCOMMotion`/`Lattice_
+Shift_Tracker`, and `Berendsen_Thermostat`/`NoseHoover_Thermostat`'s
+deferred-sync fixes are all done. See "Per-algorithm status" below.)
 
 ## Per-algorithm status
 
@@ -243,17 +312,17 @@ POS resync costs ~15s/10000-steps wherever it lands.
   accidental coarse-full-resync-every-step bug (`MIRROR_BOX` never
   tracked as fresh) and the mirror current/old swap gap hiding behind
   it; stable at ~9.6s for several benchmark runs after that.
-  **Regressed this session, not yet root-caused:** 9.6s → 24.0s after
-  `Energy_Calculation`'s `gpu_mirror_touches()` was narrowed to 0 (see
-  "residual resync tug-of-war" below) — bisection confirmed this
-  specific change as the trigger (reverting it alone brings this back
-  to 9.2s), but reverting it also un-fixes `Lattice_Shift_Tracker`
-  (16.7s) for a worse net total, so the narrowing was kept. The
-  underlying question — why does *whichever* algorithm ends up doing
-  the first POS resync of the next step cost ~15s/10000-steps instead
-  of the ~0.1-0.3s a plain `copy_pos_vel_to_device()` should cost — is
-  open; needs real profiling (nsys or similar), not yet available in
-  this workflow.
+  **Regressed, not yet fixed:** 9.6s → ~24s once `Energy_Calculation`
+  was narrowed (a later pass). Root cause of the *magnitude* is the
+  Unified Memory page-migration cost (see "Diagnosed" section above);
+  a targeted attempt to fix the *trigger* (narrowing `Forcefield`'s
+  mask, since it's the algorithm right before this one that still
+  forces a POS/VEL invalidation) broke `CUDA_Shake` correctness and was
+  reverted — see "`Leap_Frog_Velocity`/`Forcefield`" below. Two
+  independent pieces both need to land before this is actually fixed:
+  the pinned-staging transfer fix (removes the *cost* of whichever
+  resync happens) and understanding the `CUDA_Shake` dependency (removes
+  the *unnecessary* resync itself).
 - **`Leap_Frog_Position<gpuBackend>`** — **solved:** replaced the
   unconditional `sync_configuration_from_device()` with
   `mark_gpu_dirty(POS|VEL)`; publish now happens lazily via
@@ -263,17 +332,17 @@ POS resync costs ~15s/10000-steps wherever it lands.
   Sequence::run()`, needed its own hook). Own timer: 30.9s → 0.08s,
   stable across this session's later changes too.
 - **`Berendsen_Thermostat<gpuBackend>` / `NoseHoover_Thermostat<gpuBackend>`**
-  (share `thermostat_velocity_scale.h`) — **could be solved:** same
-  bucket-2 shape as `Temperature_Calculation` before this session's fix
-  — one `cudaStreamSynchronize()` per step to pull back the COM-velocity
-  reduction needed for the scale-apply kernel's launch parameters
-  (29.1s for Berendsen in this benchmark; NoseHoover shares the same
-  code path so likely similar, not separately measured here since this
-  benchmark uses Berendsen). Unlike `Remove_COM_Motion`, this reduction
-  *is* a single pass (no sequential-launch-parameter dependency), so the
-  same `finalize_gpu_step()` deferral pattern should apply directly —
-  next-best candidate after `Leap_Frog_Position` if pursuing the
-  bucket-2 cluster further.
+  (share `thermostat_velocity_scale.h`) — **solved this session:** the
+  `cudaStreamSynchronize()` that used to pull the COM-velocity reduction
+  back to the host (just to compute `com_v_per_group[g] = sums/mass`, a
+  trivial O(num_groups) divide) is gone — that divide now happens in a
+  new tiny kernel (`gpu::launch_group_com_velocity`, `temperature_
+  kernels.cu`), so reduction → divide → scale-apply is three kernels on
+  one stream with zero host round trips, same "merge the trivial
+  postprocess into a kernel" pattern already proven on `Temperature_
+  Calculation`. Own timer: 28.6s → 0.29s (**~100×**, now `CUDA_Lincs`-
+  level). NoseHoover shares the identical code path, so should see the
+  same fix, not separately re-measured.
 - **`CUDA_M_Shake`** — **solved:** deferred constraint-error-flags
   (no per-step error-check sync at all, folded into the shared
   end-of-step array). **Could be solved further:** still does one
@@ -424,52 +493,65 @@ freshness/dirty bits, unlike `invalidate_gpu_mirror()`) for exactly
 this case; any future genuinely-single-writer field excluded from
 `MIRROR_ALL` will need the same treatment.
 
-### The residual resync tug-of-war (open, not yet root-caused)
+### The residual resync tug-of-war — root cause now diagnosed
 
-This pass's headline numbers (343.9s → 345.3s, essentially flat) expose
-something the "pull-based sync" principle above doesn't fully explain:
-**even after every writer defers correctly, *something* still has to
-do the first real resync of POS each step, and wherever that lands
-costs roughly 15s over 10000 steps — 30-50× more than a plain
-`copy_pos_vel_to_device()` should cost.** Concretely: with
-`Energy_Calculation` narrowed (this session's final state),
-`Leap_Frog_Velocity` pays it (9.6s → 24.0s) and `Lattice_Shift_Tracker`
-doesn't (0.8s → 0.1s); reverting `Energy_Calculation`'s narrowing flips
-this — `Lattice_Shift_Tracker` pays it (→ 16.7s) and `Leap_Frog_
-Velocity` doesn't (→ 9.2s). Bisected and measured both ways; the
-narrowed-`Energy_Calculation` configuration wins on net total (345.3s
-vs 360.0s) but neither is actually *fixing* the underlying cost, just
-choosing the cheaper place to pay it.
+See "Diagnosed: Unified Memory is the real cost behind bucket 2" above
+for the full explanation — `cudaMallocManaged`-backed arrays touched by
+host `for`-loops fault-and-migrate on demand, invisibly and
+independent of which algorithm "logically" triggered the resync. This
+is why fixing one algorithm's sync tax kept relocating the cost to
+whichever became "first to touch a stale page" next
+(`Lattice_Shift_Tracker` ↔ `Leap_Frog_Velocity`/`Temperature_
+Calculation`, depending on `Energy_Calculation`'s mask) rather than
+eliminating it. The fix (pinned staging buffers, not yet implemented)
+is scoped above; once it lands, re-measure whether `Energy_
+Calculation`'s narrowing is still the right call, or whether the
+tug-of-war disappears entirely and the mask choice stops mattering.
 
-Two live hypotheses, neither confirmed:
-1. **The "coarse" `copy_to_device()` path is doing more than it needs
-   to.** `resync_missing_fields()` (`cuda_manager.cu`) treats any
-   request touching `FORCE`/`BOX`/`CONSTRAINT_FORCE`/`VIRIAL` as
-   "coarse" and falls back to a full `copy_to_device()` — which now
-   also copies `lattice_shifts` (added this session) — instead of the
-   cheaper `copy_pos_vel_to_device()`. Whichever algorithm first
-   requests `FORCE` after it's gone stale (`Leap_Frog_Velocity` always
-   does) pays for the whole coarse copy, not just POS/VEL. Not yet
-   confirmed this is actually the coarse path firing here (would need
-   to log `resync_missing_fields()`'s branch choice, not yet done).
-2. **`math::CuVArray`'s resize()/element-copy path has some non-obvious
-   per-call cost** (e.g. real `cudaMalloc`/`cudaFree` on every
-   `resize()` even when the size is unchanged) that the coarse path's
-   9 full-array copies (pos/vel/force/constraint_force × current+old,
-   plus lattice_shifts) pay for repeatedly. Not investigated.
+### `Leap_Frog_Velocity`/`Forcefield` — narrowing attempted, reverted, open
 
-Whichever it is, real profiling (`nsys`/`ncu`, not available in this
-session's iterate-and-benchmark workflow) is needed before attempting
-another fix here — guessing further risks repeating this session's
-"fixed one line, moved the cost, net flat" pattern a third time.
+`Forcefield::gpu_mirror_touches()` (`forcefield.h`) still returns
+`MIRROR_ALL & ~(FORCE|VIRIAL)`, i.e. `POS|VEL|BOX|CONSTRAINT_FORCE` —
+despite its own doc comment stating outright that Forcefield never
+writes any of those. Tried narrowing to `0u` entirely (it's the very
+next default-`MIRROR_ALL` algorithm to touch POS/VEL before `Leap_Frog_
+Velocity`, which needs POS+VEL+FORCE immediately after — a plausible
+source of exactly the "unnecessary resync" pattern this whole session
+has been chasing). **Broke `CUDA_Shake` correctness**: `ubiquitin_gpu`
+failed with "SHAKE error, vectors orthogonal" by step 3. Root cause not
+understood: `CUDA_Shake::apply()` (`cuda_shake.cc`) uploads `conf.
+current()/old().pos` directly from the CPU array (`vec3_upload_fpl`,
+bypassing `configuration_view()` entirely) and has its own default
+`gpu_mirror_touches() == MIRROR_ALL`, which *should* independently
+guarantee that CPU array is fresh before it reads it, regardless of
+`Forcefield`'s mask — but bisection is unambiguous (bisected against
+the companion `Berendsen_Thermostat` fix too, to rule out an
+interaction effect: `Forcefield`'s narrowing alone, with the thermostat
+fix reverted, still reproduces the failure). Reverted rather than
+shipped with an unexplained correctness dependency. **Next step**: trace
+exactly which mirror-freshness state differs between the two mask
+values at the point `CUDA_Shake` reads `conf.current().pos` — likely
+needs instrumenting `gpu_fresh_fields`/`gpu_dirty_fields` directly
+rather than reasoning about it, since the reasoning above says this
+*shouldn't* depend on `Forcefield` at all and evidently does.
 
 ## Verification note
 
 Every "solved" entry above has a passing correctness test
 (`ctest`, 31/32 with only the pre-existing `aladip_cuda` perturbation-
 gate failure unrelated to any of this) and has been run under
-`compute-sanitizer --tool memcheck` with zero errors. "Could be solved"
-entries are diagnosed (root cause identified, usually via direct
-comparison against `CUDA_Lincs`'s zero-sync reference case) but not yet
-implemented. Step-0 `E_Total` (`-2.4963e+05`) has been checked unchanged
-across every benchmark run referenced in this file.
+`compute-sanitizer --tool memcheck` with zero errors — including the 13
+force-touching tests re-verified after the `FPH` precision switch
+(every bonded/nonbonded/constraint GPU test plus `ubiquitin_gpu`).
+"Could be solved" entries are diagnosed (root cause identified, usually
+via direct comparison against `CUDA_Lincs`'s zero-sync reference case)
+but not yet implemented. Step-0 `E_Total` (`-2.4963e+05`) has been
+checked unchanged across every benchmark run referenced in this file,
+CPU and GPU alike (confirmed identical in the direct CPU-vs-GPU
+comparison run this pass).
+
+The `Forcefield`/`Leap_Frog_Velocity` narrowing attempt (this pass) is
+the one exception to "every change here shipped tested": it was
+implemented, found to break `CUDA_Shake` on `ubiquitin_gpu`, and
+reverted before commit — the code as committed does not include that
+narrowing. See "`Leap_Frog_Velocity`/`Forcefield`" above.
