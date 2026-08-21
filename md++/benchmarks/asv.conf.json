@@ -1,0 +1,60 @@
+{
+    "version": 1,
+    "project": "gromosXX",
+    "project_url": "https://www.gromos.net",
+
+    // Repository root, relative to this file: md++/benchmarks -> repo root.
+    "repo": "../..",
+    "branches": ["master"],
+    "dvcs": "git",
+
+    "benchmark_dir": "benchmarks",
+    "env_dir": "/local/gromos/bench_asv/env",
+    "results_dir": "/local/gromos/bench_asv/results",
+    "html_dir": "/local/gromos/bench_asv/html",
+
+    "environment_type": "virtualenv",
+    "pythons": ["3.10"],
+
+    // md++ is a C++ project, so the Python-oriented defaults are replaced.
+    // asv does not run these through a shell: it shlex-splits and substitutes
+    // only {placeholders}, so "$VAR" would not expand. The wrappers read the
+    // matrix variables from their environment instead, which asv does provide.
+    //
+    // {conf_dir} is the directory holding this file, i.e. the working
+    // checkout. The scripts must be referenced through it rather than through
+    // {build_dir}, because the historical commits being benchmarked do not
+    // contain this benchmark suite.
+    "build_command": [
+        "{conf_dir}/scripts/asv_build.sh {build_dir} {build_cache_dir}"
+    ],
+    "install_command": [
+        "{conf_dir}/scripts/asv_install.sh {build_cache_dir} {env_dir}"
+    ],
+    "uninstall_command": [],
+
+    // Builds are the expensive part (~230 translation units, versus roughly a
+    // minute of benchmarking), so keep plenty of them around.
+    "build_cache_size": 8,
+    "install_timeout": 3600,
+
+    // Build variants. Each entry is a separate environment with its own build,
+    // and shows up as its own series. Constraints come from cmake/options.cmake:
+    // OMP and MPI are mutually exclusive, and CUKERNEL requires OMP.
+    //
+    // The cmake flags for each variant are derived inside build_gromos.sh, so
+    // the matrix stays one-dimensional and the combinations md++ forbids
+    // (OMP with MPI, CUKERNEL without OMP) cannot be expressed here at all.
+    //
+    // The cuda variant additionally needs GROMOS_NVCC when nvcc is not on
+    // PATH, which is the common case; set it in the environment before running.
+    "matrix": {
+        "env": {
+            "GROMOS_VARIANT": ["serial", "omp", "cuda", "mpi"],
+            "GROMOS_BENCH_SYSTEMS": ["/local/gromos/bench_systems"],
+            "GROMOS_BENCH_SCRATCH": ["/local/gromos/bench_scratch"]
+        }
+    },
+
+    "benchmark_time_limit": 7200
+}

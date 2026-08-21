@@ -1,0 +1,11 @@
+# asv working directories and results are configured to live outside the
+# repository (/local/gromos/bench_asv), but ignore the defaults too in case
+# someone runs asv with a different configuration.
+env/
+results/
+html/
+.asv/
+__pycache__/
+
+# The project's top-level .gitignore excludes "build*", which is why the asv
+# build hooks live in scripts/ under names that do not start with "build".
