@@ -19,6 +19,7 @@
 #   GROMOS_CMAKE_ARGS   optional extra -D flags, appended last
 #   GROMOS_BUILD_JOBS   parallel build jobs (default: nproc)
 #   GROMOS_NVCC         path to nvcc, for the CUDA variant
+#   GROMOS_CUDA_HOST_COMPILER  host compiler nvcc drives (default: g++ on PATH)
 
 set -euo pipefail
 
@@ -63,6 +64,18 @@ if [ -n "${GROMOS_NVCC:-}" ]; then
         exit 1
     fi
     CMAKE_ARGS+=(-DCMAKE_CUDA_COMPILER="${GROMOS_NVCC}")
+
+    # Pin the host compiler nvcc drives. When nvcc comes from a conda
+    # environment (the usual case here, since there is no system CUDA
+    # toolkit), it otherwise defaults to that environment's toolchain and
+    # picks up its sysroot headers. Those disagree with the host glibc and
+    # configuration dies with hundreds of "identifier _Float32 is undefined"
+    # errors out of bits/mathcalls.h -- an error that points at the standard
+    # library and says nothing about the actual cause.
+    CUDA_HOST_CXX="${GROMOS_CUDA_HOST_COMPILER:-$(command -v g++ || true)}"
+    if [ -n "${CUDA_HOST_CXX}" ]; then
+        CMAKE_ARGS+=(-DCMAKE_CUDA_HOST_COMPILER="${CUDA_HOST_CXX}")
+    fi
 fi
 
 # The variant is the single source of truth for how a build is configured;
@@ -94,7 +107,10 @@ rm -rf "${PREFIX}"
 mkdir -p "${PREFIX}"
 
 echo "=== configure variant=${VARIANT} ${VARIANT_ARGS[*]:-} ${GROMOS_CMAKE_ARGS:-}"
-cmake "${CMAKE_ARGS[@]}" "${VARIANT_ARGS[@]:-}" "${EXTRA[@]}"
+# No ":-" defaults here: on an empty array (the serial variant has no extra
+# flags) "${arr[@]:-}" expands to one empty word rather than to nothing, and
+# cmake reads that empty argument as a source directory.
+cmake "${CMAKE_ARGS[@]}" ${VARIANT_ARGS[@]+"${VARIANT_ARGS[@]}"} ${EXTRA[@]+"${EXTRA[@]}"}
 
 echo "=== build (-j ${JOBS})"
 cmake --build "${BUILD_DIR}/_asvbuild" -j "${JOBS}"

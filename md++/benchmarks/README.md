@@ -74,7 +74,13 @@ staging step. Everything else reads the local cache.
 
 ## Running
 
+Run asv from *this* directory. The build hooks are located via `{conf_dir}`,
+which asv resolves from the current working directory rather than from the
+location of `asv.conf.json`, so running from elsewhere breaks the build step
+even when `--config` points here.
+
 ```sh
+cd md++/benchmarks
 asv machine --yes                        # once per machine
 asv run HEAD^!                           # benchmark one commit
 asv run NEW                              # anything not yet benchmarked
