@@ -26,4 +26,16 @@ fi
 cd "$(dirname "$(readlink -f "$0")")"
 
 export PYTHONPATH="${TOOLS}${PYTHONPATH:+:${PYTHONPATH}}"
-exec "${TOOLS}/bin/asv" "$@"
+
+# Drop asv's spurious mamba plugin warning. asv means to ignore a missing
+# mamba, but its guard tests for ".mamba" in the module name while the module
+# is actually called "_mamba_helpers", so the underscore defeats the match and
+# it logs an error on every invocation. Nothing here uses mamba -- the
+# environments are virtualenvs. Matched as exact whole lines so that any other
+# diagnostic still reaches the terminal, and asv's exit status is preserved.
+"${TOOLS}/bin/asv" "$@" 2> >(grep -vFx \
+    -e "Couldn't load asv.plugins._mamba_helpers because" \
+    -e "No module named 'libmambapy'" >&2)
+status=$?
+wait
+exit "${status}"
