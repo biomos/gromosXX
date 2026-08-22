@@ -39,7 +39,7 @@
 #include "../../util/error.h"
 #include "../../util/debug.h"
 
-#include "gpu/cuda/memory/vec3_convert.h"
+#include "gpu/cuda/manager/cuda_manager.h"
 #include "cuda_shake.h"
 
 #undef MODULE
@@ -164,14 +164,24 @@ int algorithm::CUDA_Shake::init(
   }
 
   const unsigned num_atoms = static_cast<unsigned>(topo.num_atoms());
-  m_pos.resize(num_atoms);
-  m_old_pos.resize(num_atoms);
   m_constraint_force.resize(num_atoms);
   m_virial.resize(9);
   m_error_flag.resize(1);
 
+  m_constrained_atoms_dev.resize(constrained_atoms().size());
+  {
+    unsigned idx = 0;
+    for (unsigned int a : constrained_atoms()) m_constrained_atoms_dev[idx++] = a;
+  }
+
+  if (m_stream == 0) cudaStreamCreate(&m_stream);
+
   m_initialized = true;
   return 0;
+}
+
+algorithm::CUDA_Shake::~CUDA_Shake() {
+  if (m_stream) cudaStreamDestroy(m_stream);
 }
 
 int algorithm::CUDA_Shake::apply(
@@ -194,12 +204,16 @@ int algorithm::CUDA_Shake::apply(
   const unsigned num_atoms = static_cast<unsigned>(topo.num_atoms());
   const unsigned num_solute_atoms = static_cast<unsigned>(topo.num_solute_atoms());
 
-  // FPL_TYPE-narrowing bulk upload (float under FP_PRECISION 1/2) --
-  // see vec3_convert.h's doc comment for why this can't be a memcpy.
-  gpu::vec3_upload_fpl(m_pos.data(), &conf.current().pos(0), num_atoms);
-  gpu::vec3_upload_fpl(m_old_pos.data(), &conf.old().pos(0), num_atoms);
-  cudaMemset(m_constraint_force.data(), 0, num_atoms * sizeof(FPH3_TYPE));
-  cudaMemset(m_virial.data(), 0, 9 * sizeof(double));
+  // GPU-resident: pos/old_pos operated on directly through the shared
+  // mirror -- no private upload/download every apply() call (see
+  // cuda_shake.h's doc comment). Requesting only MIRROR_POS (never
+  // MIRROR_VEL) as a read field keeps this from clobbering VEL, which
+  // this class itself corrects below via mark_gpu_dirty(), same
+  // reasoning as CUDA_M_Shake/CUDA_Lincs.
+  gpu::Configuration::View view = sim.cuda().configuration_view(conf, gpu::MIRROR_POS, m_stream);
+
+  cudaMemsetAsync(m_constraint_force.data(), 0, num_atoms * sizeof(FPH3_TYPE), m_stream);
+  cudaMemsetAsync(m_virial.data(), 0, 9 * sizeof(double), m_stream);
   m_error_flag[0] = 0;
 
   const double dt = sim.time_step_size();
@@ -207,21 +221,21 @@ int algorithm::CUDA_Shake::apply(
   const FPL_TYPE dt2_fpl = static_cast<FPL_TYPE>(dt2);
 
   if (m_solute_active) {
-    cudaMemset(m_solute_delta.data(), 0, num_solute_atoms * sizeof(FPL3_TYPE));
+    cudaMemsetAsync(m_solute_delta.data(), 0, num_solute_atoms * sizeof(FPL3_TYPE), m_stream);
 
     unsigned iterations = 0;
     bool converged = false;
     while (!converged) {
       m_changed_flag[0] = 0;
       gpu::launch_shake_solute_round(
-          m_pos.data(), m_old_pos.data(),
+          view.current().pos.data(), view.old().pos.data(),
           m_solute_constraints.data(), static_cast<unsigned>(m_solute_constraints.size()),
           m_solute_inv_mass.data(), static_cast<FPL_TYPE>(m_solute_tolerance),
           conf.boundary_type, conf.current().box, dt2_fpl,
           m_solute_delta.data(), m_constraint_force.data(), m_virial.data(),
-          m_changed_flag.data(), m_error_flag.data());
-      gpu::launch_shake_solute_apply(m_pos.data(), m_solute_delta.data(), num_solute_atoms);
-      cudaDeviceSynchronize();
+          m_changed_flag.data(), m_error_flag.data(), m_stream);
+      gpu::launch_shake_solute_apply(view.current().pos.data(), m_solute_delta.data(), num_solute_atoms, m_stream);
+      cudaStreamSynchronize(m_stream);
 
       if (m_error_flag[0] != 0) break;
       converged = (m_changed_flag[0] == 0);
@@ -249,15 +263,15 @@ int algorithm::CUDA_Shake::apply(
   for (const SolventType & st : m_solvent_types) {
     if (st.num_molecules == 0 || st.constraints.size() == 0) continue;
     gpu::launch_shake_solvent(
-        m_pos.data(), m_old_pos.data(),
+        view.current().pos.data(), view.old().pos.data(),
         st.constraints.data(), static_cast<unsigned>(st.constraints.size()),
         st.inv_mass_local.data(), st.num_atoms_per_molecule,
         st.first_atom, st.num_molecules,
         static_cast<FPL_TYPE>(m_solvent_tolerance), static_cast<unsigned>(m_max_iterations),
         conf.boundary_type, conf.current().box, dt2_fpl,
-        m_constraint_force.data(), m_virial.data(), m_error_flag.data());
+        m_constraint_force.data(), m_virial.data(), m_error_flag.data(), m_stream);
   }
-  cudaDeviceSynchronize();
+  cudaStreamSynchronize(m_stream);
 
   if (m_error_flag[0] != 0) {
     if (m_error_flag[0] == 1) {
@@ -273,13 +287,20 @@ int algorithm::CUDA_Shake::apply(
     return E_SHAKE_FAILURE_SOLVENT;
   }
 
-  gpu::vec3_download_fpl(&conf.current().pos(0), m_pos.data(), num_atoms);
+  // Vouch for the position we just corrected: no CPU round trip.
+  // gpu_mirror_touches() == 0 keeps Algorithm_Sequence::run()'s default
+  // post-apply() invalidation from immediately erasing this.
+  sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_POS, m_stream);
+
   // Accumulation (+=), not a plain copy -- stays a per-atom loop, but
   // only over constrained_atoms() (already exactly the atoms this
   // class's term lists reference), not every atom in the system --
   // same rationale as sparse_force_accumulate.h for the bonded terms.
   // The CPU's own convention (dividing by dt2 once, after the raw
-  // lambda*ref_r sum) is preserved here.
+  // lambda*ref_r sum) is preserved here. constraint_force/virial_tensor
+  // still on the private-buffer-then-host-merge path -- see cuda_m_
+  // shake.h's doc comment for why (shared global accumulator, multiple
+  // GPU-native writers, not yet solved).
   for (unsigned int i : constrained_atoms()) {
     conf.old().constraint_force(i) +=
         math::Vec(static_cast<double>(m_constraint_force[i].x),
@@ -305,10 +326,11 @@ int algorithm::CUDA_Shake::apply(
 
   if (!sim.param().stochastic.sd && !sim.param().minimise.ntem &&
       !sim.param().analyze.analyze) {
-    for (std::set<unsigned int>::const_iterator it = constrained_atoms().begin(),
-         to = constrained_atoms().end(); it != to; ++it) {
-      conf.current().vel(*it) = (conf.current().pos(*it) - conf.old().pos(*it)) / dt;
-    }
+    gpu::launch_velocity_from_delta(
+        view.current().pos.data(), view.old().pos.data(), view.current().vel.data(),
+        m_constrained_atoms_dev.data(), static_cast<unsigned>(m_constrained_atoms_dev.size()),
+        static_cast<FPL_TYPE>(1.0 / dt), m_stream);
+    sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_VEL, m_stream);
   }
 
   m_timer.stop();

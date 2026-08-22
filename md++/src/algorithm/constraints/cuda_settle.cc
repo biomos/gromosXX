@@ -39,6 +39,7 @@
 #include "../../util/error.h"
 #include "../../util/debug.h"
 
+#include "gpu/cuda/manager/cuda_manager.h"
 #include "gpu/cuda/memory/vec3_convert.h"
 #include "cuda_settle.h"
 
@@ -110,6 +111,8 @@ int algorithm::CUDA_Settle::init(
   m_virial.resize(9);
   m_error_flag.resize(1);
 
+  if (m_stream == 0) cudaStreamCreate(&m_stream);
+
   m_initialized = true;
 
   if (!quiet) {
@@ -118,6 +121,10 @@ int algorithm::CUDA_Settle::init(
        << "END\n";
   }
   return 0;
+}
+
+algorithm::CUDA_Settle::~CUDA_Settle() {
+  if (m_stream) cudaStreamDestroy(m_stream);
 }
 
 int algorithm::CUDA_Settle::apply(
@@ -141,24 +148,41 @@ int algorithm::CUDA_Settle::apply(
   const unsigned num_atoms = static_cast<unsigned>(topo.num_atoms());
   const unsigned num_solvent_atoms = num_atoms - m_first_atom;
 
-  // Bulk memcpy over the solvent range, not a per-atom struct-rebuild
-  // loop -- math::Vec and double3 are layout-identical
-  // (gpu/cuda/memory/vec3_convert.h).
-  gpu::vec3_upload(m_pos.data() + m_first_atom, &conf.current().pos(m_first_atom), num_solvent_atoms);
-  gpu::vec3_upload(m_old_pos.data() + m_first_atom, &conf.old().pos(m_first_atom), num_solvent_atoms);
-  gpu::vec3_upload(m_vel.data() + m_first_atom, &conf.current().vel(m_first_atom), num_solvent_atoms);
-  cudaMemset(m_virial.data(), 0, 9 * sizeof(double));
-  m_error_flag[0] = 0;
-
   const bool do_velocity = !sim.param().stochastic.sd && !sim.param().minimise.ntem &&
       !sim.param().analyze.analyze;
+
+  // GPU-resident: pos/vel operated on directly through the shared
+  // mirror -- no private host upload/download every apply() call (see
+  // cuda_settle.h's doc comment). launch_settle() itself stays plain
+  // double precision, so the mirror's FPL3_TYPE pos/vel get cast to/
+  // from this class's private double3 buffers entirely on-device.
+  const unsigned read_fields = do_velocity ? (gpu::MIRROR_POS | gpu::MIRROR_VEL) : gpu::MIRROR_POS;
+  gpu::Configuration::View view = sim.cuda().configuration_view(conf, read_fields, m_stream);
+
+  gpu::launch_cast_fpl3_to_double3(view.current().pos.data(), m_pos.data(), m_first_atom, num_solvent_atoms, m_stream);
+  gpu::launch_cast_fpl3_to_double3(view.old().pos.data(), m_old_pos.data(), m_first_atom, num_solvent_atoms, m_stream);
+  if (do_velocity)
+    gpu::launch_cast_fpl3_to_double3(view.current().vel.data(), m_vel.data(), m_first_atom, num_solvent_atoms, m_stream);
+
+  cudaMemsetAsync(m_virial.data(), 0, 9 * sizeof(double), m_stream);
+  m_error_flag[0] = 0;
+
   const double dt_i = 1.0 / sim.time_step_size();
 
   gpu::launch_settle(
       m_pos.data(), m_old_pos.data(), m_vel.data(), m_first_atom, m_num_molecules,
       m_mass_O, m_mass_H, m_dist_OH, m_dist_HH, dt_i, do_velocity,
-      m_constraint_force.data(), m_virial.data(), m_error_flag.data());
-  cudaDeviceSynchronize();
+      m_constraint_force.data(), m_virial.data(), m_error_flag.data(), m_stream);
+
+  // Cast the corrected positions (and velocities, if computed) back
+  // into the mirror -- queued on the same stream right after
+  // launch_settle(), so it's covered by the cudaStreamSynchronize()
+  // below along with the error-flag check.
+  gpu::launch_cast_double3_to_fpl3(m_pos.data(), view.current().pos.data(), m_first_atom, num_solvent_atoms, m_stream);
+  if (do_velocity)
+    gpu::launch_cast_double3_to_fpl3(m_vel.data(), view.current().vel.data(), m_first_atom, num_solvent_atoms, m_stream);
+
+  cudaStreamSynchronize(m_stream);
 
   if (m_error_flag[0] != 0) {
     io::messages.add("SETTLE error", "CUDA_Settle", io::message::error);
@@ -168,11 +192,18 @@ int algorithm::CUDA_Settle::apply(
     return 1;
   }
 
-  gpu::vec3_download(&conf.current().pos(m_first_atom), m_pos.data() + m_first_atom, num_solvent_atoms);
+  // Vouch for what we just corrected: no CPU round trip.
+  // gpu_mirror_touches() == 0 keeps Algorithm_Sequence::run()'s default
+  // post-apply() invalidation from immediately erasing this.
+  sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_POS, m_stream);
+  if (do_velocity) sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_VEL, m_stream);
+
+  // constraint_force/virial_tensor still on the private-buffer-then-
+  // host-merge path -- see cuda_m_shake.h's doc comment for why
+  // (shared global accumulator, multiple GPU-native writers, not yet
+  // solved).
   gpu::vec3_download(&conf.old().constraint_force(m_first_atom),
                       m_constraint_force.data() + m_first_atom, num_solvent_atoms);
-  if (do_velocity)
-    gpu::vec3_download(&conf.current().vel(m_first_atom), m_vel.data() + m_first_atom, num_solvent_atoms);
 
   if (sim.param().pcouple.virial == math::atomic_virial) {
     for (unsigned b = 0; b < 3; ++b) {

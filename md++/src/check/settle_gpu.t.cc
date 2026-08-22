@@ -43,6 +43,7 @@
 #include "../algorithm/algorithm/algorithm_sequence.h"
 #include "../algorithm/constraints/settle.h"
 #include "../algorithm/constraints/cuda_settle.h"
+#include "gpu/cuda/manager/cuda_manager.h"
 
 #include "../io/argument.h"
 #include "../util/parse_verbosity.h"
@@ -122,6 +123,12 @@ namespace {
     const int gpu_rc = gpu_settle.apply(gpu_s.topo, gpu_s.conf, gpu_s.sim);
     flush_messages("settle apply");
 
+    // CUDA_Settle leaves pos/vel GPU-resident (mark_gpu_dirty(), no
+    // eager CPU publish) -- this test reads gpu_s.conf directly, so it
+    // must request the publish explicitly, same as any other direct
+    // consumer.
+    gpu_s.sim.cuda().flush_gpu_dirty(gpu_s.conf, gpu::MIRROR_POS | gpu::MIRROR_VEL);
+
     if (cpu_rc != 0 || gpu_rc != 0) {
       std::cerr << label << ": apply() failed (cpu_rc=" << cpu_rc
                 << " gpu_rc=" << gpu_rc << ")" << std::endl;
@@ -130,13 +137,23 @@ namespace {
 
     // SETTLE is a single closed-form evaluation per molecule (no
     // iteration) -- both sides run the exact same arithmetic sequence,
-    // so this is a tight, bit-comparable-up-to-associativity tolerance
-    // (unlike solute SHAKE's Jacobi-vs-Gauss-Seidel comparison).
-    // Relative, not absolute: constraint_force multiplies the (tiny,
-    // already-agreeing-to-1e-9-absolute) position correction by
-    // 1/dt^2, which amplifies ordinary floating-point non-associativity
-    // in the position by orders of magnitude in the force.
+    // so pos itself stays tight (bit-comparable up to associativity).
+    // vel/constraint_force need a looser, scale-relative tolerance
+    // (same shape as shake_gpu.t.cc's, for the same reason): CUDA_
+    // Settle now reads/writes pos through the shared GPU mirror
+    // (FPL/float precision, matching every other GPU-resident
+    // algorithm) instead of a private full-double upload/download --
+    // settle_kernels.cu's own math still runs in double, but its input
+    // position already carries the mirror's float rounding. SETTLE's
+    // correction delta (`d_a` in settle_kernels.cu) is a *difference*
+    // of two close double3 values derived from that float-rounded
+    // input -- ordinary catastrophic cancellation amplifies that
+    // rounding into a much larger relative error in the delta itself,
+    // and vel/constraint_force are both directly proportional to that
+    // delta (scaled by 1/dt and 1/dt^2 respectively).
     const double tol = 1e-6;
+    const double cf_atol = 1.0, cf_rtol = 2e-3;
+    const double vel_atol = 2e-3, vel_rtol = 5e-4;
     int errors = 0;
 
     const unsigned num_atoms = static_cast<unsigned>(cpu_s.topo.num_atoms());
@@ -151,8 +168,7 @@ namespace {
         ++errors;
       }
       const math::Vec vel_diff = cpu_s.conf.current().vel(i) - gpu_s.conf.current().vel(i);
-      const double vel_scale = std::max(1.0, math::abs(cpu_s.conf.current().vel(i)));
-      if (math::abs(vel_diff) > tol * vel_scale) {
+      if (math::abs(vel_diff) > vel_atol + vel_rtol * math::abs(cpu_s.conf.current().vel(i))) {
         std::cerr << label << ": vel mismatch at atom " << i
                   << ": cpu=" << math::v2s(cpu_s.conf.current().vel(i))
                   << " gpu=" << math::v2s(gpu_s.conf.current().vel(i)) << std::endl;
@@ -160,8 +176,7 @@ namespace {
       }
       const math::Vec cf_diff = cpu_s.conf.old().constraint_force(i) -
                                  gpu_s.conf.old().constraint_force(i);
-      const double cf_scale = std::max(1.0, math::abs(cpu_s.conf.old().constraint_force(i)));
-      if (math::abs(cf_diff) > tol * cf_scale) {
+      if (math::abs(cf_diff) > cf_atol + cf_rtol * math::abs(cpu_s.conf.old().constraint_force(i))) {
         std::cerr << label << ": constraint_force mismatch at atom " << i
                   << ": cpu=" << math::v2s(cpu_s.conf.old().constraint_force(i))
                   << " gpu=" << math::v2s(gpu_s.conf.old().constraint_force(i)) << std::endl;

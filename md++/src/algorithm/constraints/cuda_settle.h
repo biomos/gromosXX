@@ -39,11 +39,22 @@
  * (`sim.mpi_enabled()`) and `start.shake_pos`/`start.shake_vel` (the
  * CPU class itself refuses these -- "initial settle-ing is not
  * possible").
+ *
+ * GPU-resident: reads/writes positions and velocities through the
+ * shared CudaManager mirror (sim.cuda().configuration_view()/
+ * mark_gpu_dirty()) instead of a private per-apply() host upload/
+ * download -- matching CUDA_Lincs/CUDA_M_Shake. The mirror stores pos/
+ * vel at FPL precision, but launch_settle() deliberately stays plain
+ * `double`/`double3` (settle_kernels.h's doc comment) -- bridged with
+ * a device-to-device FPL3_TYPE<->double3 cast
+ * (gpu/cuda/memory/precision_cast_kernels.h) over just the solvent
+ * range, entirely on-GPU, no host round trip either way.
  */
 
 #pragma once
 
 #include "gpu/cuda/memory/cuvector.h"
+#include "gpu/cuda/memory/precision_cast_kernels.h"
 #include "gpu/cuda/algorithm/constraints/settle_kernels.h"
 
 namespace algorithm {
@@ -51,7 +62,7 @@ namespace algorithm {
   class CUDA_Settle : public Algorithm {
   public:
     CUDA_Settle() : Algorithm("CUDA_Settle") {}
-    virtual ~CUDA_Settle() {}
+    virtual ~CUDA_Settle();
 
     virtual int init(topology::Topology & topo,
                       configuration::Configuration & conf,
@@ -65,6 +76,12 @@ namespace algorithm {
 
     std::set<unsigned int> & constrained_atoms() { return m_constrained_atoms; }
 
+    // Owns its own GPU-mirror freshness: apply() marks MIRROR_POS/VEL
+    // fresh+dirty itself and must not have that immediately erased by
+    // Algorithm_Sequence::run()'s default post-apply() invalidation
+    // (see leap_frog_gpu.cc/cuda_m_shake.h for the same pattern).
+    virtual unsigned gpu_mirror_touches() const override { return 0u; }
+
   private:
     std::set<unsigned int> m_constrained_atoms;
 
@@ -75,12 +92,20 @@ namespace algorithm {
     unsigned m_first_atom = 0;
     unsigned m_num_molecules = 0;
 
+    // Private double3 buffers -- cast to/from the mirror's FPL3_TYPE
+    // pos/vel on-device each apply() call (see this file's doc
+    // comment); not a host-visible upload/download.
     gpu::cuvector<double3> m_pos;
     gpu::cuvector<double3> m_old_pos;
     gpu::cuvector<double3> m_vel;
     gpu::cuvector<double3> m_constraint_force;
     gpu::cuvector<double> m_virial;
     gpu::cuvector<int> m_error_flag;
+
+    // Own stream: lets this run concurrently with CUDA_Lincs/CUDA_Shake
+    // (disjoint atom ranges) instead of implicitly serializing on the
+    // default stream.
+    cudaStream_t m_stream = 0;
 
     bool m_initialized = false;
   };

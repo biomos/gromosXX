@@ -44,6 +44,15 @@
  * ported here), and `start.shake_pos` (a startup-only one-time cost,
  * not worth this class's added complexity -- use CPU `Shake` if that
  * combination is needed).
+ *
+ * GPU-resident: reads/writes positions through the shared CudaManager
+ * mirror (sim.cuda().configuration_view()/mark_gpu_dirty()), matching
+ * CUDA_Lincs/CUDA_M_Shake -- no private per-apply() upload/download of
+ * pos/old_pos/vel. Still calls cudaDeviceSynchronize() itself, unlike
+ * CUDA_Lincs/CUDA_M_Shake: the solute Jacobi solve is a host-driven
+ * round loop that must read `m_changed_flag`/`m_error_flag` back after
+ * every round to decide whether to continue -- inherent to that
+ * algorithm's structure, orthogonal to where pos/vel live.
  */
 
 #pragma once
@@ -51,6 +60,7 @@
 #include "gpu/cuda/memory/cuvector.h"
 #include "gpu/cuda/memory/precision.h"
 #include "gpu/cuda/algorithm/constraints/shake_kernels.h"
+#include "gpu/cuda/algorithm/constraints/velocity_from_delta_kernels.h"
 
 namespace algorithm {
 
@@ -65,7 +75,7 @@ namespace algorithm {
         m_solvent_tolerance(solvent_tolerance),
         m_max_iterations(max_iterations) {}
 
-    virtual ~CUDA_Shake() {}
+    virtual ~CUDA_Shake();
 
     virtual int init(topology::Topology & topo,
                       configuration::Configuration & conf,
@@ -78,6 +88,12 @@ namespace algorithm {
                        simulation::Simulation & sim);
 
     std::set<unsigned int> & constrained_atoms() { return m_constrained_atoms; }
+
+    // Owns its own GPU-mirror freshness: apply() marks MIRROR_POS/VEL
+    // fresh+dirty itself and must not have that immediately erased by
+    // Algorithm_Sequence::run()'s default post-apply() invalidation
+    // (see leap_frog_gpu.cc/cuda_m_shake.h for the same pattern).
+    virtual unsigned gpu_mirror_touches() const override { return 0u; }
 
   private:
     /**
@@ -103,11 +119,19 @@ namespace algorithm {
     gpu::cuvector<FPL3_TYPE> m_solute_delta;
     gpu::cuvector<int> m_changed_flag;
 
-    gpu::cuvector<FPL3_TYPE> m_pos;
-    gpu::cuvector<FPL3_TYPE> m_old_pos;
     gpu::cuvector<FPH3_TYPE> m_constraint_force;
     gpu::cuvector<double> m_virial;
     gpu::cuvector<int> m_error_flag;
+
+    // constrained_atoms(), uploaded once in init(), for the on-device
+    // velocity_from_delta kernel -- see cuda_m_shake.h/cuda_lincs.h for
+    // the same pattern.
+    gpu::cuvector<unsigned> m_constrained_atoms_dev;
+
+    // Own stream: lets this run concurrently with CUDA_M_Shake/CUDA_
+    // Settle (disjoint atom ranges) instead of implicitly serializing
+    // on the default stream.
+    cudaStream_t m_stream = 0;
 
     bool m_initialized = false;
   };

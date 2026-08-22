@@ -45,6 +45,7 @@
 #include "../math/periodicity.h"
 #include "../algorithm/constraints/shake.h"
 #include "../algorithm/constraints/cuda_shake.h"
+#include "gpu/cuda/manager/cuda_manager.h"
 
 #include "../io/argument.h"
 #include "../util/parse_verbosity.h"
@@ -165,6 +166,11 @@ namespace {
     const int cpu_rc = cpu_shake.apply(cpu_s.topo, cpu_s.conf, cpu_s.sim);
     const int gpu_rc = gpu_shake.apply(gpu_s.topo, gpu_s.conf, gpu_s.sim);
     flush_messages("shake apply");
+
+    // CUDA_Shake leaves pos/vel GPU-resident (mark_gpu_dirty(), no eager
+    // CPU publish) -- this test reads gpu_s.conf directly, so it must
+    // request the publish explicitly, same as any other direct consumer.
+    gpu_s.sim.cuda().flush_gpu_dirty(gpu_s.conf, gpu::MIRROR_POS | gpu::MIRROR_VEL);
 
     if (cpu_rc != 0 || gpu_rc != 0) {
       std::cerr << label << ": apply() failed (cpu_rc=" << cpu_rc
