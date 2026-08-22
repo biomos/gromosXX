@@ -210,7 +210,8 @@ int main(int argc, char *argv[]){
     // the exact per-step sync this design is meant to avoid, since
     // pos/vel are marked dirty every step regardless of write cadence.
     if (traj.needs_gpu_mirror_flush(conf, sim))
-      sim.cuda().flush_gpu_dirty(conf, gpu::MIRROR_POS | gpu::MIRROR_VEL | gpu::MIRROR_FORCE);
+      sim.cuda().flush_gpu_dirty(conf, gpu::MIRROR_POS | gpu::MIRROR_VEL |
+                                        gpu::MIRROR_FORCE | gpu::MIRROR_CONSTRAINT_FORCE);
     traj.write(conf, topo, sim, io::reduced);
 
     // run a step
@@ -281,8 +282,8 @@ int main(int argc, char *argv[]){
   // cadence. LATTICE_SHIFT included since _print_lattice_shifts() is
   // only ever called for this final write, never the periodic one --
   // see io::Out_Configuration::_print_lattice_shifts()'s call site.
-  sim.cuda().flush_gpu_dirty(conf, gpu::MIRROR_POS | gpu::MIRROR_VEL |
-                                    gpu::MIRROR_FORCE | gpu::MIRROR_LATTICE_SHIFT);
+  sim.cuda().flush_gpu_dirty(conf, gpu::MIRROR_POS | gpu::MIRROR_VEL | gpu::MIRROR_FORCE |
+                                    gpu::MIRROR_CONSTRAINT_FORCE | gpu::MIRROR_LATTICE_SHIFT);
   traj.write(conf, topo, sim, io::final);
   traj.print_final(topo, conf, sim);
     

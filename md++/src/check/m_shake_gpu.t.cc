@@ -121,13 +121,16 @@ namespace {
     flush_messages("m_shake apply");
 
     // CUDA_M_Shake is GPU-resident: apply() leaves the corrected
-    // position/velocity on the GPU mirror (mark_gpu_dirty()), relying
-    // on Algorithm_Sequence::run()'s automatic flush_gpu_dirty() before
-    // whatever runs next to publish it back to conf. This test calls
-    // apply() standalone, with no such "next algorithm" -- so it must
-    // publish explicitly itself before inspecting gpu_s.conf, the same
-    // way a real end-of-step eventually would.
+    // position/velocity/constraint_force on the GPU mirror
+    // (mark_gpu_dirty()), relying on Algorithm_Sequence::run()'s
+    // automatic flush_gpu_dirty() before whatever runs next to publish
+    // it back to conf. This test calls apply() standalone, with no such
+    // "next algorithm" -- so it must publish explicitly itself before
+    // inspecting gpu_s.conf, the same way a real end-of-step eventually
+    // would. sync_configuration_from_device() only covers POS/VEL, so
+    // constraint_force needs its own explicit flush.
     gpu_s.sim.cuda().sync_configuration_from_device(gpu_s.conf);
+    gpu_s.sim.cuda().flush_gpu_dirty(gpu_s.conf, gpu::MIRROR_CONSTRAINT_FORCE);
 
     if (cpu_rc != 0 || gpu_rc != 0) {
       std::cerr << label << ": apply() failed (cpu_rc=" << cpu_rc

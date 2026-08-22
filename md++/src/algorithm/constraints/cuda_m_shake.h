@@ -46,16 +46,16 @@
  * separate streams, no data hazard) instead of serializing through a
  * host round-trip between them.
  *
- * constraint_force/virial_tensor deliberately stay on the older,
- * private-buffer-then-small-download path for now (not yet routed
- * through the shared mirror's MIRROR_CONSTRAINT_FORCE/MIRROR_VIRIAL,
- * despite that infrastructure existing) -- virial_tensor is a single
- * global accumulator that multiple contributors (e.g. a future
- * CUDA_Shake solute pass run alongside this) would need careful
- * "zero once per step, then only ever += " semantics for, which is a
- * real design question of its own, not yet solved. Revisit once
- * CUDA_Shake/CUDA_Settle are migrated too and that multi-contributor
- * case actually exists.
+ * constraint_force now publishes into the shared mirror's
+ * MIRROR_CONSTRAINT_FORCE field on-device (constraint_force_publish_
+ * kernels.h) -- safe as a plain write since solute/solvent constraint
+ * algorithms always write disjoint atom ranges. virial_tensor
+ * deliberately stays on the older, private-buffer-then-small-download
+ * path: it's a single global accumulator that every bonded/nonbonded
+ * term *also* contributes to (not just the constraint algorithms), so
+ * moving it needs a "zero once per step, then only ever atomicAdd"
+ * scheme spanning Forcefield's children too, not just the constraint
+ * algorithms -- a real design question of its own, not yet solved.
  *
  * v1 scope, hard-errored in init() rather than silently producing a
  * wrong/no-op result -- same conditions algorithm::M_Shake::init()

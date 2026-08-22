@@ -40,7 +40,7 @@
 #include "../../util/debug.h"
 
 #include "gpu/cuda/manager/cuda_manager.h"
-#include "gpu/cuda/memory/vec3_convert.h"
+#include "gpu/cuda/algorithm/constraints/constraint_force_publish_kernels.h"
 #include "cuda_settle.h"
 
 #undef MODULE
@@ -198,12 +198,20 @@ int algorithm::CUDA_Settle::apply(
   sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_POS, m_stream);
   if (do_velocity) sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_VEL, m_stream);
 
-  // constraint_force/virial_tensor still on the private-buffer-then-
-  // host-merge path -- see cuda_m_shake.h's doc comment for why
-  // (shared global accumulator, multiple GPU-native writers, not yet
-  // solved).
-  gpu::vec3_download(&conf.old().constraint_force(m_first_atom),
-                      m_constraint_force.data() + m_first_atom, num_solvent_atoms);
+  // Publish into the shared mirror's constraint_force (GPU-resident, no
+  // CPU round trip) -- a plain write, not atomicAdd: the solvent range
+  // is disjoint from whatever solute constraint algorithm is active
+  // (SHAKE/LINCS), and the mirror's constraint_force was already
+  // zeroed once this step (CudaManager::zero_mirror_force()). scale=1
+  // since settle_kernels.cu's constraint_force output is already fully
+  // scaled (dt2_i baked in at computation time, unlike SHAKE/M-SHAKE's
+  // raw sums). virial_tensor stays on the private-buffer-then-host-
+  // merge path -- see cuda_m_shake.h's doc comment for why (shared
+  // global accumulator, multiple GPU-native writers, not yet solved).
+  gpu::launch_publish_constraint_force_range_from_double3(
+      view.old().constraint_force.data(), m_constraint_force.data(),
+      m_first_atom, num_solvent_atoms, 1.0, m_stream);
+  sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_CONSTRAINT_FORCE, m_stream);
 
   if (sim.param().pcouple.virial == math::atomic_virial) {
     for (unsigned b = 0; b < 3; ++b) {

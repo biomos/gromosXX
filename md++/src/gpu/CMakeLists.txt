@@ -52,6 +52,7 @@ set(GPU_HEADERS
     cuda/algorithm/constraints/lincs_kernels.h
     cuda/algorithm/constraints/m_shake_kernels.h
     cuda/algorithm/constraints/velocity_from_delta_kernels.h
+    cuda/algorithm/constraints/constraint_force_publish_kernels.h
     cuda/memory/vec3_convert.h
     cuda/memory/precision_cast_kernels.h
     cuda/algorithm/temperature/atom_bath_arrays.h
@@ -99,6 +100,7 @@ if(USE_CUDA)
         cuda/algorithm/constraints/lincs_kernels.cu
         cuda/algorithm/constraints/m_shake_kernels.cu
         cuda/algorithm/constraints/velocity_from_delta_kernels.cu
+        cuda/algorithm/constraints/constraint_force_publish_kernels.cu
         cuda/algorithm/pressure/berendsen_barostat_kernels.cu
     )
 

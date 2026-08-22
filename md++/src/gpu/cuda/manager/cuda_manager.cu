@@ -355,12 +355,26 @@ void gpu::CudaManager::zero_mirror_force(configuration::Configuration & conf) {
     if (mirror->current.virial_tensor) {
         cudaMemset(mirror->current.virial_tensor, 0, sizeof(FPH9_TYPE));
     }
+    // Zeroed here (not per-constraint-algorithm) for the same reason as
+    // force/virial above: called once per step, before the swap that
+    // makes this "current" half into "old" -- exactly the half the
+    // constraint algorithms (which run after Leap_Frog_Velocity's swap)
+    // publish their own constraint_force contribution into. Solute vs
+    // solvent constraint algorithms write disjoint atom ranges (exactly
+    // one of SHAKE/LINCS is active for solute, one of M_SHAKE/SETTLE for
+    // solvent), so no cross-algorithm accumulation ordering is needed --
+    // each just needs its own range zeroed first.
+    if (mirror->current.constraint_force.size() > 0) {
+        cudaMemset(mirror->current.constraint_force.data(), 0,
+                   mirror->current.constraint_force.size() * sizeof(FPH3_TYPE));
+    }
     // Fresh step: every producer event guarding last step's FORCE value
     // is now meaningless (the buffer was just zeroed by this call, on
     // the default stream -- see this method's ordering note below).
     // Each Interaction's own mark_gpu_dirty(MIRROR_FORCE, its_stream)
     // this step re-populates it.
     clear_producer_events(*mirror, gpu::MIRROR_FORCE);
+    clear_producer_events(*mirror, gpu::MIRROR_CONSTRAINT_FORCE);
 }
 
 int * gpu::CudaManager::constraint_error_flag_slot(unsigned slot) {

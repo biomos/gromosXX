@@ -40,6 +40,7 @@
 #include "../../util/debug.h"
 
 #include "gpu/cuda/manager/cuda_manager.h"
+#include "gpu/cuda/algorithm/constraints/constraint_force_publish_kernels.h"
 #include "cuda_shake.h"
 
 #undef MODULE
@@ -196,11 +197,6 @@ int algorithm::CUDA_Shake::apply(
     return 1;
   }
 
-  for (std::set<unsigned int>::const_iterator it = constrained_atoms().begin(),
-       to = constrained_atoms().end(); it != to; ++it) {
-    conf.old().constraint_force(*it) = 0.0;
-  }
-
   const unsigned num_atoms = static_cast<unsigned>(topo.num_atoms());
   const unsigned num_solute_atoms = static_cast<unsigned>(topo.num_solute_atoms());
 
@@ -292,21 +288,28 @@ int algorithm::CUDA_Shake::apply(
   // post-apply() invalidation from immediately erasing this.
   sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_POS, m_stream);
 
-  // Accumulation (+=), not a plain copy -- stays a per-atom loop, but
-  // only over constrained_atoms() (already exactly the atoms this
-  // class's term lists reference), not every atom in the system --
-  // same rationale as sparse_force_accumulate.h for the bonded terms.
-  // The CPU's own convention (dividing by dt2 once, after the raw
-  // lambda*ref_r sum) is preserved here. constraint_force/virial_tensor
-  // still on the private-buffer-then-host-merge path -- see cuda_m_
+  // Publish into the shared mirror's constraint_force (GPU-resident, no
+  // CPU round trip) -- a plain write, not atomicAdd: constrained_atoms()
+  // is disjoint from every other active constraint algorithm's own atom
+  // range (solute vs solvent constraint algorithms are always mutually
+  // exclusive pairs), and the mirror's constraint_force was already
+  // zeroed once this step (CudaManager::zero_mirror_force(), called
+  // from Forcefield before the exchange_state() swap that makes this
+  // "current" half into "old"). scale=1/dt2 matches the CPU's own
+  // convention (dividing by dt2 once, after the raw lambda*ref_r sum,
+  // which is all shake_kernels.cu's launch_shake_solute_round/
+  // launch_shake_solvent compute into m_constraint_force). virial_tensor
+  // stays on the private-buffer-then-host-merge path -- see cuda_m_
   // shake.h's doc comment for why (shared global accumulator, multiple
-  // GPU-native writers, not yet solved).
-  for (unsigned int i : constrained_atoms()) {
-    conf.old().constraint_force(i) +=
-        math::Vec(static_cast<double>(m_constraint_force[i].x),
-                  static_cast<double>(m_constraint_force[i].y),
-                  static_cast<double>(m_constraint_force[i].z)) / dt2;
-  }
+  // GPU-native writers, "zero once then only +=" semantics not yet
+  // solved for a field every bonded/nonbonded term also contributes to,
+  // unlike constraint_force which only constraint algorithms ever
+  // write).
+  gpu::launch_publish_constraint_force_indices(
+      view.old().constraint_force.data(), m_constraint_force.data(),
+      m_constrained_atoms_dev.data(), static_cast<unsigned>(m_constrained_atoms_dev.size()),
+      1.0 / dt2, m_stream);
+  sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_CONSTRAINT_FORCE, m_stream);
 
   // Matches the CPU's real `V == math::atomic_virial` gate (shake.h's
   // shake_iteration) -- vacuum boundary never contributes (SPLIT_VIRIAL_

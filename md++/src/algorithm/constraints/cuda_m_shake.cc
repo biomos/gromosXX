@@ -41,6 +41,7 @@
 
 #include "gpu/cuda/manager/cuda_manager.h"
 #include "gpu/constraint_error_slots.h"
+#include "gpu/cuda/algorithm/constraints/constraint_force_publish_kernels.h"
 #include "cuda_m_shake.h"
 
 #undef MODULE
@@ -217,20 +218,24 @@ int algorithm::CUDA_M_Shake::apply(
     sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_VEL, m_stream);
   }
 
-  // constraint_force/virial_tensor: still the private-buffer path
-  // (cuda_m_shake.h's doc comment explains why), so publishing them
-  // needs an explicit small sync+download here -- but only on this
-  // algorithm's own stream, not a global cudaDeviceSynchronize(), so
-  // it doesn't stall whatever else (e.g. CUDA_Lincs) is running
-  // concurrently on a different stream.
-  cudaStreamSynchronize(m_stream);
+  // Publish into the shared mirror's constraint_force (GPU-resident, no
+  // CPU round trip) -- a plain write, not atomicAdd: the solvent range
+  // is disjoint from whatever solute constraint algorithm is active
+  // (SHAKE/LINCS), and the mirror's constraint_force was already
+  // zeroed once this step (CudaManager::zero_mirror_force()). scale=
+  // dt2i matches launch_m_shake_solvent's raw (undivided) sum, same
+  // convention CUDA_Shake's own publish uses. virial_tensor stays on
+  // the private-buffer-then-host-merge path -- see cuda_m_shake.h's
+  // doc comment for why (shared global accumulator, multiple GPU-
+  // native writers, not yet solved) -- still needs its own small sync
+  // (own stream only, not a global cudaDeviceSynchronize()) before the
+  // host reads m_virial below.
+  gpu::launch_publish_constraint_force_range(
+      view.old().constraint_force.data(), m_constraint_force.data(),
+      m_first_atom, num_solvent_atoms, dt2i, m_stream);
+  sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_CONSTRAINT_FORCE, m_stream);
 
-  for (unsigned int i : constrained_atoms()) {
-    conf.old().constraint_force(i) +=
-        math::Vec(static_cast<double>(m_constraint_force[i].x),
-                  static_cast<double>(m_constraint_force[i].y),
-                  static_cast<double>(m_constraint_force[i].z)) * dt2i;
-  }
+  cudaStreamSynchronize(m_stream);
 
   if (do_virial) {
     for (unsigned b = 0; b < 3; ++b) {
