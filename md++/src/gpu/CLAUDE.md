@@ -27,6 +27,64 @@ caching, the hard error on CPU-pairlist-under-CUDA, the fallback warning)
 exist: they're all about making transfer cost visible and avoidable, not
 about squeezing individual kernels.
 
+## Data residency rule: GPU stays authoritative
+
+This is a hard rule, not a per-algorithm judgment call — established after a
+session of finding and fixing violations one at a time (see git log around
+`cuda_shake`/`cuda_settle`/`constraint_force_publish_kernels`/
+`virial_accumulate_kernels` for the concrete before/after).
+
+**Any simulation data (positions, velocities, force, constraint_force,
+virial_tensor, energies, box, ...) that a GPU-native algorithm produces or
+consumes must live in the shared `CudaManager` mirror
+(`sim.cuda().configuration_view()`/`mark_gpu_dirty()`), and stay there.**
+
+- If multiple GPU-native algorithms accumulate into the same shared
+  quantity (virial_tensor, force), the accumulation itself happens on-device
+  — `atomicAdd` into the mirror's own field, not each algorithm's private
+  buffer downloaded and summed on the host. `gpu/cuda/memory/
+  virial_accumulate_kernels.h` is the reference pattern: one small
+  `atomicAdd`-9-doubles kernel, called by every contributor, into a field
+  zeroed once per step (`CudaManager::zero_mirror_force()`).
+- If the writers' target ranges are disjoint (constraint_force: solute vs
+  solvent constraint algorithms never overlap), a plain on-device write is
+  enough — no atomics needed, but it's still a device-to-device operation,
+  never a host round trip. `gpu/cuda/algorithm/constraints/
+  constraint_force_publish_kernels.h` is that pattern.
+- A GPU-native algorithm may still keep a **private** per-term GPU buffer
+  for its own internal use (e.g. each bonded term's own energy/virial
+  before merging into the shared total) — that's fine, even expected, when
+  the decomposition itself is meaningful (per-interaction-type energies are
+  reported separately in output). What's not fine is downloading that
+  private buffer to CPU and merging it there every step "just because it's
+  easier" — the merge must happen on-device too, into the shared mirror
+  field, via the on-device patterns above.
+- **The CPU never gets an eager, unconditional publish.** A CPU-backend
+  algorithm that needs to read GPU-resident data is responsible for that
+  publish itself, through the exact same mechanism every other consumer
+  uses: either its own `gpu_mirror_touches()` mask (if it's registered in
+  `Algorithm_Sequence`, e.g. `Pressure_Calculation`'s
+  `gpu_mirror_touches() == MIRROR_VIRIAL`, whose before-hook `flush_gpu_
+  dirty()` is the *only* thing that copies virial_tensor to the host, once
+  per step, only because that one CPU-only reader needs it) or an explicit
+  `sim.cuda().flush_gpu_dirty(conf, <fields>)` call at the point of actual
+  need (trajectory/checkpoint output, `program/md.cc`'s output-cadence
+  flush is the reference example). Never flush "just in case" on a fixed
+  schedule unrelated to an actual reader.
+- This includes test code: a test that calls `apply()`/
+  `calculate_interactions()` standalone (bypassing `Algorithm_Sequence::
+  run()`'s automatic per-algorithm flush) and then reads `conf` directly
+  must call `flush_gpu_dirty()` itself before that read, mirroring what a
+  real consumer would do — this is not a workaround, it's the test
+  correctly exercising the same contract a real caller has to honor. Don't
+  "fix" a stale-read test failure by making the algorithm publish eagerly
+  instead.
+- Before writing a CPU-merge loop (`conf.old().foo(i) += ...`) or a plain
+  host readback for anything GPU-computed, stop and ask whether this
+  belongs in the mirror instead — the default assumption for new
+  GPU-native code should be "stays on GPU," not "syncs back are cheap
+  enough."
+
 ## Current status (see PLAN.md §2 for the full decision log)
 
 - Backend dispatch (`util::cpuBackend`/`gpuBackend`, `algorithm::AlgorithmB<Backend>`,

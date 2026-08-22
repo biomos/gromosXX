@@ -130,7 +130,7 @@ namespace {
     // would. sync_configuration_from_device() only covers POS/VEL, so
     // constraint_force needs its own explicit flush.
     gpu_s.sim.cuda().sync_configuration_from_device(gpu_s.conf);
-    gpu_s.sim.cuda().flush_gpu_dirty(gpu_s.conf, gpu::MIRROR_CONSTRAINT_FORCE);
+    gpu_s.sim.cuda().flush_gpu_dirty(gpu_s.conf, gpu::MIRROR_CONSTRAINT_FORCE | gpu::MIRROR_VIRIAL);
 
     if (cpu_rc != 0 || gpu_rc != 0) {
       std::cerr << label << ": apply() failed (cpu_rc=" << cpu_rc

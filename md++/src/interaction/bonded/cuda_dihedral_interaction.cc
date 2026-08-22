@@ -37,6 +37,7 @@
 #include "../../interaction/interaction_types.h"
 
 #include "../../gpu/cuda/manager/cuda_manager.h"
+#include "gpu/cuda/memory/virial_accumulate_kernels.h"
 #include "gpu/cuda/interaction/bonded/dihedral_kernels.h"
 
 #include "cuda_dihedral_interaction.h"
@@ -163,19 +164,21 @@ int interaction::CUDA_Dihedral_Interaction::calculate_interactions(
 
   sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_FORCE, m_stream);
 
-  // Energy/virial are small, private, double-precision buffers (not
-  // part of the mirror) so still need a sync to read back, but only on
-  // this algorithm's own stream, not a device-wide barrier.
+  // Publish virial into the shared mirror's virial_tensor via atomicAdd
+  // (GPU-resident, no CPU round trip) -- see cuda_angle_interaction.cc
+  // for the full rationale (every contributor shares one accumulator,
+  // zeroed once per step by CudaManager::zero_mirror_force()).
+  gpu::launch_accumulate_virial9(
+      reinterpret_cast<FPH_TYPE*>(view.current().virial_tensor), m_virial.data(), m_stream);
+  sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_VIRIAL, m_stream);
+
+  // Energy is a small, private, double-precision buffer (not part of
+  // the mirror) so still needs a sync to read back, but only on this
+  // algorithm's own stream, not a device-wide barrier.
   cudaStreamSynchronize(m_stream);
 
   for (unsigned g = 0; g < num_energy_groups; ++g) {
     conf.current().energies.dihedral_energy[g] += m_dihedral_energy[g];
-  }
-
-  for (unsigned b = 0; b < 3; ++b) {
-    for (unsigned a = 0; a < 3; ++a) {
-      conf.current().virial_tensor(b, a) += m_virial[b * 3 + a];
-    }
   }
 
   m_timer.stop();

@@ -46,16 +46,14 @@
  * separate streams, no data hazard) instead of serializing through a
  * host round-trip between them.
  *
- * constraint_force now publishes into the shared mirror's
- * MIRROR_CONSTRAINT_FORCE field on-device (constraint_force_publish_
- * kernels.h) -- safe as a plain write since solute/solvent constraint
+ * constraint_force publishes into the shared mirror's MIRROR_
+ * CONSTRAINT_FORCE field on-device (constraint_force_publish_
+ * kernels.h) -- a plain write, since solute/solvent constraint
  * algorithms always write disjoint atom ranges. virial_tensor
- * deliberately stays on the older, private-buffer-then-small-download
- * path: it's a single global accumulator that every bonded/nonbonded
- * term *also* contributes to (not just the constraint algorithms), so
- * moving it needs a "zero once per step, then only ever atomicAdd"
- * scheme spanning Forcefield's children too, not just the constraint
- * algorithms -- a real design question of its own, not yet solved.
+ * publishes via atomicAdd (virial_accumulate_kernels.h) instead, since
+ * it's a single global accumulator every bonded/nonbonded term also
+ * contributes to in the same step -- both are fully GPU-resident now,
+ * no CPU round trip in either case.
  *
  * v1 scope, hard-errored in init() rather than silently producing a
  * wrong/no-op result -- same conditions algorithm::M_Shake::init()

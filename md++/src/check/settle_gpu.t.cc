@@ -127,7 +127,7 @@ namespace {
     // eager CPU publish) -- this test reads gpu_s.conf directly, so it
     // must request the publish explicitly, same as any other direct
     // consumer.
-    gpu_s.sim.cuda().flush_gpu_dirty(gpu_s.conf, gpu::MIRROR_POS | gpu::MIRROR_VEL | gpu::MIRROR_CONSTRAINT_FORCE);
+    gpu_s.sim.cuda().flush_gpu_dirty(gpu_s.conf, gpu::MIRROR_POS | gpu::MIRROR_VEL | gpu::MIRROR_CONSTRAINT_FORCE | gpu::MIRROR_VIRIAL);
 
     if (cpu_rc != 0 || gpu_rc != 0) {
       std::cerr << label << ": apply() failed (cpu_rc=" << cpu_rc

@@ -29,6 +29,7 @@
 #include "gpu/cuda/interaction/nonbonded/kernels/rf_excluded_kernels.h"
 #include "gpu/cuda/interaction/nonbonded/kernels/one_four_kernels.h"
 #include "gpu/cuda/interaction/nonbonded/kernels/displacement.h"
+#include "gpu/cuda/memory/virial_accumulate_kernels.h"
 #include "block_pairlist.h"
 
 #include "cuda_pairlist_algorithm_impl.h"
@@ -883,10 +884,16 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::compute_forces_energies(
     // Whether this is *used* downstream (plain atomic virial, or further
     // corrected to molecular virial by Molecular_Virial_Interaction,
     // generic across accelerators) is entirely Forcefield's decision.
-    for (unsigned b = 0; b < 3; ++b) {
-        for (unsigned a = 0; a < 3; ++a) {
-            const unsigned k = b * 3 + a;
-            conf.current().virial_tensor(b, a) += m_virial[k] + m_virial_long[k];
-        }
-    }
+    // Published into the shared mirror's virial_tensor via atomicAdd
+    // (GPU-resident, no CPU round trip) -- every bonded term/NonBonded/
+    // active constraint algorithm contributes to the same global
+    // accumulator each step, zeroed once per step by CudaManager::
+    // zero_mirror_force(). Two calls (short-range + frozen long-range),
+    // not a pre-summed one: atomicAdd is commutative/associative, and
+    // this avoids an extra elementwise host-or-device combine step.
+    gpu::launch_accumulate_virial9(
+        reinterpret_cast<FPH_TYPE*>(view.current().virial_tensor), m_virial.data(), m_stream);
+    gpu::launch_accumulate_virial9(
+        reinterpret_cast<FPH_TYPE*>(view.current().virial_tensor), m_virial_long.data(), m_stream);
+    sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_VIRIAL, m_stream);
 }

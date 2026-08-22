@@ -142,6 +142,13 @@ namespace {
     }
     flush_messages("first force calc");
 
+    // gpu_ff's bonded/nonbonded terms atomicAdd their virial straight
+    // into the GPU mirror's virial_tensor (no CPU round trip) --
+    // gpu_force_seq.run() only contains gpu_ff itself, so nothing in
+    // that sequence triggers the publish; must flush explicitly before
+    // reading gpu_s.conf.current().virial_tensor below.
+    gpu_s.sim.cuda().flush_gpu_dirty(gpu_s.conf, gpu::MIRROR_VIRIAL);
+
     // Pressure_Calculation reads conf.old(), not conf.current() -- feed
     // it the virial this step just computed plus a fixed synthetic
     // kinetic energy tensor (identical on both sides; nothing in this

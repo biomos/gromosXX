@@ -42,6 +42,7 @@
 #include "gpu/cuda/manager/cuda_manager.h"
 #include "gpu/constraint_error_slots.h"
 #include "gpu/cuda/algorithm/constraints/constraint_force_publish_kernels.h"
+#include "gpu/cuda/memory/virial_accumulate_kernels.h"
 #include "cuda_m_shake.h"
 
 #undef MODULE
@@ -224,25 +225,22 @@ int algorithm::CUDA_M_Shake::apply(
   // (SHAKE/LINCS), and the mirror's constraint_force was already
   // zeroed once this step (CudaManager::zero_mirror_force()). scale=
   // dt2i matches launch_m_shake_solvent's raw (undivided) sum, same
-  // convention CUDA_Shake's own publish uses. virial_tensor stays on
-  // the private-buffer-then-host-merge path -- see cuda_m_shake.h's
-  // doc comment for why (shared global accumulator, multiple GPU-
-  // native writers, not yet solved) -- still needs its own small sync
-  // (own stream only, not a global cudaDeviceSynchronize()) before the
-  // host reads m_virial below.
+  // convention CUDA_Shake's own publish uses.
   gpu::launch_publish_constraint_force_range(
       view.old().constraint_force.data(), m_constraint_force.data(),
       m_first_atom, num_solvent_atoms, dt2i, m_stream);
   sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_CONSTRAINT_FORCE, m_stream);
 
-  cudaStreamSynchronize(m_stream);
-
+  // Published via atomicAdd into the shared mirror's virial_tensor
+  // (GPU-resident, no CPU round trip) -- writes into old() since
+  // exchange_state() already swapped this step, matching
+  // constraint_force's own convention above. Nothing left in this
+  // function reads host-side GPU data, so the cudaStreamSynchronize()
+  // this used to need (to read m_virial back on the host) is gone too.
   if (do_virial) {
-    for (unsigned b = 0; b < 3; ++b) {
-      for (unsigned a = 0; a < 3; ++a) {
-        conf.old().virial_tensor(b, a) += m_virial[b * 3 + a];
-      }
-    }
+    gpu::launch_accumulate_virial9(
+        reinterpret_cast<FPH_TYPE*>(view.old().virial_tensor), m_virial.data(), m_stream);
+    sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_VIRIAL, m_stream);
   }
 
   m_timer.stop();

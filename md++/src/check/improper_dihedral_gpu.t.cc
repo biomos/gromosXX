@@ -111,7 +111,7 @@ namespace {
     // CUDA_Improper_Dihedral_Interaction writes force directly into the
     // GPU mirror and mark_gpu_dirty()s it (see angle_gpu.t.cc's comment
     // for why this standalone test needs its own explicit publish).
-    gpu_s.sim.cuda().flush_gpu_dirty(gpu_s.conf, gpu::MIRROR_FORCE);
+    gpu_s.sim.cuda().flush_gpu_dirty(gpu_s.conf, gpu::MIRROR_FORCE | gpu::MIRROR_VIRIAL);
 
     // See quartic_bond_gpu.t.cc's tolerance comment.
     const double tol = 5e-3;

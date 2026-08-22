@@ -41,6 +41,7 @@
 
 #include "gpu/cuda/manager/cuda_manager.h"
 #include "gpu/cuda/algorithm/constraints/constraint_force_publish_kernels.h"
+#include "gpu/cuda/memory/virial_accumulate_kernels.h"
 #include "cuda_shake.h"
 
 #undef MODULE
@@ -317,14 +318,15 @@ int algorithm::CUDA_Shake::apply(
   // gets nothing added here either (same as CPU): SHAKE's virial
   // contribution is atomic-only, corrected to molecular virial elsewhere
   // if requested (Molecular_Virial_Interaction, generic across
-  // accelerators).
+  // accelerators). Published via atomicAdd into the shared mirror's
+  // virial_tensor (GPU-resident, no CPU round trip) -- writes into
+  // old() since exchange_state() already swapped this step, matching
+  // constraint_force's own old()/current() convention above.
   if (conf.boundary_type != math::vacuum &&
       sim.param().pcouple.virial == math::atomic_virial) {
-    for (unsigned b = 0; b < 3; ++b) {
-      for (unsigned a = 0; a < 3; ++a) {
-        conf.old().virial_tensor(b, a) += m_virial[b * 3 + a];
-      }
-    }
+    gpu::launch_accumulate_virial9(
+        reinterpret_cast<FPH_TYPE*>(view.old().virial_tensor), m_virial.data(), m_stream);
+    sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_VIRIAL, m_stream);
   }
 
   if (!sim.param().stochastic.sd && !sim.param().minimise.ntem &&

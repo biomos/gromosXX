@@ -41,6 +41,7 @@
 
 #include "gpu/cuda/manager/cuda_manager.h"
 #include "gpu/cuda/algorithm/constraints/constraint_force_publish_kernels.h"
+#include "gpu/cuda/memory/virial_accumulate_kernels.h"
 #include "cuda_settle.h"
 
 #undef MODULE
@@ -205,20 +206,20 @@ int algorithm::CUDA_Settle::apply(
   // zeroed once this step (CudaManager::zero_mirror_force()). scale=1
   // since settle_kernels.cu's constraint_force output is already fully
   // scaled (dt2_i baked in at computation time, unlike SHAKE/M-SHAKE's
-  // raw sums). virial_tensor stays on the private-buffer-then-host-
-  // merge path -- see cuda_m_shake.h's doc comment for why (shared
-  // global accumulator, multiple GPU-native writers, not yet solved).
+  // raw sums).
   gpu::launch_publish_constraint_force_range_from_double3(
       view.old().constraint_force.data(), m_constraint_force.data(),
       m_first_atom, num_solvent_atoms, 1.0, m_stream);
   sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_CONSTRAINT_FORCE, m_stream);
 
+  // Published via atomicAdd into the shared mirror's virial_tensor
+  // (GPU-resident, no CPU round trip) -- writes into old() since
+  // exchange_state() already swapped this step, matching
+  // constraint_force's own convention above.
   if (sim.param().pcouple.virial == math::atomic_virial) {
-    for (unsigned b = 0; b < 3; ++b) {
-      for (unsigned a = 0; a < 3; ++a) {
-        conf.old().virial_tensor(b, a) += m_virial[b * 3 + a];
-      }
-    }
+    gpu::launch_accumulate_virial9(
+        reinterpret_cast<FPH_TYPE*>(view.old().virial_tensor), m_virial.data(), m_stream);
+    sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_VIRIAL, m_stream);
   }
 
   m_timer.stop();
