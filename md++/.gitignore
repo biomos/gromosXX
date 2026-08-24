@@ -39,3 +39,4 @@ build*
 
 #IDE-Folder:
 **.idea
+**.vscode
