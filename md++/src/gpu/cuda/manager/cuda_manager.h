@@ -216,6 +216,23 @@ namespace gpu {
                                   unsigned fields = gpu::MIRROR_ALL);
 
             /**
+             * @brief Publish a CPU-side correction to virial_tensor back
+             * into the GPU mirror. Counterpart to flush_gpu_dirty(): that
+             * one is mirror-to-CPU (for a CPU-only reader), this one is
+             * CPU-to-mirror (for a CPU-only *writer* whose result later
+             * GPU-native code still needs to accumulate onto or a later
+             * flush must not stomp). Molecular_Virial_Interaction is the
+             * only caller today -- it corrects conf.current().virial_
+             * tensor in place from atomic to molecular virial; without
+             * this, that correction never reaches the mirror, and
+             * Pressure_Calculation's own later MIRROR_VIRIAL flush
+             * (copy_constraint_data_from_device(), an overwrite not a
+             * merge) would silently replace it with the stale raw atomic
+             * value again. No-op if `conf` has no mirror yet.
+             */
+            void publish_cpu_virial(configuration::Configuration & conf);
+
+            /**
              * @brief Clear freshness bits on the Configuration mirror
              * (data-level cache-coherence layer on top of the
              * identity-keyed cache, PLAN.md §3.2 follow-up): declares

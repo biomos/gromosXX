@@ -65,6 +65,9 @@ void gpu::CudaManager::validate_device_id(int device_id) const {
 void gpu::CudaManager::flush_gpu_dirty(configuration::Configuration & conf, unsigned fields) {
 }
 
+void gpu::CudaManager::publish_cpu_virial(configuration::Configuration & conf) {
+}
+
 void gpu::CudaManager::invalidate_gpu_mirror(configuration::Configuration & conf, unsigned fields) {
 }
 

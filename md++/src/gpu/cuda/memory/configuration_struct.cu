@@ -121,6 +121,13 @@ void gpu::Configuration::copy_constraint_data_from_device(configuration::Configu
     conf.old().virial_tensor = fph9_to_matrix(vt_o);
 }
 
+void gpu::Configuration::copy_virial_to_device(const configuration::Configuration& conf) {
+    const FPH9_TYPE vt_c = matrix_to_fph9(conf.current().virial_tensor);
+    const FPH9_TYPE vt_o = matrix_to_fph9(conf.old().virial_tensor);
+    CUDA_CHECK(cudaMemcpy(current.virial_tensor, &vt_c, sizeof(FPH9_TYPE), cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(old.virial_tensor, &vt_o, sizeof(FPH9_TYPE), cudaMemcpyHostToDevice));
+}
+
 void gpu::Configuration::copy_lattice_shifts_to_device(const configuration::Configuration& conf) {
     const size_t n = conf.special().lattice_shifts.size();
     lattice_shifts.resize(n);

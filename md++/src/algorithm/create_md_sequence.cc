@@ -269,7 +269,7 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
   }
   
   if (sim.param().pcouple.calculate){
-    algorithm::Pressure_Calculation * pcalc = algorithm::make_algorithm<algorithm::Pressure_Calculation>(sim);
+    algorithm::Algorithm * pcalc = algorithm::make_algorithm<algorithm::Pressure_Calculation>(sim);
     md_seq.push_back(pcalc);
     
     // coarse grain factor for pressure correction

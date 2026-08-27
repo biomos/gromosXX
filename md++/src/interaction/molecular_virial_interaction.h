@@ -70,6 +70,13 @@ namespace interaction
     // virial()'s r(b)*force(a) correction, util/prepare_virial.cc) --
     // see Interaction::needs_fresh_cpu_force()'s doc comment.
     virtual bool needs_fresh_cpu_force() const override { return true; }
+
+    // Reads and rewrites conf.current().virial_tensor in place
+    // (virial_tensor -= corrP, util/prepare_virial.cc) -- must see the
+    // full atomic virial GPU-native bonded/nonbonded terms already
+    // accumulated this step, not the stale/zeroed CPU-side value. See
+    // Interaction::needs_fresh_cpu_virial()'s doc comment.
+    virtual bool needs_fresh_cpu_virial() const override { return true; }
   };
   
 } // interaction

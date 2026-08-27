@@ -194,10 +194,24 @@ int interaction::Forcefield
     if ((*it)->needs_fresh_cpu_force()) {
       sim.cuda().flush_gpu_dirty(conf, gpu::MIRROR_FORCE);
     }
+    // Same publish-on-demand pattern for virial_tensor -- see
+    // Interaction::needs_fresh_cpu_virial()'s doc comment.
+    const bool fresh_virial = (*it)->needs_fresh_cpu_virial();
+    if (fresh_virial) {
+      sim.cuda().flush_gpu_dirty(conf, gpu::MIRROR_VIRIAL);
+    }
     // !!! crash if error
     int error=(*it)->calculate_interactions(topo, conf, sim);
     if (error){
       return 1;
+    }
+    // This Interaction may have corrected conf.current().virial_tensor
+    // in place (Molecular_Virial_Interaction) -- publish that back to
+    // the mirror so it isn't silently clobbered by a later GPU-side
+    // flush of the same field (see CudaManager::publish_cpu_virial()'s
+    // doc comment).
+    if (fresh_virial) {
+      sim.cuda().publish_cpu_virial(conf);
     }
   }
   //m_timer.stop();  

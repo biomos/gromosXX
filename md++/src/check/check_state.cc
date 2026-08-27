@@ -164,8 +164,8 @@ int check::check_state(topology::Topology & mytopo,
 
   conf.exchange_state();
   
-  algorithm::Pressure_Calculation * pcalc =
-    new algorithm::Pressure_Calculation;
+  algorithm::Pressure_Calculation<util::cpuBackend> * pcalc =
+    new algorithm::Pressure_Calculation<util::cpuBackend>;
 
   pcalc->apply(topo, conf, sim);
 
@@ -290,7 +290,7 @@ static void exact_atomic_virial(topology::Topology & topo,
 				configuration::Configuration &conf, 
 				simulation::Simulation & sim, 
 				interaction::Interaction &term,
-				algorithm::Pressure_Calculation *pcalc,
+				algorithm::Pressure_Calculation<util::cpuBackend> *pcalc,
 				math::Vec &vir,
 				double const accuracy,
 				int & res,
@@ -336,8 +336,8 @@ int check::check_atomic_virial(topology::Topology & topo,
 
   math::Vec vir;
 
-  algorithm::Pressure_Calculation * pcalc =
-    new algorithm::Pressure_Calculation;
+  algorithm::Pressure_Calculation<util::cpuBackend> * pcalc =
+    new algorithm::Pressure_Calculation<util::cpuBackend>;
 
   conf.exchange_state();
   conf.current().pos = conf.old().pos;

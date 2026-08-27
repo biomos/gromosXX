@@ -34,6 +34,9 @@
 #include "../../interaction/forcefield/forcefield.h"
 
 #include "../../interaction/molecular_virial_interaction.h"
+#ifdef USE_CUDA
+#include "../../interaction/special/cuda_molecular_virial_interaction.h"
+#endif
 
 #include "../../io/ifp.h"
 
@@ -88,9 +91,22 @@ int interaction::create_g96_forcefield(interaction::Forcefield & ff,
 
   // correct the virial (if molecular virial is required)
   if (sim.param().pcouple.virial == math::molecular_virial){
-    
-    Molecular_Virial_Interaction * mvi = new Molecular_Virial_Interaction;
-    ff.push_back(mvi);
+
+#ifdef USE_CUDA
+    // accelerator==gpu_cuda gets the real GPU-native correction (reads
+    // force/writes virial_tensor straight in the mirror, see
+    // cuda_molecular_virial_interaction.h) instead of the CPU one,
+    // which needs force/virial round-tripped through the CPU array --
+    // mirrors create_bonded.cc's dispatch on the same flag.
+    if (sim.param().gpu.accelerator == simulation::gpu_cuda) {
+      CUDA_Molecular_Virial_Interaction * mvi = new CUDA_Molecular_Virial_Interaction;
+      ff.push_back(mvi);
+    } else
+#endif
+    {
+      Molecular_Virial_Interaction * mvi = new Molecular_Virial_Interaction;
+      ff.push_back(mvi);
+    }
   }
 
   // the special

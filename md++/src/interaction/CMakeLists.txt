@@ -95,6 +95,7 @@ if(USE_CUDA)
     list (APPEND INTERACTION_CC "bonded/cuda_improper_dihedral_interaction.cc")
     list (APPEND INTERACTION_CC "bonded/cuda_dihedral_interaction.cc")
     list (APPEND INTERACTION_CC "special/cuda_position_restraint_interaction.cc")
+    list (APPEND INTERACTION_CC "special/cuda_molecular_virial_interaction.cc")
 endif()
 
 

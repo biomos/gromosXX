@@ -262,6 +262,29 @@ void gpu::CudaManager::flush_gpu_dirty(configuration::Configuration & conf, unsi
     // starts leaving it GPU-only too.
 }
 
+void gpu::CudaManager::publish_cpu_virial(configuration::Configuration & conf) {
+    gpu::Configuration * mirror = nullptr;
+    const std::size_t id = conf.id();
+
+    if (id == m_last_conf_id && m_last_conf_gpu) {
+        mirror = m_last_conf_gpu;
+    } else {
+        auto it = m_configurations.find(id);
+        if (it != m_configurations.end()) mirror = it->second.get();
+    }
+    if (!mirror) return;
+
+    // Synchronous H2D copy (see copy_virial_to_device()'s doc comment):
+    // the next GPU writer of virial_tensor (a constraint algorithm's
+    // atomicAdd, issued afterward in host program order, i.e. later in
+    // Algorithm_Sequence::run()) is guaranteed to be enqueued only after
+    // this blocking call has already completed on-device.
+    mirror->copy_virial_to_device(conf);
+    // The mirror's virial_tensor now matches the CPU correction exactly
+    // -- nothing to publish until a future writer marks it dirty again.
+    mirror->gpu_dirty_fields &= ~gpu::MIRROR_VIRIAL;
+}
+
 void gpu::CudaManager::invalidate_gpu_mirror(configuration::Configuration & conf, unsigned fields) {
     gpu::Configuration * mirror = nullptr;
     const std::size_t id = conf.id();

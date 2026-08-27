@@ -352,6 +352,27 @@ namespace gpu {
         void copy_constraint_data_from_device(configuration::Configuration& conf);
 
         /**
+         * @brief Publish conf.current()/old().virial_tensor back to the
+         * mirror's current/old.virial_tensor (both halves, matching
+         * copy_constraint_data_from_device()'s "always together"
+         * convention for this shared field). Counterpart write-back for
+         * Molecular_Virial_Interaction/CUDA_Molecular_Virial_Interaction:
+         * the CPU-only variant corrects virial_tensor in place (atomic
+         * virial -> molecular virial), but that correction is otherwise
+         * invisible to the GPU side -- the mirror still holds the raw
+         * pre-correction atomic virial, so a later flush (Pressure_
+         * Calculation's own MIRROR_VIRIAL touch) would silently overwrite
+         * the correction right back out with the stale raw value via
+         * copy_constraint_data_from_device(). A plain blocking cudaMemcpy
+         * (no stream) is enough: it only needs to happen-before the next
+         * GPU writer (a constraint algorithm's atomicAdd, issued
+         * afterward in host program order), which a synchronous H2D copy
+         * already guarantees without needing the producer-event
+         * machinery.
+         */
+        void copy_virial_to_device(const configuration::Configuration& conf);
+
+        /**
          * @brief Copy conf.special().lattice_shifts to the GPU (once,
          * at mirror creation / first request -- Lattice_Shift_Tracker<
          * gpuBackend> accumulates into it in place afterwards, never

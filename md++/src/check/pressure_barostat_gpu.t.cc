@@ -20,15 +20,17 @@
 
 /**
  * @file pressure_barostat_gpu.t.cc
- * Pressure_Calculation (plain host-side, O(9) matrix code, no CUDA
- * kernel of its own -- narrows gpu_mirror_touches() to MIRROR_VIRIAL,
- * see pressure_calculation.h) and Berendsen_Barostat<gpuBackend> (O(9)
- * mu/box computation on the host, O(num_atoms) position scaling as a
- * real GPU kernel, GPU-resident -- see berendsen_barostat_gpu.cc) are
- * both exercised here through a real Algorithm_Sequence::run(), and
- * compared against the identical CPU-only sequence:
- * CUDA_Quartic_Bond_Interaction (GPU force calc) -> Pressure_Calculation
- * -> Berendsen_Barostat<gpuBackend> -> CUDA_Quartic_Bond_Interaction
+ * Pressure_Calculation<gpuBackend> (O(9) matrix code on the host, but
+ * reads virial_tensor straight from the GPU mirror via
+ * configuration_view() instead of a CPU array -- narrows
+ * gpu_mirror_touches() to 0, see pressure_calculation.h) and
+ * Berendsen_Barostat<gpuBackend> (O(9) mu/box computation on the host,
+ * O(num_atoms) position scaling as a real GPU kernel, GPU-resident --
+ * see berendsen_barostat_gpu.cc) are both exercised here through a real
+ * Algorithm_Sequence::run(), and compared against the identical
+ * CPU-only sequence: CUDA_Quartic_Bond_Interaction (GPU force calc) ->
+ * Pressure_Calculation<gpuBackend> -> Berendsen_Barostat<gpuBackend> ->
+ * CUDA_Quartic_Bond_Interaction
  * again. The second force calc must see the barostat's GPU-scaled
  * positions (whether published to CPU yet or not -- configuration_view()
  * resolves that transparently), not a stale pre-barostat copy. Only
@@ -108,7 +110,8 @@ namespace {
     cpu_ff.push_back(new interaction::Quartic_Bond_Interaction());
     gpu_ff.push_back(new interaction::CUDA_Quartic_Bond_Interaction());
 
-    algorithm::Pressure_Calculation cpu_pcalc, gpu_pcalc;
+    algorithm::Pressure_Calculation<util::cpuBackend> cpu_pcalc;
+    algorithm::Pressure_Calculation<util::gpuBackend> gpu_pcalc;
     algorithm::Berendsen_Barostat<util::cpuBackend> cpu_baro;
     algorithm::Berendsen_Barostat<util::gpuBackend> gpu_baro;
 
@@ -158,9 +161,22 @@ namespace {
     cpu_s.conf.old().kinetic_energy_tensor = math::Matrix(100.0);
     gpu_s.conf.old().kinetic_energy_tensor = math::Matrix(100.0);
 
-    // Pressure_Calculation + Berendsen_Barostat -- CPU-only, no CUDA
-    // awareness; Algorithm_Sequence::run()'s default gpu_mirror_touches()
-    // handling (PLAN.md §10 step 16) is what's actually under test here.
+    // Pressure_Calculation<gpuBackend> reads virial_tensor straight from
+    // the mirror (configuration_view(), not flush_gpu_dirty()) -- push
+    // the synthetic .old() value set above back onto the mirror so it
+    // sees the same data the CPU backend does. In a real run this
+    // publish happens naturally (CUDA_Molecular_Virial_Interaction
+    // writes the mirror's current half during Forcefield, and the
+    // current/old mirror swap in lockstep with conf.exchange_state()
+    // turns it into "old" by the time Pressure_Calculation runs) --
+    // this standalone test bypasses that pipeline, so it must do the
+    // equivalent publish explicitly.
+    gpu_s.sim.cuda().publish_cpu_virial(gpu_s.conf);
+
+    // Pressure_Calculation + Berendsen_Barostat -- gpu_pcalc/gpu_baro
+    // are the real gpuBackend implementations under test here (not the
+    // generic Algorithm_Sequence::run() gpu_mirror_touches() fallback
+    // path, PLAN.md §10 step 16, which cpu_pcalc/cpu_baro still exercise).
     if (cpu_pressure_seq.run(cpu_s.topo, cpu_s.conf, cpu_s.sim) != 0 ||
         gpu_pressure_seq.run(gpu_s.topo, gpu_s.conf, gpu_s.sim) != 0) {
       flush_messages("pressure/barostat");

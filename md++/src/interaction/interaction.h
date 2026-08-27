@@ -115,6 +115,25 @@ namespace interaction
     virtual bool needs_fresh_cpu_force() const { return true; }
 
     /**
+     * @brief Same contract as needs_fresh_cpu_force(), for virial_tensor.
+     * Default false: unlike force, most CPU-only Interactions never read
+     * virial_tensor mid-step, so an unconditional flush here would be
+     * pure waste for the common case. Molecular_Virial_Interaction is the
+     * one real consumer -- it reads the atomic virial accumulated by
+     * GPU-native bonded/nonbonded terms (their mark_gpu_dirty(MIRROR_
+     * VIRIAL) calls) and corrects it to a molecular virial in place, so
+     * it must see the true accumulated total, not the zeroed-this-step
+     * mirror value that's still sitting on the CPU side otherwise. Found
+     * the same way as the POSITIONRES force-drop bug: GPU virial ended
+     * up wildly wrong (raw atomic virial, symmetric) vs. CPU's correct
+     * molecular virial (asymmetric, smaller) despite matching kinetic
+     * energy -- because nothing flushed MIRROR_VIRIAL before this
+     * Interaction's turn (Pressure_Calculation's own MIRROR_VIRIAL flush
+     * happens later, outside Forcefield entirely).
+     */
+    virtual bool needs_fresh_cpu_virial() const { return false; }
+
+    /**
      * @brief Does this Interaction have a real GPU-native implementation
      * (writes force directly into the GPU-resident mirror, no per-call
      * CPU round trip)? Default false. Used only for diagnostics --
