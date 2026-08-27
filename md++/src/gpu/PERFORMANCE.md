@@ -41,14 +41,16 @@ against earlier passes:
 |---|---|---|
 | CPU, single-threaded (`USE_CUDA=OFF` or `NTGPU=0`, `OMP` off) | ~2.2-2.25 ns/day | ~769-783 s |
 | **CPU, `OMP_NUM_THREADS=6`** (`cuda-off` preset, or `NTGPU=0` on `cuda-on`) | **~8.96-8.97 ns/day** | **~194.6-194.7 s** |
-| GPU active (`cuda-on`, `FPH` accumulation, `OMP_NUM_THREADS=6` set but irrelevant to the GPU path itself) | 4.56-4.60 ns/day | 375.7-380.8 s |
+| GPU active, pre-event-leak-fix (historical, see below) | 4.56-4.60 ns/day | 375.7-380.8 s |
+| **GPU active, with `PAIRLIST` `SKIN 0.6`** (see "What it would take to beat CPU+OMP") | **5.30 ns/day** | **328.1 s** |
 
-**GPU is currently ~1.96x *slower* than 6-thread CPU**, the reverse of
-the old single-thread comparison (GPU used to be ~2.0-2.1x *faster*).
-6 OpenMP threads roughly quadruple the CPU baseline (Amdahl's law,
-unsurprising), while the GPU number is unchanged by CPU threading (its
-own bottlenecks — see below — are elsewhere). This is the real
-baseline to beat going forward; see "What it would take to beat
+**GPU is currently ~1.68x *slower* than 6-thread CPU** (was ~1.96x
+before the `SKIN` fix below), the reverse of the old single-thread
+comparison (GPU used to be ~2.0-2.1x *faster*). 6 OpenMP threads
+roughly quadruple the CPU baseline (Amdahl's law, unsurprising), while
+the GPU number is largely unchanged by CPU threading (its own
+bottlenecks — see below — are elsewhere). This is the real baseline to
+beat going forward; see "What it would take to beat
 CPU+OMP" at the end of this file for next steps. Full TIMING block for
 the GPU run (`FPH` accumulation, post-event-leak-fix):
 
@@ -211,50 +213,80 @@ notes below.
 
 ## What it would take to beat CPU+OMP
 
-Current state: GPU 380.8s vs CPU (`OMP_NUM_THREADS=6`) 194.7s — GPU
-needs to roughly **halve** to catch up, not shave off a few percent.
-Two facts pin down where that has to come from:
+Current state (post-SKIN-fix, see below): GPU 328.1s vs CPU
+(`OMP_NUM_THREADS=6`) 194.7s. Two facts pin down where further gains
+have to come from:
 
-1. **`NonBonded` alone (249.2s) already exceeds CPU+OMP's *entire*
-   runtime (194.7s).** No amount of optimizing the rest of the GPU
-   profile (currently ~132s combined: bonded terms, `Leap_Frog_*`,
-   `TemperatureCalculation`, constraints) closes this gap on its own
-   — `NonBonded` has to come down substantially, or nothing else
-   matters.
+1. **`NonBonded` alone (186.6s post-fix, was 249.2s) is still close to
+   CPU+OMP's *entire* runtime (194.7s).** No amount of optimizing the
+   rest of the GPU profile (~141s combined: bonded terms,
+   `Leap_Frog_*`, `TemperatureCalculation`, constraints) closes this
+   gap on its own — `NonBonded` has to come down further.
 2. **CPU+OMP's own `NonBonded` (174.9s) is itself already
-   OpenMP-parallel** across its short/long-range solvent-solvent and
-   pairlist sub-buckets — this isn't a "GPU vs. unparallelized CPU"
-   comparison anymore, it's GPU vs. a real 6-way-threaded competitor.
-   The old single-thread-CPU framing (`NonBonded` 748.9s) is no longer
-   the bar to clear.
+   OpenMP-parallel** — this isn't a "GPU vs. unparallelized CPU"
+   comparison, it's GPU vs. a real 6-way-threaded competitor. The old
+   single-thread-CPU framing (`NonBonded` 748.9s) is no longer the bar
+   to clear. (Note on GPU architecture as an excuse: GROMACS gets real
+   speedups over multi-threaded CPU on the same class of consumer
+   card, so "weak FP64 on consumer GPUs" is not a sufficient
+   explanation for this gap on its own — the `FPH` tradeoff section's
+   analysis of double-`atomicAdd` throughput is real, but it's a
+   partial cost, not carte blanche for GPU being categorically slower
+   here.)
 
-Concretely, in priority order:
+**Done: the pairlist rebuild/classification profile, and a real fix.**
+Instrumented `CUDA_Pairlist_Algorithm::update()` directly (host-side
+`std::chrono` around `rebuild_candidates()` and `classify_tiles()`
+separately, `nsys`/`ncu` were not usable in this sandboxed environment
+— produced only a corrupted `.qdstrm`, `nsys export`/`nsys stats` both
+failed on it). Finding, over a 2000-step/400-`update()`-call diagnostic
+run at this benchmark's actual `PAIRLIST` config (`SKIN` column
+omitted, defaults to 0.0):
 
-1. **`NonBonded`'s pairlist (150.1s, 60% of `NonBonded`'s own GPU
-   time) — same "top pick" as before, now more urgent.** Real
-   profiling inside `CUDA_Pairlist_Algorithm_Impl` (rebuild-bound vs.
-   classification-bound vs. sort-bound, per `NSNB` cadence) hasn't been
-   done yet. This is the single largest lever available: shaving even
-   30-40% off the pairlist would already meaningfully close the gap to
-   CPU+OMP on its own.
-2. **`NonBonded`'s force/energy compute (98.7s)** — the `FPH`-precision
-   double-`atomicAdd` tradeoff (see above) is already paid; the next
-   lever here is likely tile/occupancy tuning rather than a precision
-   or algorithmic change, unprofiled so far.
-3. **The bucket-2 cluster (`Leap_Frog_Velocity` 15.7s,
-   `TemperatureCalculation` 16.5s, plus smaller ones) is still real,
-   still unfixed** — "Diagnosed: Unified Memory is the real cost"
-   below identifies the mechanism (`cudaMallocManaged` page-fault
-   migration) but the pinned-staging-buffer fix was never implemented.
-   Combined these are ~35-40s, smaller than either `NonBonded` bucket
-   but a genuine, understood, not-yet-executed fix.
-4. **Multi-GPU / larger batch sizes are out of scope for this
-   comparison** (single RTX 5060 Ti vs. 6 CPU threads) but worth
-   remembering: this GPU is a consumer part with comparatively few
-   SMs and weak FP64 throughput (see the `FPH` tradeoff section) —
-   the GPU-vs-CPU balance would look different on a datacenter card
-   with real FP64 throughput and more SMs to hide the pairlist's
-   latency behind.
+- Cost is split almost evenly: `rebuild_candidates()` 13.9s,
+  `classify_tiles()` 14.6s (400/400 calls each) — not dominated by
+  either phase in isolation.
+- But `rebuild_calls == update_calls == 400`, i.e. **every
+  classification cycle also triggers a full candidate rebuild.**
+  `needs_candidate_rebuild()` (`cuda_pairlist_algorithm_impl.cu`) has
+  an explicit `if (skin == 0.0) return true;` early-return — and
+  `sim.param().pairlist.skin` defaults to 0.0 unless the `PAIRLIST`
+  block's optional 7th `SKIN` column is set (`in_parameter.cc`). This
+  session's benchmark `.imd` never set it, so the skin-buffer
+  decoupling this code already implements (`needs_candidate_rebuild()`
+  comparing actual atom displacement since the last rebuild against
+  `skin`, letting `classify_tiles()` reuse an older candidate set when
+  safe) was silently inactive — a benchmark-configuration gap, not a
+  code gap.
+- Setting `SKIN 0.6` (nm) in the same diagnostic: `rebuild_calls`
+  dropped 400 → 42 (candidate rebuild now genuinely decoupled from the
+  `NSNB` classification cadence), pairlist 2000-step cost 28.7s →
+  16.6s. **Verified at full 10000-step scale**: total wall time 380.8s
+  → 328.1s (4.56 → 5.30 ns/day), `NonBonded` 249.2s → 186.6s, pairlist
+  sub-bucket 150.1s → 86.5s. Closes the gap to CPU+OMP from 1.96x
+  slower to **1.68x slower**. Config-only change, zero code risk (the
+  skin-buffer mechanism already has its own dedicated correctness
+  test, `cuda_skin_drift`, part of the standard suite).
+- `classify_tiles()`'s own cost (~14.6s/2000 steps, roughly unchanged
+  by skin — it still runs every classification cycle regardless) is
+  now the larger of the two phases and the next thing to profile in
+  detail if pairlist work continues; not yet broken down further
+  (exclusion checking vs. short/long bucketing vs. atomicAdd-heavy tile
+  writes).
+
+Remaining priorities, in order:
+
+1. **`classify_tiles()` internals** (~86.5s of the post-fix pairlist
+   total is now mostly this, not rebuild) — needs its own breakdown,
+   not yet done.
+2. **`NonBonded`'s force/energy compute (99.7s)** — the `FPH`-precision
+   double-`atomicAdd` tradeoff is already paid; next lever is likely
+   tile/occupancy tuning, unprofiled so far.
+3. **The bucket-2 cluster** (`Leap_Frog_Velocity` ~16.8s,
+   `TemperatureCalculation` ~17.8s, plus smaller ones, ~40s combined)
+   — "Diagnosed: Unified Memory is the real cost" below identifies the
+   mechanism (`cudaMallocManaged` page-fault migration); the
+   pinned-staging-buffer fix was never implemented.
 
 None of this changes the event-leak fix's own conclusion: that bug
 made every GPU run pay a spurious, unrelated ~3.5x tax that had
@@ -264,29 +296,10 @@ now that it's fixed, the remaining gap is real algorithmic work
 
 ## Recommendation: what to optimize next
 
-**Top pick — `NonBonded`'s pairlist cost (116.18s, 68% of NonBonded's
-own GPU time, the single largest number in the whole profile after the
-unavoidable force computation itself).** This is bucket 1, not bucket 2
-— real work (candidate search, Morton sort, tile classification over
-22712 atoms), already faster than CPU's own pairlist (139.8s), but not
-nearly as dramatically improved as the force kernel was (761s → 54s,
-4.5× vs pairlist's own 139.8s → 116.2s, only ~1.2×). That gap between
-"how much the force kernel improved" and "how much the pairlist
-improved" is the biggest remaining opportunity in the codebase, bigger
-than the entire bucket-2 cluster combined. It needs real profiling
-inside `CUDA_Pairlist_Algorithm_Impl` first (is it rebuild-bound?
-classification-bound, which runs every step regardless of the `NSNB`
-rebuild cadence? sort-bound?) before proposing a fix — I have not done
-that profiling yet, this is a "look here next" flag, not a diagnosed
-root cause.
-
-**Second pick, if the pairlist investigation isn't the priority:** the
-pinned-staging transfer fix ("Diagnosed: Unified Memory is the real
-cost" above) — this is the one fix that would validate or invalidate a
-lot of this session's "moves, doesn't vanish" findings at once
-(`Leap_Frog_Velocity`, `CUDA_M_Shake`, `Temperature_Calculation` all
-show the same shape). Higher confidence than the pairlist item since
-the root cause is now understood, not just flagged.
+Superseded by "What it would take to beat CPU+OMP" above, which has
+the current, profiled, and partially-fixed picture (pairlist
+rebuild/classification split, the `SKIN` config fix, and what's left).
+Kept here only as a pointer, not duplicated.
 
 (`Leap_Frog_Position`, `Berendsen_Barostat`/`RemoveCOMMotion`/`Lattice_
 Shift_Tracker`, and `Berendsen_Thermostat`/`NoseHoover_Thermostat`'s
