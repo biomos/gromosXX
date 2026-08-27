@@ -375,6 +375,20 @@ void gpu::CudaManager::zero_mirror_force(configuration::Configuration & conf) {
     // this step re-populates it.
     clear_producer_events(*mirror, gpu::MIRROR_FORCE);
     clear_producer_events(*mirror, gpu::MIRROR_CONSTRAINT_FORCE);
+    // Same reasoning applies to MIRROR_VIRIAL: every bonded term/
+    // NonBonded/active constraint algorithm calls mark_gpu_dirty(...,
+    // MIRROR_VIRIAL, its_stream) once per step (virial_accumulate_
+    // kernels.h), each appending one more event -- without this clear,
+    // field_producer_events[VIRIAL] grows by ~6 events every step
+    // forever (real cudaEventCreateWithFlags()/cudaEventRecord()
+    // resources, never destroyed), the same O(steps^2)-event-leak
+    // pattern MIRROR_LATTICE_SHIFT was already fixed for elsewhere in
+    // this file -- missed here when virial_tensor's on-device
+    // accumulation was added. (The dominant cost turned out to be a
+    // sibling leak on MIRROR_POS/MIRROR_VEL, fixed in lattice_shift_
+    // gpu.cc/leap_frog_gpu.cc -- this one alone is a smaller, real fix,
+    // not the full story.)
+    clear_producer_events(*mirror, gpu::MIRROR_VIRIAL);
 }
 
 int * gpu::CudaManager::constraint_error_flag_slot(unsigned slot) {

@@ -123,6 +123,18 @@ int algorithm::Leap_Frog_Velocity<util::gpuBackend>::apply(
     // clobber it with the (now stale) CPU value. gpu_mirror_touches()
     // == 0 keeps Algorithm_Sequence::run()'s default invalidation from
     // erasing this immediately after apply() returns.
+    //
+    // clear_stale_producer_events() first: this is the first algorithm
+    // in the sequence each step to write VEL, and VEL's freshness is
+    // essentially never invalidated anymore in normal operation
+    // (Forcefield/every constraint algorithm's gpu_mirror_touches() ==
+    // 0 -- GPU stays authoritative by design, src/gpu/CLAUDE.md), so
+    // field_producer_events[MIRROR_VEL] would otherwise grow by one
+    // event every step forever, never destroyed -- the exact O(steps^2)
+    // pattern already fixed for MIRROR_LATTICE_SHIFT/MIRROR_POS (see
+    // lattice_shift_gpu.cc's doc comment); rediscovered here via a
+    // 10000-step benchmark going from ~375s to ~1300s.
+    sim.cuda().clear_stale_producer_events(conf, gpu::MIRROR_VEL);
     sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_VEL, stream);
 
     this->m_timer.stop();

@@ -149,7 +149,23 @@ _apply(topology::Topology &topo,
   // configuration_view() above already resynced/waited on whatever was
   // pending, and mark_gpu_dirty() immediately below re-establishes
   // exactly one live event for this step's write.
-  sim.cuda().clear_stale_producer_events(conf, gpu::MIRROR_LATTICE_SHIFT);
+  //
+  // MIRROR_POS included here too, for the exact same reason: this is
+  // the first algorithm in the sequence each step to write POS
+  // (RemoveCOMMotion runs before it but only writes POS on its own
+  // skip-step cadence). Forcefield::gpu_mirror_touches() == 0 and
+  // CUDA_Shake/CUDA_Settle/CUDA_M_Shake/CUDA_Lincs's own
+  // gpu_mirror_touches() == 0 mean POS's freshness is essentially
+  // never invalidated anymore in normal operation (by design -- GPU
+  // stays authoritative, see src/gpu/CLAUDE.md's data-residency rule),
+  // so the old "resync_missing_fields() clears stale events as a side
+  // effect of a coarse resync" path that used to bound this list
+  // basically never fires either -- rediscovered via the exact same
+  // O(steps^2) pattern (measured: a 10000-step ubiquitin run went from
+  // ~375s to ~1300s, traced to field_producer_events[MIRROR_POS] and
+  // [MIRROR_VEL] growing by ~5/~2 events every step, unbounded, never
+  // destroyed). See leap_frog_gpu.cc for the matching MIRROR_VEL fix.
+  sim.cuda().clear_stale_producer_events(conf, gpu::MIRROR_LATTICE_SHIFT | gpu::MIRROR_POS);
 
   // O(9) host math, exact CPU formula (math::Periodicity<b>::
   // put_chargegroups_into_box_saving_shifts(), math/periodicity.cc) --
