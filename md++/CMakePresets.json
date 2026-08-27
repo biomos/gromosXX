@@ -9,22 +9,24 @@
         {
             "name": "cuda-on",
             "displayName": "CUDA Enabled",
-            "description": "Build with CUDA support",
+            "description": "Build with CUDA and OpenMP support",
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/build/cuda-on",
             "cacheVariables": {
                 "USE_CUDA": "ON",
+                "OMP": "ON",
                 "CMAKE_BUILD_TYPE": "Release"
             }
         },
         {
             "name": "cuda-off",
             "displayName": "CUDA Disabled",
-            "description": "Build without CUDA support",
+            "description": "Build without CUDA support, with OpenMP support",
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/build/cuda-off",
             "cacheVariables": {
                 "USE_CUDA": "OFF",
+                "OMP": "ON",
                 "CMAKE_BUILD_TYPE": "Release"
             }
         },
