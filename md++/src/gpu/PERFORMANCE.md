@@ -6,15 +6,21 @@ stream-ordered redesign, the `POSITIONRES`-dropped-force bug fix, the
 mixed-CPU/GPU warning mechanism, the `Temperature_Calculation` and
 `Leap_Frog_Position` deferred-sync fixes, `Berendsen_Barostat`'s GPU
 port plus `RemoveCOMMotion`/`Lattice_Shift_Tracker`'s deferred-sync
-fixes, and — this pass — switching force/constraint-force/virial/
-kinetic-energy/pressure-tensor accumulation to double precision
-(`FPH`), fixing `Berendsen_Thermostat`/`NoseHoover_Thermostat`'s
-per-step sync tax, and diagnosing (not yet fixing) the root cause of
-the "residual resync tug-of-war" from the previous pass — see
-"Diagnosed: Unified Memory is the real cost" below. See individual
-commits' messages for full narrative detail; this file is the standing
-reference for "what's the current performance picture and what's
-next," updated as further optimization work lands.
+fixes, switching force/constraint-force/virial/kinetic-energy/
+pressure-tensor accumulation to double precision (`FPH`), fixing
+`Berendsen_Thermostat`/`NoseHoover_Thermostat`'s per-step sync tax,
+porting `CUDA_Shake`/`CUDA_Settle` onto the shared GPU mirror,
+moving constraint_force/virial_tensor accumulation fully on-device —
+and, this pass, enabling OpenMP by default in the `cuda-on`/`cuda-off`
+presets (the relevant CPU baseline is multi-threaded, not
+single-threaded) and fixing a severe regression that re-benchmarking
+under that change surfaced: unbounded `field_producer_events` growth
+on `MIRROR_POS`/`MIRROR_VEL`/`MIRROR_VIRIAL` (a ~3.5x GPU slowdown,
+375s → ~1300s, unrelated to OpenMP itself — see that commit's message
+for the full root-cause trace). See individual commits' messages for
+full narrative detail; this file is the standing reference for "what's
+the current performance picture and what's next," updated as further
+optimization work lands.
 
 ## Benchmark setup
 
@@ -26,64 +32,76 @@ isotropic Berendsen pressure coupling, reaction-field electrostatics.
 file used for CPU and GPU runs (only the `GPU` block differs). GPU: RTX
 50-series class card, confirmed idle (`nvidia-smi`) before each run.
 
-Headline numbers, most recent run (GPU with `FPH`-precision force/
-virial accumulation and the `Berendsen_Thermostat` sync fix; CPU
-run on the same binary, `NTGPU=0`, for a true apples-to-apples
-comparison):
+Headline numbers, most recent run. **The relevant CPU baseline is now
+`OMP_NUM_THREADS=6` (12 logical cores available), not single-threaded**
+— single-thread numbers are kept below only for historical comparison
+against earlier passes:
 
 | | Performance | Wall time (sim) |
 |---|---|---|
-| CPU (this branch, `USE_CUDA=OFF`, or `NTGPU=0` on a `USE_CUDA=ON` build) | ~2.2-2.25 ns/day | ~769-783 s |
-| **GPU (this branch, GPU active, `FPH` accumulation)** | **4.60 ns/day** | **375.7 s** |
+| CPU, single-threaded (`USE_CUDA=OFF` or `NTGPU=0`, `OMP` off) | ~2.2-2.25 ns/day | ~769-783 s |
+| **CPU, `OMP_NUM_THREADS=6`** (`cuda-off` preset, or `NTGPU=0` on `cuda-on`) | **~8.96-8.97 ns/day** | **~194.6-194.7 s** |
+| GPU active (`cuda-on`, `FPH` accumulation, `OMP_NUM_THREADS=6` set but irrelevant to the GPU path itself) | 4.56-4.60 ns/day | 375.7-380.8 s |
 
-GPU delivers a genuine **~2.0-2.1× speedup** over CPU. This is down
-from the ~2.2-2.3× measured before this pass — see "The `FPH`
-precision tradeoff" below for why, and why it was still the right
-call. Full TIMING block for the current GPU run:
+**GPU is currently ~1.96x *slower* than 6-thread CPU**, the reverse of
+the old single-thread comparison (GPU used to be ~2.0-2.1x *faster*).
+6 OpenMP threads roughly quadruple the CPU baseline (Amdahl's law,
+unsurprising), while the GPU number is unchanged by CPU threading (its
+own bottlenecks — see below — are elsewhere). This is the real
+baseline to beat going forward; see "What it would take to beat
+CPU+OMP" at the end of this file for next steps. Full TIMING block for
+the GPU run (`FPH` accumulation, post-event-leak-fix):
 
 ```
-RemoveCOMMotion                        0.158
-Lattice_Shift_Tracker                  0.098
-Angle                                  9.116
-ImproperDihedral                       6.403
-Dihedral                               3.898
-Crossdihedral                          0.003
-NonBonded                            197.343   (compute forces energies 73.521 / 37.26%, pairlist 123.419 / 62.54%)
-MolecularVirial                        4.486
-Leap_Frog_Velocity                    24.380
-BerendsenThermostat                    0.285
-Leap_Frog_Position                     0.058
-CUDA_Lincs                             0.275
-CUDA_M_Shake                          36.651
-TemperatureCalculation                31.933
-PressureCalculation                    0.001
-BerendsenBarostat                      0.068
+RemoveCOMMotion                        0.008
+Lattice_Shift_Tracker                  0.112
+Angle                                  4.890
+ImproperDihedral                       5.644
+Dihedral                               4.176
+Crossdihedral                          0.004
+NonBonded                            249.247   (compute forces energies 98.740 / 39.62%, pairlist 150.093 / 60.22%)
+MolecularVirial                        4.331
+Leap_Frog_Velocity                    15.746
+BerendsenThermostat                    0.302
+Leap_Frog_Position                     0.064
+CUDA_Lincs                             0.319
+CUDA_M_Shake                           0.170
+TemperatureCalculation                16.516
+PressureCalculation                    0.003
+BerendsenBarostat                      0.106
 ```
 
-Same run, CPU-only (`NTGPU=0`, same binary/topology/config), for direct
-comparison — note the completely different cost shape (`NonBonded` is
-97% of CPU time; every "expensive on GPU" bucket-2 line above costs
-essentially nothing on CPU, since CPU has no fixed per-call sync tax to
-pay):
+Same run, CPU path, `OMP_NUM_THREADS=6` (`NTGPU=0`, same `cuda-on`
+binary/topology/config) — the current relevant comparison. Note the
+completely different cost shape: `NonBonded` still dominates (175s of
+195s total, ~90%), but each of its own sub-buckets is now itself
+OpenMP-parallelized (`shortrange solvent-solvent`/`longrange solvent-
+solvent`/`pairlist` are the big three), and every "expensive on GPU"
+bucket-2 line above (`Leap_Frog_Velocity`, `TemperatureCalculation`,
+`CUDA_M_Shake`, etc.) costs essentially nothing on CPU, since CPU has
+no fixed per-call sync tax to pay in the first place:
 
 ```
 RemoveCOMMotion                        0.002
-Lattice_Shift_Tracker                  0.750
-Angle                                  0.358
-ImproperDihedral                       0.246
-Dihedral                               0.635
-Crossdihedral                          0.002
-NonBonded                            748.880   (shortrange solvent-solvent 313.763 / 41.90%, longrange solvent-solvent 263.991 / 35.25%, pairlist 137.355 / 18.34%)
-MolecularVirial                        3.939
-Leap_Frog_Velocity                     0.511
-BerendsenThermostat                    0.220
-Leap_Frog_Position                     0.362
-Lincs                                  1.325   (solute 1.171 / 88.41%)
-M_Shake                                7.442   (solvent 6.782 / 91.14%)
-TemperatureCalculation                 1.751
-PressureCalculation                    0.002
-BerendsenBarostat                      0.174
+Lattice_Shift_Tracker                  0.813
+Angle                                  0.379
+ImproperDihedral                       0.268
+Dihedral                               0.693
+Crossdihedral                          0.004
+NonBonded                            174.853   (shortrange solvent-solvent 55.244 / 31.59%, longrange solvent-solvent 41.046 / 23.47%, pairlist 26.708 / 15.27%, unaccounted 41.728 / 23.86%)
+MolecularVirial                        4.451
+Leap_Frog_Velocity                     0.347
+BerendsenThermostat                    0.339
+Leap_Frog_Position                     0.198
+Lincs                                  1.640   (solute 1.429 / 87.12%)
+M_Shake                                3.848   (solvent 3.419 / 88.85%)
 ```
+
+The large "unaccounted time" bucket inside `NonBonded` (23.86%, ~42s)
+is new relative to the old single-thread breakdown and is itself worth
+investigating separately — likely OpenMP scheduling/barrier overhead
+across NonBonded's several `#pragma omp` regions, not yet profiled in
+detail.
 
 `NonBonded` is where GPU wins decisively: 748.9s → 197.3s, a genuine
 **3.8× speedup** on real embarrassingly-parallel compute. Every other
@@ -190,6 +208,59 @@ consumer needs the result, using the new `Algorithm::finalize_gpu_step()`
 `NonBonded`). Not every bucket-2 algorithm has a real "wait, is anyone
 downstream even going to look at this" gap to exploit — see per-algorithm
 notes below.
+
+## What it would take to beat CPU+OMP
+
+Current state: GPU 380.8s vs CPU (`OMP_NUM_THREADS=6`) 194.7s — GPU
+needs to roughly **halve** to catch up, not shave off a few percent.
+Two facts pin down where that has to come from:
+
+1. **`NonBonded` alone (249.2s) already exceeds CPU+OMP's *entire*
+   runtime (194.7s).** No amount of optimizing the rest of the GPU
+   profile (currently ~132s combined: bonded terms, `Leap_Frog_*`,
+   `TemperatureCalculation`, constraints) closes this gap on its own
+   — `NonBonded` has to come down substantially, or nothing else
+   matters.
+2. **CPU+OMP's own `NonBonded` (174.9s) is itself already
+   OpenMP-parallel** across its short/long-range solvent-solvent and
+   pairlist sub-buckets — this isn't a "GPU vs. unparallelized CPU"
+   comparison anymore, it's GPU vs. a real 6-way-threaded competitor.
+   The old single-thread-CPU framing (`NonBonded` 748.9s) is no longer
+   the bar to clear.
+
+Concretely, in priority order:
+
+1. **`NonBonded`'s pairlist (150.1s, 60% of `NonBonded`'s own GPU
+   time) — same "top pick" as before, now more urgent.** Real
+   profiling inside `CUDA_Pairlist_Algorithm_Impl` (rebuild-bound vs.
+   classification-bound vs. sort-bound, per `NSNB` cadence) hasn't been
+   done yet. This is the single largest lever available: shaving even
+   30-40% off the pairlist would already meaningfully close the gap to
+   CPU+OMP on its own.
+2. **`NonBonded`'s force/energy compute (98.7s)** — the `FPH`-precision
+   double-`atomicAdd` tradeoff (see above) is already paid; the next
+   lever here is likely tile/occupancy tuning rather than a precision
+   or algorithmic change, unprofiled so far.
+3. **The bucket-2 cluster (`Leap_Frog_Velocity` 15.7s,
+   `TemperatureCalculation` 16.5s, plus smaller ones) is still real,
+   still unfixed** — "Diagnosed: Unified Memory is the real cost"
+   below identifies the mechanism (`cudaMallocManaged` page-fault
+   migration) but the pinned-staging-buffer fix was never implemented.
+   Combined these are ~35-40s, smaller than either `NonBonded` bucket
+   but a genuine, understood, not-yet-executed fix.
+4. **Multi-GPU / larger batch sizes are out of scope for this
+   comparison** (single RTX 5060 Ti vs. 6 CPU threads) but worth
+   remembering: this GPU is a consumer part with comparatively few
+   SMs and weak FP64 throughput (see the `FPH` tradeoff section) —
+   the GPU-vs-CPU balance would look different on a datacenter card
+   with real FP64 throughput and more SMs to hide the pairlist's
+   latency behind.
+
+None of this changes the event-leak fix's own conclusion: that bug
+made every GPU run pay a spurious, unrelated ~3.5x tax that had
+nothing to do with the actual GPU-vs-CPU architectural comparison —
+now that it's fixed, the remaining gap is real algorithmic work
+(pairlist, mainly), not a bookkeeping bug.
 
 ## Recommendation: what to optimize next
 
