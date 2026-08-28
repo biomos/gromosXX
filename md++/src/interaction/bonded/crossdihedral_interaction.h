@@ -57,14 +57,27 @@ namespace interaction
     /**
      * init
      */
-    virtual int init(topology::Topology &topo, 
+    virtual int init(topology::Topology &topo,
 		     configuration::Configuration &conf,
 		     simulation::Simulation &sim,
 		     std::ostream &os = std::cout,
-		     bool quiet = false) 
+		     bool quiet = false)
     {
       // if (!quiet)
       // os << "Crossdihedral interaction\n";
+      // sim.param().force.crossdihedral defaults to 1 with no FORCE-
+      // block field to turn it off (simulation/parameter.h), so this
+      // Interaction is pushed into every Forcefield regardless of
+      // whether the topology defines any crossdihedral terms at all --
+      // most topologies (anything without CMAP-style terms, e.g. this
+      // ubiquitin benchmark) have zero. calculate_interactions() then
+      // does nothing (an empty-range loop), but the base class's
+      // needs_fresh_cpu_force()==true default still made Forcefield::
+      // calculate_interactions() flush_gpu_dirty(MIRROR_FORCE) -- a
+      // real device-wide sync + full force-array D2H copy -- before
+      // every single call, for zero benefit. Cache emptiness once here
+      // (topology is static for a run) instead of checking every step.
+      m_has_terms = !topo.solute().crossdihedrals().empty();
       return 0;
     };
     /**
@@ -73,8 +86,13 @@ namespace interaction
     virtual int calculate_interactions(topology::Topology & topo,
 				       configuration::Configuration & conf,
 				       simulation::Simulation & sim);
-    
+
+    // See init()'s doc comment: only request the CPU-fresh force
+    // publish when there are actually terms to read/write force for.
+    virtual bool needs_fresh_cpu_force() const override { return m_has_terms; }
+
   protected:
+    bool m_has_terms = true;
 
     /**
      * calculate nearest minimum
