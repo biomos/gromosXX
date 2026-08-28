@@ -38,6 +38,7 @@
 #include "../../gpu/cuda/manager/cuda_manager.h"
 #include "gpu/cuda/interaction/bonded/angle_kernels.h"
 #include "gpu/cuda/memory/virial_accumulate_kernels.h"
+#include "gpu/cuda/memory/energy_accumulate_kernels.h"
 
 #include "cuda_angle_interaction.h"
 
@@ -139,6 +140,11 @@ int interaction::CUDA_Angle_Interaction::calculate_interactions(
   // may have already accumulated this step.
   gpu::Configuration::View view = sim.cuda().configuration_view(conf, gpu::MIRROR_POS, m_stream);
 
+  if (!m_energy_registered) {
+    sim.cuda().ensure_energy_groups(conf, num_energy_groups);
+    m_energy_registered = true;
+  }
+
   gpu::launch_angle(
       view.current().pos, m_angle_i.data(), m_angle_j.data(), m_angle_k.data(), m_angle_type.data(),
       m_K.data(), m_cos0.data(), m_atom_energy_group.data(), m_num_angles,
@@ -157,16 +163,14 @@ int interaction::CUDA_Angle_Interaction::calculate_interactions(
       reinterpret_cast<FPH_TYPE*>(view.current().virial_tensor), m_virial.data(), m_stream);
   sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_VIRIAL, m_stream);
 
-  // Energy is a small, private, double-precision buffer (not part of
-  // the mirror -- see cuda_angle_interaction.h) so still needs a sync
-  // to read back, but only on this algorithm's own stream, not a
-  // device-wide barrier that would stall NonBonded/other bonded terms
-  // running concurrently.
-  cudaStreamSynchronize(m_stream);
-
-  for (unsigned g = 0; g < num_energy_groups; ++g) {
-    conf.current().energies.angle_energy[g] += m_angle_energy[g];
-  }
+  // Same on-device merge for energy -- see energy_accumulate_kernels.h.
+  // Replaces the previous cudaStreamSynchronize() + host merge loop
+  // (a real unified-memory page-fault migration every step for two
+  // doubles -- see git history for the profiling that found this):
+  // this class now does nothing host-blocking at all.
+  const gpu::EnergyMirrorPtrs eptrs = sim.cuda().energy_mirror_ptrs(conf);
+  gpu::launch_accumulate_energy(eptrs.angle, m_angle_energy.data(), num_energy_groups, m_stream);
+  sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_ENERGY, m_stream);
 
   m_timer.stop();
   return 0;

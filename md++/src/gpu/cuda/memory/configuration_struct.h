@@ -311,6 +311,64 @@ namespace gpu {
         mutable math::CuVArray lattice_shifts;
 
         /**
+         * @brief Per-energy-group scratch totals for the GPU-native
+         * bonded/special terms (CUDA_Angle_Interaction, CUDA_Dihedral_
+         * Interaction, CUDA_Improper_Dihedral_Interaction, CUDA_
+         * Quartic_Bond_Interaction, CUDA_Position_Restraint_
+         * Interaction), sized to num_energy_groups. Plain cudaMalloc'd
+         * device buffers (never touched from the host except by
+         * copy_energy_from_device()'s explicit cudaMemcpy) -- each
+         * contributing Interaction's own private per-step buffer
+         * atomicAdd-merges into these via energy_accumulate_kernels.h,
+         * on-device, instead of each keeping a private gpu::cuvector
+         * (managed memory) and reading it back with a host loop every
+         * step (a genuine unified-memory page-fault migration per
+         * touch -- see git history for the profiling that found this).
+         * Deliberately standalone like lattice_shifts above, not inside
+         * State/current/old: these are per-step scratch, zeroed once by
+         * zero_energy() and flushed once by copy_energy_from_device()
+         * (Energy_Calculation's own MIRROR_ENERGY touch), never cycled
+         * by exchange_state().
+         */
+        mutable double* energy_bond = nullptr;
+        mutable double* energy_angle = nullptr;
+        mutable double* energy_improper = nullptr;
+        mutable double* energy_dihedral = nullptr;
+        mutable double* energy_posrest = nullptr;
+        unsigned energy_num_groups = 0;
+
+        /**
+         * @brief Allocate/resize the energy_* buffers above to
+         * num_groups doubles each. Idempotent: a no-op if already
+         * sized to num_groups (the common case -- every GPU-native
+         * bonded/special term's init() calls this once, and
+         * num_energy_groups is fixed for the whole run, so only the
+         * first caller actually allocates).
+         */
+        void resize_energy_groups(unsigned num_groups);
+
+        /**
+         * @brief Zero all energy_* buffers -- called once per step,
+         * matching CudaManager::zero_mirror_force()'s convention.
+         */
+        void zero_energy(cudaStream_t stream);
+
+        /**
+         * @brief Publish the energy_* buffers into conf.old().energies.
+         * {bond,angle,improper,dihedral,posrest}_energy via a plain
+         * cudaMemcpy (not a host loop -- see this class's doc comment
+         * above for why that distinction is the entire point). Targets
+         * .old(), not .current(): by the time Energy_Calculation runs
+         * (after the leap-frog current/old swap), "old" is the CPU-side
+         * struct that was "current" during this step's Forcefield call,
+         * where the accumulation actually happened -- same convention
+         * Pressure_Calculation already uses for virial_tensor. Calls
+         * cudaDeviceSynchronize() internally, same as the other
+         * copy_*_from_device() routines.
+         */
+        void copy_energy_from_device(configuration::Configuration& conf);
+
+        /**
          * @brief Copy all arrays from CPU configuration to GPU (full sync).
          */
         void copy_to_device(configuration::Configuration& conf);
@@ -448,11 +506,16 @@ namespace gpu {
          * field they guard is next written or explicitly invalidated --
          * never accumulate unboundedly across steps.
          */
-        std::vector<cudaEvent_t> field_producer_events[7];
+        std::vector<cudaEvent_t> field_producer_events[8];
 
         ~Configuration() {
             for (std::vector<cudaEvent_t> & events : field_producer_events)
                 for (cudaEvent_t e : events) cudaEventDestroy(e);
+            if (energy_bond) cudaFree(energy_bond);
+            if (energy_angle) cudaFree(energy_angle);
+            if (energy_improper) cudaFree(energy_improper);
+            if (energy_dihedral) cudaFree(energy_dihedral);
+            if (energy_posrest) cudaFree(energy_posrest);
         }
     };
 }

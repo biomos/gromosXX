@@ -84,7 +84,7 @@ namespace {
     // so the per-field event lists never accumulate across steps or
     // outlive the write they were guarding.
     void clear_producer_events(gpu::Configuration & mirror, unsigned fields) {
-        for (unsigned bit = 0; bit < 7; ++bit) {
+        for (unsigned bit = 0; bit < 8; ++bit) {
             if (!(fields & (1u << bit))) continue;
             for (cudaEvent_t e : mirror.field_producer_events[bit]) cudaEventDestroy(e);
             mirror.field_producer_events[bit].clear();
@@ -152,7 +152,7 @@ namespace {
                                   unsigned missing, cudaStream_t stream) {
         if (stream == 0) return;
         const unsigned already_fresh = read_fields & ~missing;
-        for (unsigned bit = 0; bit < 7; ++bit) {
+        for (unsigned bit = 0; bit < 8; ++bit) {
             if (!(already_fresh & (1u << bit))) continue;
             for (cudaEvent_t e : mirror.field_producer_events[bit])
                 cudaStreamWaitEvent(stream, e, 0);
@@ -209,7 +209,7 @@ void gpu::CudaManager::mark_gpu_dirty(configuration::Configuration & conf, unsig
     // bits' vectors -- each vector owns and destroys its own handles,
     // so sharing would double-destroy). All recorded at the same stream
     // position, so they're functionally simultaneous.
-    for (unsigned bit = 0; bit < 7; ++bit) {
+    for (unsigned bit = 0; bit < 8; ++bit) {
         if (!(fields & (1u << bit))) continue;
         cudaEvent_t ev;
         cudaEventCreateWithFlags(&ev, cudaEventDisableTiming);
@@ -256,6 +256,15 @@ void gpu::CudaManager::flush_gpu_dirty(configuration::Configuration & conf, unsi
     if (to_flush & gpu::MIRROR_LATTICE_SHIFT) {
         mirror->copy_lattice_shifts_from_device(conf);
         mirror->gpu_dirty_fields &= ~gpu::MIRROR_LATTICE_SHIFT;
+    }
+    if (to_flush & gpu::MIRROR_ENERGY) {
+        // Every GPU-native bonded/special term already atomicAdd-
+        // merged its own contribution into the mirror's energy_*
+        // buffers (energy_accumulate_kernels.h) -- this is the one
+        // real publish point, at Energy_Calculation's own MIRROR_
+        // ENERGY touch.
+        mirror->copy_energy_from_device(conf);
+        mirror->gpu_dirty_fields &= ~gpu::MIRROR_ENERGY;
     }
     // BOX: nothing ever marks this dirty today, so there's no flush
     // routine needed for it yet -- add one here if a future writer
@@ -412,6 +421,57 @@ void gpu::CudaManager::zero_mirror_force(configuration::Configuration & conf) {
     // gpu.cc/leap_frog_gpu.cc -- this one alone is a smaller, real fix,
     // not the full story.)
     clear_producer_events(*mirror, gpu::MIRROR_VIRIAL);
+}
+
+void gpu::CudaManager::ensure_energy_groups(configuration::Configuration & conf, unsigned num_groups) {
+    gpu::Configuration * mirror = nullptr;
+    const std::size_t id = conf.id();
+
+    if (id == m_last_conf_id && m_last_conf_gpu) {
+        mirror = m_last_conf_gpu;
+    } else {
+        auto it = m_configurations.find(id);
+        if (it != m_configurations.end()) mirror = it->second.get();
+    }
+    if (!mirror) return;
+
+    mirror->resize_energy_groups(num_groups);
+}
+
+gpu::EnergyMirrorPtrs gpu::CudaManager::energy_mirror_ptrs(configuration::Configuration & conf) {
+    gpu::Configuration * mirror = nullptr;
+    const std::size_t id = conf.id();
+
+    if (id == m_last_conf_id && m_last_conf_gpu) {
+        mirror = m_last_conf_gpu;
+    } else {
+        auto it = m_configurations.find(id);
+        if (it != m_configurations.end()) mirror = it->second.get();
+    }
+    if (!mirror) return gpu::EnergyMirrorPtrs{};
+
+    return gpu::EnergyMirrorPtrs{
+        mirror->energy_bond, mirror->energy_angle, mirror->energy_improper,
+        mirror->energy_dihedral, mirror->energy_posrest};
+}
+
+void gpu::CudaManager::zero_mirror_energy(configuration::Configuration & conf) {
+    gpu::Configuration * mirror = nullptr;
+    const std::size_t id = conf.id();
+
+    if (id == m_last_conf_id && m_last_conf_gpu) {
+        mirror = m_last_conf_gpu;
+    } else {
+        auto it = m_configurations.find(id);
+        if (it != m_configurations.end()) mirror = it->second.get();
+    }
+    if (!mirror || mirror->energy_num_groups == 0) return;
+
+    mirror->zero_energy(0);
+    // Fresh step: every producer event guarding last step's energy_*
+    // values is now meaningless -- same reasoning as zero_mirror_
+    // force()'s MIRROR_VIRIAL clear.
+    clear_producer_events(*mirror, gpu::MIRROR_ENERGY);
 }
 
 int * gpu::CudaManager::constraint_error_flag_slot(unsigned slot) {

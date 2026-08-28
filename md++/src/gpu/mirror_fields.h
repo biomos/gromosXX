@@ -83,6 +83,20 @@ namespace gpu {
      * Lattice_Shift_Tracker<gpuBackend>'s own gpu_mirror_touches()==0.
      */
     MIRROR_LATTICE_SHIFT    = 1u << 6,
+    /**
+     * @brief conf.{current,old}().energies.{bond,angle,improper,
+     * dihedral,posrest}_energy -- per-energy-group scratch written by
+     * the GPU-native bonded/special terms (CUDA_Angle_Interaction etc.)
+     * via atomicAdd into one shared per-type device buffer instead of
+     * each keeping a private gpu::cuvector (managed memory) and
+     * touching it from the host every step. See gpu::Configuration's
+     * energy_* fields and gpu/cuda/memory/energy_accumulate_kernels.h.
+     * Deliberately NOT part of MIRROR_ALL, same rationale as MIRROR_
+     * LATTICE_SHIFT: only Energy_Calculation (the one real consumer)
+     * narrows gpu_mirror_touches() to this bit, so no other CPU-side
+     * algorithm's default flush pays for a resync it doesn't need.
+     */
+    MIRROR_ENERGY           = 1u << 7,
     MIRROR_ALL   = MIRROR_POS | MIRROR_VEL | MIRROR_FORCE | MIRROR_BOX |
                    MIRROR_CONSTRAINT_FORCE | MIRROR_VIRIAL,
   };

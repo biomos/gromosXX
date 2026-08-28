@@ -83,12 +83,13 @@ namespace interaction {
     gpu::cuvector<double>   m_posrest_energy;
     unsigned m_num_restraints = 0;
     bool m_initialized = false;
+    bool m_energy_registered = false;
 
-    // Own stream: force is written directly into the GPU-resident
-    // mirror (no sync at all); energy stays on a small private buffer
-    // needing its own sync to read back, but only on this stream, so it
-    // doesn't block NonBonded or the other bonded/special terms running
-    // concurrently on their own streams.
+    // Own stream: force/energy are both written directly into the
+    // GPU-resident mirror (atomicAdd) with no host sync at all --
+    // m_posrest_energy is private per-call scratch for the kernel to
+    // write into before that on-device merge, never touched from the
+    // host.
     cudaStream_t m_stream = 0;
   };
 

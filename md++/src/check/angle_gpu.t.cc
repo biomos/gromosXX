@@ -115,6 +115,14 @@ namespace {
     // it must do the same publish itself before reading conf.current().
     // force()/virial_tensor() below).
     gpu_s.sim.cuda().flush_gpu_dirty(gpu_s.conf, gpu::MIRROR_FORCE | gpu::MIRROR_VIRIAL);
+    // Energy is published to conf.old() (not .current()), matching
+    // Pressure_Calculation's own convention for virial_tensor -- see
+    // gpu::Configuration::copy_energy_from_device()'s doc comment: the
+    // real per-step publish point (Energy_Calculation) runs after the
+    // leap-frog current/old swap, so it targets whichever CPU struct is
+    // "old" by then. This standalone test never swaps, so it must read
+    // the same place the flush actually wrote.
+    gpu_s.sim.cuda().flush_gpu_dirty(gpu_s.conf, gpu::MIRROR_ENERGY);
 
     // See quartic_bond_gpu.t.cc's tolerance comment: bonded terms'
     // cost - cos0 (or dist2 - r0^2) formulas are near-cancellations near
@@ -139,7 +147,7 @@ namespace {
         static_cast<unsigned>(cpu_s.conf.current().energies.angle_energy.size());
     for (unsigned g = 0; g < num_energy_groups; ++g) {
       const double cpu_e = cpu_s.conf.current().energies.angle_energy[g];
-      const double gpu_e = gpu_s.conf.current().energies.angle_energy[g];
+      const double gpu_e = gpu_s.conf.old().energies.angle_energy[g];
       if (std::abs(cpu_e - gpu_e) > tol * std::max(1.0, std::abs(cpu_e))) {
         std::cerr << label << ": angle_energy[" << g << "] mismatch: cpu=" << cpu_e
                   << " gpu=" << gpu_e << std::endl;

@@ -22,6 +22,24 @@ namespace configuration {
     class Configuration;
 }
 
+namespace gpu {
+    /**
+     * @brief Raw device pointers to gpu::Configuration's per-energy-
+     * group scratch buffers (see that class's doc comment) -- plain
+     * pointers, not a View wrapper, since callers only ever pass them
+     * straight into energy_accumulate_kernels.h's launch_accumulate_
+     * energy(), never index them from a __global__ kernel through this
+     * struct itself. All null if `conf` has no mirror yet.
+     */
+    struct EnergyMirrorPtrs {
+        double* bond = nullptr;
+        double* angle = nullptr;
+        double* improper = nullptr;
+        double* dihedral = nullptr;
+        double* posrest = nullptr;
+    };
+}
+
 #define CUDA_VARIABLE_DISABLED() disabled(__FILE__, __LINE__, __func__)
 namespace gpu {
     class CudaDeviceManager;
@@ -414,6 +432,44 @@ namespace gpu {
              * already zeroed via cudaMalloc/resize).
              */
             void zero_mirror_force(configuration::Configuration & conf);
+
+            /**
+             * @brief Allocate/resize the GPU mirror's energy_* buffers
+             * (gpu::Configuration::resize_energy_groups()) to
+             * num_groups doubles each. Called once by each GPU-native
+             * bonded/special term's calculate_interactions() (guarded
+             * by its own "already resized" flag, since this must run
+             * after configuration_view() has guaranteed the mirror
+             * exists -- unlike zero_mirror_force()/mark_gpu_dirty(),
+             * this can't be a safe no-op on a missing mirror the first
+             * time it's needed). Idempotent: every caller passes the
+             * same num_energy_groups (fixed for the whole run), so only
+             * the first call actually allocates. No-op if `conf` has no
+             * mirror yet (should not happen given the ordering above;
+             * declared unconditionally like the other mirror methods
+             * for CPU-only-build compilation, genuine no-op there).
+             */
+            void ensure_energy_groups(configuration::Configuration & conf, unsigned num_groups);
+
+            /**
+             * @brief Raw device pointers to the mirror's energy_*
+             * buffers, for a GPU-native bonded/special term's own
+             * launch_accumulate_energy() call. Must be called after
+             * ensure_energy_groups() (or another configuration_view()-
+             * using call) has already guaranteed the mirror exists;
+             * returns all-null EnergyMirrorPtrs otherwise.
+             */
+            gpu::EnergyMirrorPtrs energy_mirror_ptrs(configuration::Configuration & conf);
+
+            /**
+             * @brief Zero the GPU mirror's energy_* buffers, matching
+             * zero_mirror_force()'s convention -- called once per step,
+             * before any GPU-native bonded/special term's
+             * calculate_interactions() runs. No-op if `conf` has no
+             * mirror yet or its energy_* buffers aren't allocated yet
+             * (nothing to zero).
+             */
+            void zero_mirror_energy(configuration::Configuration & conf);
 
             /**
              * @brief Zero the deferred constraint-error-flags buffer

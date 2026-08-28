@@ -57,6 +57,7 @@ set(GPU_HEADERS
     cuda/memory/vec3_convert.h
     cuda/memory/precision_cast_kernels.h
     cuda/memory/virial_accumulate_kernels.h
+    cuda/memory/energy_accumulate_kernels.h
     cuda/algorithm/temperature/atom_bath_arrays.h
     cuda/algorithm/temperature/thermostat_velocity_scale.h
     cuda/algorithm/pressure/berendsen_barostat_kernels.h
@@ -78,6 +79,7 @@ if(USE_CUDA)
         cuda/memory/configuration_struct.cu
         cuda/memory/precision_cast_kernels.cu
         cuda/memory/virial_accumulate_kernels.cu
+        cuda/memory/energy_accumulate_kernels.cu
         cuda/manager/cuda_device_worker.cu
         cuda/manager/cuda_device_manager.cu
         cuda/manager/cuda_memory_manager.cu

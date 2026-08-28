@@ -83,6 +83,16 @@ void gpu::CudaManager::exchange_mirror_state(configuration::Configuration & conf
 void gpu::CudaManager::zero_mirror_force(configuration::Configuration & conf) {
 }
 
+void gpu::CudaManager::ensure_energy_groups(configuration::Configuration & conf, unsigned num_groups) {
+}
+
+gpu::EnergyMirrorPtrs gpu::CudaManager::energy_mirror_ptrs(configuration::Configuration & conf) {
+    return gpu::EnergyMirrorPtrs{};
+}
+
+void gpu::CudaManager::zero_mirror_energy(configuration::Configuration & conf) {
+}
+
 void gpu::CudaManager::zero_constraint_error_flags() {
 }
 

@@ -75,12 +75,13 @@ namespace interaction {
     gpu::cuvector<double>   m_virial;
     unsigned m_num_dihedrals = 0;
     bool m_initialized = false;
+    bool m_energy_registered = false;
 
-    // Own stream: force is written directly into the GPU-resident
-    // mirror (no sync at all); energy/virial stay on a small private
-    // buffer needing their own sync to read back, but only on this
-    // stream, so it doesn't block NonBonded or the other bonded terms
-    // running concurrently on their own streams.
+    // Own stream: force/virial/energy are all written directly into
+    // the GPU-resident mirror (atomicAdd) with no host sync at all --
+    // m_dihedral_energy/m_virial are private per-call scratch for the
+    // kernel to write into before that on-device merge, never touched
+    // from the host.
     cudaStream_t m_stream = 0;
   };
 

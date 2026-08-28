@@ -146,6 +146,7 @@ namespace {
     // GPU mirror and mark_gpu_dirty()s it (see angle_gpu.t.cc's comment
     // for why this standalone test needs its own explicit publish).
     gpu_s.sim.cuda().flush_gpu_dirty(gpu_s.conf, gpu::MIRROR_FORCE);
+    gpu_s.sim.cuda().flush_gpu_dirty(gpu_s.conf, gpu::MIRROR_ENERGY);
 
     const double tol = 5e-3; // see quartic_bond_gpu.t.cc's tolerance comment
     int errors = 0;
@@ -166,7 +167,7 @@ namespace {
         static_cast<unsigned>(cpu_s.conf.current().energies.posrest_energy.size());
     for (unsigned g = 0; g < num_groups; ++g) {
       const double cpu_e = cpu_s.conf.current().energies.posrest_energy[g];
-      const double gpu_e = gpu_s.conf.current().energies.posrest_energy[g];
+      const double gpu_e = gpu_s.conf.old().energies.posrest_energy[g];
       const double escale = std::max(1.0, std::abs(cpu_e));
       if (std::abs(cpu_e - gpu_e) > tol * escale) {
         std::cerr << label << ": posrest energy mismatch in group " << g

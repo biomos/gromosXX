@@ -39,6 +39,7 @@
 #include "../../gpu/cuda/manager/cuda_manager.h"
 #include "gpu/cuda/interaction/bonded/improper_dihedral_kernels.h"
 #include "gpu/cuda/memory/virial_accumulate_kernels.h"
+#include "gpu/cuda/memory/energy_accumulate_kernels.h"
 
 #include "cuda_improper_dihedral_interaction.h"
 
@@ -137,6 +138,11 @@ int interaction::CUDA_Improper_Dihedral_Interaction::calculate_interactions(
 
   gpu::Configuration::View view = sim.cuda().configuration_view(conf, gpu::MIRROR_POS, m_stream);
 
+  if (!m_energy_registered) {
+    sim.cuda().ensure_energy_groups(conf, num_energy_groups);
+    m_energy_registered = true;
+  }
+
   gpu::launch_improper_dihedral(
       view.current().pos, m_dihedral_i.data(), m_dihedral_j.data(), m_dihedral_k.data(),
       m_dihedral_l.data(), m_dihedral_type.data(),
@@ -152,11 +158,12 @@ int interaction::CUDA_Improper_Dihedral_Interaction::calculate_interactions(
       reinterpret_cast<FPH_TYPE*>(view.current().virial_tensor), m_virial.data(), m_stream);
   sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_VIRIAL, m_stream);
 
-  cudaStreamSynchronize(m_stream);
-
-  for (unsigned g = 0; g < num_energy_groups; ++g) {
-    conf.current().energies.improper_energy[g] += m_improper_energy[g];
-  }
+  // Same on-device merge for energy -- see energy_accumulate_kernels.h
+  // and cuda_angle_interaction.cc's identical comment. No host sync at
+  // all in this class anymore.
+  const gpu::EnergyMirrorPtrs eptrs = sim.cuda().energy_mirror_ptrs(conf);
+  gpu::launch_accumulate_energy(eptrs.improper, m_improper_energy.data(), num_energy_groups, m_stream);
+  sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_ENERGY, m_stream);
 
   m_timer.stop();
   return 0;

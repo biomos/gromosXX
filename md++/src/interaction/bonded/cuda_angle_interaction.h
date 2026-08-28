@@ -74,12 +74,17 @@ namespace interaction {
     gpu::cuvector<double>   m_virial;
     unsigned m_num_angles = 0;
     bool m_initialized = false;
+    // Set once the mirror's shared energy_* buffers are known to exist
+    // (see CudaManager::ensure_energy_groups()'s doc comment) -- avoids
+    // re-issuing that call every step.
+    bool m_energy_registered = false;
 
-    // Own stream: force is written directly into the GPU-resident
-    // mirror (no sync at all); energy/virial stay on a small private
-    // buffer needing their own sync to read back, but only on this
-    // stream, so it doesn't block NonBonded or the other bonded terms
-    // running concurrently on their own streams.
+    // Own stream: force/virial/energy are all written directly into
+    // the GPU-resident mirror (atomicAdd, see energy_accumulate_
+    // kernels.h/virial_accumulate_kernels.h) with no host sync at all --
+    // m_angle_energy/m_virial are private per-call scratch for the
+    // kernel to write into before that on-device merge, never touched
+    // from the host.
     cudaStream_t m_stream = 0;
   };
 

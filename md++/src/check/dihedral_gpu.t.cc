@@ -128,6 +128,7 @@ namespace {
     // mirror and mark_gpu_dirty()s it (see angle_gpu.t.cc's comment for
     // why this standalone test needs its own explicit publish).
     gpu_s.sim.cuda().flush_gpu_dirty(gpu_s.conf, gpu::MIRROR_FORCE | gpu::MIRROR_VIRIAL);
+    gpu_s.sim.cuda().flush_gpu_dirty(gpu_s.conf, gpu::MIRROR_ENERGY);
 
     // See quartic_bond_gpu.t.cc's tolerance comment.
     const double tol = 5e-3;
@@ -149,7 +150,7 @@ namespace {
         static_cast<unsigned>(cpu_s.conf.current().energies.dihedral_energy.size());
     for (unsigned g = 0; g < num_energy_groups; ++g) {
       const double cpu_e = cpu_s.conf.current().energies.dihedral_energy[g];
-      const double gpu_e = gpu_s.conf.current().energies.dihedral_energy[g];
+      const double gpu_e = gpu_s.conf.old().energies.dihedral_energy[g];
       if (std::abs(cpu_e - gpu_e) > tol * std::max(1.0, std::abs(cpu_e))) {
         std::cerr << label << ": dihedral_energy[" << g << "] mismatch: cpu=" << cpu_e
                   << " gpu=" << gpu_e << std::endl;

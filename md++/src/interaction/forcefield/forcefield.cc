@@ -130,6 +130,11 @@ int interaction::Forcefield
   // matching the CPU-side zero right above, not per-Interaction. No-op
   // in CPU-only builds or if no GPU mirror exists yet.
   sim.cuda().zero_mirror_force(conf);
+  // Same "zero once centrally, then only ever accumulate" discipline
+  // for the per-energy-group scratch the GPU-native bonded/special
+  // terms atomicAdd into (gpu::MIRROR_ENERGY) -- see gpu::
+  // Configuration's energy_* fields' doc comment.
+  sim.cuda().zero_mirror_energy(conf);
 
   if (sim.param().force.force_groups) {
     for(unsigned int i = 0; i < conf.special().force_groups.size(); ++i) {

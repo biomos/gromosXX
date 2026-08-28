@@ -38,6 +38,7 @@
 
 #include "../../gpu/cuda/manager/cuda_manager.h"
 #include "gpu/cuda/interaction/special/position_restraint_kernels.h"
+#include "gpu/cuda/memory/energy_accumulate_kernels.h"
 
 #include "cuda_position_restraint_interaction.h"
 
@@ -122,6 +123,11 @@ int interaction::CUDA_Position_Restraint_Interaction::calculate_interactions(
   // already accumulated into the mirror this step.
   gpu::Configuration::View view = sim.cuda().configuration_view(conf, gpu::MIRROR_POS, m_stream);
 
+  if (!m_energy_registered) {
+    sim.cuda().ensure_energy_groups(conf, num_energy_groups);
+    m_energy_registered = true;
+  }
+
   gpu::launch_position_restraint(
       view.current().pos, m_seq.data(), m_ref.data(), m_inv_bf_scale.data(),
       static_cast<FPL_TYPE>(sim.param().posrest.force_constant),
@@ -131,14 +137,12 @@ int interaction::CUDA_Position_Restraint_Interaction::calculate_interactions(
 
   sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_FORCE, m_stream);
 
-  // Energy is a small, private, double-precision buffer (not part of
-  // the mirror) so still needs a sync to read back, but only on this
-  // algorithm's own stream, not a device-wide barrier.
-  cudaStreamSynchronize(m_stream);
-
-  for (unsigned g = 0; g < num_energy_groups; ++g) {
-    conf.current().energies.posrest_energy[g] += m_posrest_energy[g];
-  }
+  // Same on-device merge for energy -- see energy_accumulate_kernels.h
+  // and cuda_angle_interaction.cc's identical comment. No host sync at
+  // all in this class anymore.
+  const gpu::EnergyMirrorPtrs eptrs = sim.cuda().energy_mirror_ptrs(conf);
+  gpu::launch_accumulate_energy(eptrs.posrest, m_posrest_energy.data(), num_energy_groups, m_stream);
+  sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_ENERGY, m_stream);
 
   m_timer.stop();
   return 0;
