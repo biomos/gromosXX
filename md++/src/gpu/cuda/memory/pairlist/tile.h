@@ -150,12 +150,31 @@ namespace gpu
            * silently dropped" (check_candidate_overflow(),
            * cuda_pairlist_algorithm_impl.cu) aren't affected by this
            * clamp.
+           *
+           * m_size/m_overflow are plain device memory (cudaMalloc), not
+           * managed -- see TileVecT's own member doc comment for why.
+           * `__CUDA_ARCH__` branches the one shared signature: the
+           * device path dereferences directly (same as always), the
+           * host path does an explicit small D2H copy instead of
+           * relying on Unified Memory's page-fault migration.
            */
-          __device__ __host__ unsigned size() const { return *m_size < m_capacity ? *m_size : m_capacity; }
+          __device__ __host__ unsigned size() const {
+#ifdef __CUDA_ARCH__
+              return *m_size < m_capacity ? *m_size : m_capacity;
+#else
+              unsigned h_size = 0;
+              cudaMemcpy(&h_size, m_size, sizeof(unsigned), cudaMemcpyDeviceToHost);
+              return h_size < m_capacity ? h_size : m_capacity;
+#endif
+          }
           __device__ __host__ unsigned capacity() const { return m_capacity; }
           __device__ __host__ TileT* data() { return m_data; }
           __device__ __host__ const TileT* data() const { return m_data; }
-          __host__ bool was_overflowed() const { return *m_overflow; }
+          __host__ bool was_overflowed() const {
+              bool h_overflow = false;
+              cudaMemcpy(&h_overflow, m_overflow, sizeof(bool), cudaMemcpyDeviceToHost);
+              return h_overflow;
+          }
 
       private:
           TileT *m_data;
@@ -167,9 +186,16 @@ namespace gpu
       __host__ TileVecT(size_t capacity = 0)
           : m_data(nullptr), m_size(nullptr), m_capacity(0), m_overflow(nullptr)
       {
-          // Allocate in Unified Memory
-          cudaMallocManaged(&m_size, sizeof(unsigned));
-          cudaMallocManaged(&m_overflow, sizeof(bool));
+          // Plain device memory, not managed -- see the member doc
+          // comments below for why (m_size/m_overflow are written by
+          // device atomics every classify/build cycle and read from
+          // host every cycle too, a write-then-immediate-host-read
+          // pattern that's close to worst-case for Unified Memory's
+          // page-fault migration; m_data itself only needs to be
+          // device-visible in the hot path -- see its own comment).
+          cudaMalloc(&m_size, sizeof(unsigned));
+          cudaMalloc(&m_overflow, sizeof(bool));
+          reset_size_and_overflow();
           if (capacity > 0) {
               allocate(capacity);
           }
@@ -182,19 +208,28 @@ namespace gpu
       }
 
       __host__ void allocate(size_t capacity) {
-          // Allocate Unified Memory
+          // m_data stays Unified Memory, unlike m_size/m_overflow above:
+          // unpack_tiles_into() (cuda_pairlist_algorithm_impl.cu, used
+          // by to_pairlist_container() -- only reached from
+          // pairlist_cuda_equivalence.t.cc today, not the production
+          // hot path) dereferences TileT entries directly from host
+          // code via operator[], which would segfault against a plain
+          // device pointer. m_data is also written by many concurrent
+          // device threads via push_back() every classify/build cycle,
+          // not read-then-immediately-rewritten by host the way m_size/
+          // m_overflow are, so it doesn't have the same pathological
+          // ping-pong access pattern -- lower priority to change, and
+          // riskier given the direct-host-index usage above.
           cudaMallocManaged(&m_data, sizeof(TileT) * capacity);
           m_capacity = capacity;
-          *m_size = 0;
-          *m_overflow = false;
+          reset_size_and_overflow();
       }
 
       __host__ void deallocate() {
           if (m_data) cudaFree(m_data);
           m_data = nullptr;
-          *m_size = 0;
           m_capacity = 0;
-          *m_overflow = false;
+          reset_size_and_overflow();
       }
 
       __host__ void reserve(unsigned new_capacity) {
@@ -216,7 +251,7 @@ namespace gpu
        */
       __host__ void resize(unsigned new_size) {
           reserve(new_size);
-          *m_size = new_size;
+          cudaMemcpy(m_size, &new_size, sizeof(unsigned), cudaMemcpyHostToDevice);
       }
 
       __device__ __host__ TileT& operator[](size_t i) {
@@ -233,8 +268,15 @@ namespace gpu
       __device__ bool push_back(const TileT& tile);
 
       /// Clamped to m_capacity -- see View::size()'s doc comment above.
+      /// __CUDA_ARCH__-branched -- see View::size()'s doc comment for why.
       __device__ __host__ unsigned size() const {
+#ifdef __CUDA_ARCH__
           return *m_size < m_capacity ? *m_size : m_capacity;
+#else
+          unsigned h_size = 0;
+          cudaMemcpy(&h_size, m_size, sizeof(unsigned), cudaMemcpyDeviceToHost);
+          return h_size < m_capacity ? h_size : m_capacity;
+#endif
       }
 
       __device__ __host__ unsigned capacity() const {
@@ -250,17 +292,28 @@ namespace gpu
       }
 
       __host__ bool was_overflowed() const {
-          return *m_overflow;
+          bool h_overflow = false;
+          cudaMemcpy(&h_overflow, m_overflow, sizeof(bool), cudaMemcpyDeviceToHost);
+          return h_overflow;
       }
 
       __host__ void reset_overflow() {
-          if (m_overflow) *m_overflow = false;
+          if (m_overflow) {
+              const bool false_ = false;
+              cudaMemcpy(m_overflow, &false_, sizeof(bool), cudaMemcpyHostToDevice);
+          }
       }
 
       __host__ void clear() {
-          cudaMemset(m_data, 0, m_capacity * sizeof(TileT));
-          *m_size = 0;
-          *m_overflow = false;
+          // No memset -- everything is governed by m_size, so leaving
+          // stale tile contents behind past the new (zero) size is
+          // fine: every reader clamps to size(), and every live entry
+          // is fully overwritten by push_back() before anything reads
+          // it. Was a real, measured cost (cudaMemset over the full
+          // reserved capacity, not the actual per-cycle occupancy,
+          // every classification cycle) for literally no correctness
+          // benefit.
+          reset_size_and_overflow();
       }
 
       /**
@@ -272,23 +325,36 @@ namespace gpu
 
   private:
       /**
+       * @brief Zeroes m_size/m_overflow (both plain device memory, so a
+       * host-side `*m_size = 0` isn't valid -- one small H2D memcpy each,
+       * shared by allocate()/deallocate()/clear() instead of repeating
+       * the two cudaMemcpy calls at each of those three call sites.
+       */
+      __host__ void reset_size_and_overflow() {
+          const unsigned zero = 0;
+          cudaMemcpy(m_size, &zero, sizeof(unsigned), cudaMemcpyHostToDevice);
+          const bool false_ = false;
+          cudaMemcpy(m_overflow, &false_, sizeof(bool), cudaMemcpyHostToDevice);
+      }
+
+      /**
        * @brief Tiles - data host/device transparent array in unified memory
-       * 
+       *
        */
       TileT *m_data;
       /**
-       * @brief current size of the array writable by device
-       * 
+       * @brief current size of the array, plain device memory (cudaMalloc)
+       * -- see constructor's doc comment.
        */
       unsigned *m_size;
       /**
        * @brief total array capacity, passed by value to kernels
-       * 
+       *
        */
       unsigned m_capacity;
       /**
-       * @brief overflow flag writable by device, set to True if m_size > m_capacity
-       * 
+       * @brief overflow flag, plain device memory (cudaMalloc) -- see
+       * constructor's doc comment.
        */
       bool *m_overflow;
   };
