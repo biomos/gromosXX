@@ -452,7 +452,8 @@ gpu::EnergyMirrorPtrs gpu::CudaManager::energy_mirror_ptrs(configuration::Config
 
     return gpu::EnergyMirrorPtrs{
         mirror->energy_bond, mirror->energy_angle, mirror->energy_improper,
-        mirror->energy_dihedral, mirror->energy_posrest};
+        mirror->energy_dihedral, mirror->energy_posrest,
+        mirror->energy_lj, mirror->energy_crf};
 }
 
 void gpu::CudaManager::zero_mirror_energy(configuration::Configuration & conf) {

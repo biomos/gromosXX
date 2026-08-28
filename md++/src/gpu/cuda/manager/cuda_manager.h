@@ -37,6 +37,10 @@ namespace gpu {
         double* improper = nullptr;
         double* dihedral = nullptr;
         double* posrest = nullptr;
+        // Flattened [gi * num_groups + gj], see gpu::Configuration::
+        // energy_lj/energy_crf's doc comment.
+        double* lj = nullptr;
+        double* crf = nullptr;
     };
 }
 

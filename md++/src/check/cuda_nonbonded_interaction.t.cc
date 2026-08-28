@@ -264,6 +264,10 @@ namespace {
     // mirror and mark_gpu_dirty()s it (see angle_gpu.t.cc's comment for
     // why this standalone test needs its own explicit publish).
     s.sim.cuda().flush_gpu_dirty(s.conf, gpu::MIRROR_FORCE);
+    // Energy is published to conf.old() (not .current()), matching
+    // Pressure_Calculation's own convention -- see angle_gpu.t.cc's
+    // identical comment.
+    s.sim.cuda().flush_gpu_dirty(s.conf, gpu::MIRROR_ENERGY);
 
     const unsigned num_groups = static_cast<unsigned>(s.topo.energy_groups().size());
 
@@ -273,8 +277,8 @@ namespace {
 
     for (unsigned gi = 0; gi < num_groups; ++gi) {
       for (unsigned gj = 0; gj < num_groups; ++gj) {
-        const double gpu_e_lj  = s.conf.current().energies.lj_energy[gi][gj];
-        const double gpu_e_crf = s.conf.current().energies.crf_energy[gi][gj];
+        const double gpu_e_lj  = s.conf.old().energies.lj_energy[gi][gj];
+        const double gpu_e_crf = s.conf.old().energies.crf_energy[gi][gj];
         const double ref_e_lj  = ref.lj_energy[gi][gj];
         const double ref_e_crf = ref.crf_energy[gi][gj];
         if (std::abs(gpu_e_lj - ref_e_lj) > tol * std::max(1.0, std::abs(ref_e_lj))) {

@@ -30,6 +30,7 @@
 #include "gpu/cuda/interaction/nonbonded/kernels/one_four_kernels.h"
 #include "gpu/cuda/interaction/nonbonded/kernels/displacement.h"
 #include "gpu/cuda/memory/virial_accumulate_kernels.h"
+#include "gpu/cuda/memory/energy_accumulate_kernels.h"
 #include "block_pairlist.h"
 
 #include "cuda_pairlist_algorithm_impl.h"
@@ -774,6 +775,11 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::compute_forces_energies(
     gpu::Configuration::View view = sim.cuda().configuration_view(conf, gpu::MIRROR_POS, m_stream);
     const math::CuVArray::View pos = view.current().pos;
     FPH3_TYPE * const mirror_force = view.current().force.data();
+
+    if (!m_energy_registered) {
+        sim.cuda().ensure_energy_groups(conf, m_num_energy_groups);
+        m_energy_registered = true;
+    }
     const math::boundary_enum boundary = conf.boundary_type;
     const math::Box box = conf.current().box;
 
@@ -864,19 +870,20 @@ void interaction::CUDA_Pairlist_Algorithm_Impl::compute_forces_energies(
 
     sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_FORCE, m_stream);
 
-    // Energy/virial are small, private, double-precision buffers (not
-    // part of the mirror) so still need a sync to read back, but only on
-    // this algorithm's own stream, not a device-wide barrier.
-    cudaStreamSynchronize(m_stream);
-
-    // Direct per-[gi][gj] accumulation, same style as
-    // nonbonded_innerloop.cc's CPU inner loop -- no scalar out-params.
-    for (unsigned gi = 0; gi < m_num_energy_groups; ++gi) {
-        for (unsigned gj = 0; gj < m_num_energy_groups; ++gj) {
-            const unsigned k = gi * m_num_energy_groups + gj;
-            conf.current().energies.lj_energy[gi][gj]  += m_e_lj[k]  + m_e_lj_long[k];
-            conf.current().energies.crf_energy[gi][gj] += m_e_crf[k] + m_e_crf_long[k];
-        }
+    // Same on-device merge as the bonded/special terms (energy_
+    // accumulate_kernels.h) -- atomicAdd short-range + frozen long-range
+    // straight into the mirror's shared energy_lj/energy_crf buffers,
+    // no host readback at all. Replaces the previous cudaStreamSynchronize()
+    // + host per-[gi][gj] loop (a real unified-memory page-fault
+    // migration every step -- see git history for the profiling that
+    // found this for the bonded terms; same gpu::cuvector pattern here).
+    {
+        const gpu::EnergyMirrorPtrs eptrs = sim.cuda().energy_mirror_ptrs(conf);
+        gpu::launch_accumulate_energy(eptrs.lj, m_e_lj.data(), num_buckets, m_stream);
+        gpu::launch_accumulate_energy(eptrs.lj, m_e_lj_long.data(), num_buckets, m_stream);
+        gpu::launch_accumulate_energy(eptrs.crf, m_e_crf.data(), num_buckets, m_stream);
+        gpu::launch_accumulate_energy(eptrs.crf, m_e_crf_long.data(), num_buckets, m_stream);
+        sim.cuda().mark_gpu_dirty(conf, gpu::MIRROR_ENERGY, m_stream);
     }
 
     // Atomic virial, exact CPU formula (nonbonded_innerloop.cc):

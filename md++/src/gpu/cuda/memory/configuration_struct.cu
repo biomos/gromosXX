@@ -135,22 +135,30 @@ void gpu::Configuration::resize_energy_groups(unsigned num_groups) {
     if (energy_improper) cudaFree(energy_improper);
     if (energy_dihedral) cudaFree(energy_dihedral);
     if (energy_posrest) cudaFree(energy_posrest);
+    if (energy_lj) cudaFree(energy_lj);
+    if (energy_crf) cudaFree(energy_crf);
     const size_t bytes = sizeof(double) * num_groups;
+    const size_t bucket_bytes = sizeof(double) * num_groups * num_groups;
     CUDA_CHECK(cudaMalloc(&energy_bond, bytes));
     CUDA_CHECK(cudaMalloc(&energy_angle, bytes));
     CUDA_CHECK(cudaMalloc(&energy_improper, bytes));
     CUDA_CHECK(cudaMalloc(&energy_dihedral, bytes));
     CUDA_CHECK(cudaMalloc(&energy_posrest, bytes));
+    CUDA_CHECK(cudaMalloc(&energy_lj, bucket_bytes));
+    CUDA_CHECK(cudaMalloc(&energy_crf, bucket_bytes));
     energy_num_groups = num_groups;
 }
 
 void gpu::Configuration::zero_energy(cudaStream_t stream) {
     const size_t bytes = sizeof(double) * energy_num_groups;
+    const size_t bucket_bytes = bytes * energy_num_groups;
     cudaMemsetAsync(energy_bond, 0, bytes, stream);
     cudaMemsetAsync(energy_angle, 0, bytes, stream);
     cudaMemsetAsync(energy_improper, 0, bytes, stream);
     cudaMemsetAsync(energy_dihedral, 0, bytes, stream);
     cudaMemsetAsync(energy_posrest, 0, bytes, stream);
+    cudaMemsetAsync(energy_lj, 0, bucket_bytes, stream);
+    cudaMemsetAsync(energy_crf, 0, bucket_bytes, stream);
 }
 
 void gpu::Configuration::copy_energy_from_device(configuration::Configuration& conf) {
@@ -172,6 +180,19 @@ void gpu::Configuration::copy_energy_from_device(configuration::Configuration& c
 
     cudaMemcpy(tmp.data(), energy_posrest, bytes, cudaMemcpyDeviceToHost);
     for (unsigned g = 0; g < energy_num_groups; ++g) conf.old().energies.posrest_energy[g] += tmp[g];
+
+    const size_t num_buckets = static_cast<size_t>(energy_num_groups) * energy_num_groups;
+    std::vector<double> tmp_buckets(num_buckets);
+
+    cudaMemcpy(tmp_buckets.data(), energy_lj, sizeof(double) * num_buckets, cudaMemcpyDeviceToHost);
+    for (unsigned gi = 0; gi < energy_num_groups; ++gi)
+        for (unsigned gj = 0; gj < energy_num_groups; ++gj)
+            conf.old().energies.lj_energy[gi][gj] += tmp_buckets[gi * energy_num_groups + gj];
+
+    cudaMemcpy(tmp_buckets.data(), energy_crf, sizeof(double) * num_buckets, cudaMemcpyDeviceToHost);
+    for (unsigned gi = 0; gi < energy_num_groups; ++gi)
+        for (unsigned gj = 0; gj < energy_num_groups; ++gj)
+            conf.old().energies.crf_energy[gi][gj] += tmp_buckets[gi * energy_num_groups + gj];
 }
 
 void gpu::Configuration::copy_lattice_shifts_to_device(const configuration::Configuration& conf) {

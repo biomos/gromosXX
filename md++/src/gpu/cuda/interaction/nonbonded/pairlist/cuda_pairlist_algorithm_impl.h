@@ -350,6 +350,10 @@ namespace interaction {
        * crf_energy's shape), not a single scalar.
        */
       unsigned m_num_energy_groups = 1;
+      // Set once the mirror's shared energy_lj/energy_crf buffers are
+      // known to exist (see CudaManager::ensure_energy_groups()'s doc
+      // comment) -- avoids re-issuing that call every step.
+      bool m_energy_registered = false;
       /**
        * Short-range force is no longer a private buffer -- it's written
        * directly into the GPU-resident mirror (view.current().force),

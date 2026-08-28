@@ -335,15 +335,28 @@ namespace gpu {
         mutable double* energy_improper = nullptr;
         mutable double* energy_dihedral = nullptr;
         mutable double* energy_posrest = nullptr;
+        /**
+         * @brief LJ/CRF energy accumulators from CUDA_Nonbonded_
+         * Interaction, flattened [gi * num_groups + gj] (matching
+         * configuration::Energy::lj_energy/crf_energy's per-energy-
+         * group-*pair* matrix shape, num_groups*num_groups entries --
+         * not a per-group vector like the bonded terms' buffers above).
+         * Same on-device atomicAdd-merge/single-cudaMemcpy discipline.
+         */
+        mutable double* energy_lj = nullptr;
+        mutable double* energy_crf = nullptr;
         unsigned energy_num_groups = 0;
 
         /**
-         * @brief Allocate/resize the energy_* buffers above to
-         * num_groups doubles each. Idempotent: a no-op if already
-         * sized to num_groups (the common case -- every GPU-native
-         * bonded/special term's init() calls this once, and
-         * num_energy_groups is fixed for the whole run, so only the
-         * first caller actually allocates).
+         * @brief Allocate/resize the energy_* buffers above --
+         * energy_{bond,angle,improper,dihedral,posrest} to num_groups
+         * doubles each, energy_{lj,crf} to num_groups*num_groups.
+         * Idempotent: a no-op if already sized to num_groups (the
+         * common case -- every GPU-native bonded/special/nonbonded
+         * term's calculate_interactions() calls this once, guarded by
+         * its own "already registered" flag, and num_energy_groups is
+         * fixed for the whole run, so only the first caller actually
+         * allocates).
          */
         void resize_energy_groups(unsigned num_groups);
 
@@ -516,6 +529,8 @@ namespace gpu {
             if (energy_improper) cudaFree(energy_improper);
             if (energy_dihedral) cudaFree(energy_dihedral);
             if (energy_posrest) cudaFree(energy_posrest);
+            if (energy_lj) cudaFree(energy_lj);
+            if (energy_crf) cudaFree(energy_crf);
         }
     };
 }

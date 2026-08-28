@@ -229,6 +229,10 @@ namespace {
     // mirror and mark_gpu_dirty()s it (see angle_gpu.t.cc's comment for
     // why this standalone test needs its own explicit publish).
     s.sim.cuda().flush_gpu_dirty(s.conf, gpu::MIRROR_FORCE);
+    // Energy is published to conf.old() (not .current()), matching
+    // Pressure_Calculation's own convention -- see angle_gpu.t.cc's
+    // identical comment.
+    s.sim.cuda().flush_gpu_dirty(s.conf, gpu::MIRROR_ENERGY);
 
     // Isolate the RF-excluded contribution: subtract out the regular
     // pairlist-driven LJ/CRF result (computed the same way
@@ -271,6 +275,7 @@ namespace {
       }
       io::messages.clear();
       s2.sim.cuda().flush_gpu_dirty(s2.conf, gpu::MIRROR_FORCE);
+      s2.sim.cuda().flush_gpu_dirty(s2.conf, gpu::MIRROR_ENERGY);
 
       for (unsigned i = 0; i < num_atoms; ++i) {
         s.conf.current().force(i) -= s2.conf.current().force(i);
@@ -278,8 +283,8 @@ namespace {
       const unsigned num_groups = static_cast<unsigned>(s.topo.energy_groups().size());
       for (unsigned gi = 0; gi < num_groups; ++gi) {
         for (unsigned gj = 0; gj < num_groups; ++gj) {
-          s.conf.current().energies.crf_energy[gi][gj] -=
-              s2.conf.current().energies.crf_energy[gi][gj];
+          s.conf.old().energies.crf_energy[gi][gj] -=
+              s2.conf.old().energies.crf_energy[gi][gj];
         }
       }
       delete ni2;
@@ -292,7 +297,7 @@ namespace {
 
     for (unsigned gi = 0; gi < num_groups; ++gi) {
       for (unsigned gj = 0; gj < num_groups; ++gj) {
-        const double gpu_e_crf = s.conf.current().energies.crf_energy[gi][gj];
+        const double gpu_e_crf = s.conf.old().energies.crf_energy[gi][gj];
         const double ref_e_crf = ref.crf_energy[gi][gj];
         if (std::abs(gpu_e_crf - ref_e_crf) > tol * std::max(1.0, std::abs(ref_e_crf))) {
           std::cerr << label << ": e_crf mismatch at group (" << gi << "," << gj
