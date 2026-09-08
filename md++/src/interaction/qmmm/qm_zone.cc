@@ -74,6 +74,29 @@ int interaction::QM_Zone::init(topology::Topology& topo,
                                const configuration::Configuration& conf, 
                                const simulation::Simulation& sim) {
   //int err = 0;
+
+  // With explicit SchNet-v2 dynamic-charge embedding, QM--MM Coulomb energy
+  // and forces are evaluated by the QEq embedding.  A perturbed atom normally
+  // bypasses topo.charge() and uses the A/B charges stored in PERTATOMPARAM;
+  // leaving those charges active would therefore add a second classical CRF
+  // interaction.  Neutralize only the classical endpoint charges of permanent
+  // inner-QM atoms.  Masses, IACs/LJ parameters, and buffer-region charge
+  // handling are deliberately left unchanged.
+  if (sim.param().perturbation.perturbation
+      && sim.param().qmmm.qmmm == simulation::qmmm_mechanical
+      && sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic
+      && sim.param().qmmm.software == simulation::qm_schnetv2) {
+    for (auto it = topo.perturbed_solute().atoms().begin(),
+              to = topo.perturbed_solute().atoms().end(); it != to; ++it) {
+      if (topo.is_qm(it->first)) {
+        DEBUG(8, "Disabling classical A/B CRF charges for explicit-QEq QM atom "
+                     << it->first << ": A=" << it->second.A_charge()
+                     << " B=" << it->second.B_charge());
+        it->second.A_charge(0.0);
+        it->second.B_charge(0.0);
+      }
+    }
+  }
   
   DEBUG(12,"Getting QM atoms");
   if ((m_err = this->get_qm_atoms(topo, conf, sim)))
@@ -587,6 +610,12 @@ int interaction::QM_Zone::gather_chargegroups_from_centers(const topology::Topol
                                               std::set<AtomType>& atom_set,
                                               const double cutoff2,
                                               const std::vector<const interaction::QM_Atom*>& centers) {
+  if (centers.empty()) {
+    io::messages.add("Cannot gather chargegroups without a cutoff center",
+                     "QM_Zone", io::message::error);
+    return E_INPUT_ERROR;
+  }
+
   math::Periodicity<B> periodicity(conf.current().box);
   /** We are running twice almost the same loop for solute and solvent.
    * COG of solute is calculated normally, but in solvent, first atom is
@@ -728,8 +757,11 @@ void interaction::QM_Zone::emplace_atom(
         const double charge,
         const int buffer_state)
 {
-  // Add only ACTIVE buffer atoms
-  if (buffer_state > 0) {
+  // A negative state means that an adaptive-buffer candidate is currently
+  // inactive. It must still be considered here so it can re-enter when its
+  // chargegroup moves back inside the buffer cutoff. State zero is the only
+  // value that means "not a buffer candidate".
+  if (buffer_state != 0) {
     it = set.emplace_hint(it, index, pos, atomic_number);
   }
 }
@@ -756,8 +788,9 @@ bool interaction::QM_Zone::skip_cg<interaction::QM_Atom>(
         const unsigned index)
 {
   // When building the buffer region:
-  // skip QM atoms and atoms that are NOT active buffer candidates
-  return topo.is_qm(index) || topo.is_qm_buffer(index) <= 0;
+  // skip QM atoms and true non-buffer atoms. Temporarily inactive adaptive
+  // candidates (state -1) must remain eligible for geometric re-entry.
+  return topo.is_qm(index) || topo.is_qm_buffer(index) == 0;
 }
 
 template<>
@@ -799,7 +832,17 @@ int interaction::QM_Zone::_get_buffer_atoms(topology::Topology& topo,
   }
   const double cutoff2 = sim.param().qmmm.buffer_zone.cutoff * sim.param().qmmm.buffer_zone.cutoff;
   std::set<QM_Atom> buffer_atoms;
-  if ((m_err = this->gather_chargegroups<B>(topo, conf, sim, buffer_atoms, cutoff2)))
+  // Adaptive-buffer membership is defined relative to the true inner QM
+  // region only. Static buffer atoms remain in this->qm across updates, but
+  // must not act as selection centers for nearby adaptive solvent.
+  std::vector<const interaction::QM_Atom*> adaptive_centers;
+  adaptive_centers.reserve(this->qm.size());
+  for (std::set<QM_Atom>::const_iterator it = this->qm.begin();
+       it != this->qm.end(); ++it) {
+    if (topo.is_qm(it->index)) adaptive_centers.push_back(&(*it));
+  }
+  if ((m_err = this->gather_chargegroups_from_centers<B>(
+          topo, conf, sim, buffer_atoms, cutoff2, adaptive_centers)))
     return m_err;
   
   // ADDED MICHAEL added if statement to check for static buffer
@@ -877,9 +920,18 @@ void interaction::QM_Zone::get_mm_atoms(const topology::Topology& topo,
    * rather specific for QM
    */
   this->mm.clear();
+
+  const bool dynamic_charges =
+      (sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic);
+  const bool needs_or_environment =
+      (sim.param().qmmm.qmmm > simulation::qmmm_mechanical)
+      || dynamic_charges;
+
   if (sim.param().boundary.boundary == math::vacuum
-      && sim.param().qmmm.qmmm == simulation::qmmm_mechanical) {
-    // Include only link atoms
+      && !needs_or_environment) {
+    // Plain mechanical embedding with constant QM charges does not need an
+    // electrostatic OR representation. Only linked MM atoms are required for
+    // link-force redistribution.
     DEBUG(9, "Gathering only linked MM atoms");
     for (std::set< std::pair<unsigned,unsigned> >::const_iterator
         it = topo.qmmm_link().begin(), to = topo.qmmm_link().end();
@@ -890,13 +942,20 @@ void interaction::QM_Zone::get_mm_atoms(const topology::Topology& topo,
     }
   }
   else if (sim.param().boundary.boundary == math::vacuum
-            && sim.param().qmmm.qmmm != simulation::qmmm_mechanical
+            && needs_or_environment
             && sim.param().qmmm.cutoff == 0.0) {
-    // Include all - allowed only with vacuum PBC
-    DEBUG(9, "Gathering all MM atoms");
+    // In vacuum, RCUTQM = 0 means that the complete outer region contributes
+    // to electrostatic embedding or to the OR potential used by dynamic
+    // charges/QEq.
+    DEBUG(9, "Gathering all MM atoms for OR electrostatic potential");
     for (unsigned int i = 0; i < topo.num_atoms(); ++i) {
-      if ( !topo.is_qm(i) && !topo.is_qm_buffer(i) ) {
-        DEBUG(9, "Adding atom " << i);
+      const int buffer_state = topo.is_qm_buffer(i);
+
+      // Exclude IR atoms and active BR atoms (states 1 and 2). Inactive
+      // adaptive-buffer candidates (state -1) belong to the OR and must be
+      // included.
+      if (!topo.is_qm(i) && buffer_state <= 0) {
+        DEBUG(9, "Adding OR atom " << i);
         this->mm.emplace(i, conf.current().pos(i), topo.qm_atomic_number(i), topo.charge(i));
       }
     }

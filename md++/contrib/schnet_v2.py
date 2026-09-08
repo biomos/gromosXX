@@ -1,5 +1,6 @@
 import numpy as np
 from pathlib import Path
+import fcntl
 import os
 import torch
 import yaml
@@ -7,9 +8,8 @@ import ase
 import schnetpack as spk
 
 EV_TO_KJMOL = 96.4853321233  
-# Coulomb prefactor
-K_E_KJMOL_NM_E2 = 138.935456  # kJ/mol·nm·e^-2
-K_E_EV_NM_E2 = K_E_KJMOL_NM_E2 / EV_TO_KJMOL  # convert to eV·nm·e^-2
+# Coulomb prefactor in the same distance unit used by the MLP.
+K_E_KJMOL_A_E2 = 1389.35456  # kJ/mol·Å·e^-2
 
 class YamlParser:
     def __init__(self, yaml_file):
@@ -128,11 +128,11 @@ class ExtendedConverter(spk.interfaces.AtomsConverter):
             inputs["spin_multiplicity"] = torch.tensor([multiplicity], dtype=torch.float32, device=self.device)
             
         # Add per-atom external potential phi only if present
-        if "phi" in atoms.arrays:
-            phi = atoms.arrays["phi"]
+        if "phi_static" in atoms.arrays:
+            phi = atoms.arrays["phi_static"]
             phi = torch.tensor(phi, dtype=torch.float32, device=self.device)
             # ensure shape (N, 1) or (N,) depending on what your model expects
-            inputs["phi"] = phi
+            inputs["phi_static"] = phi
         return inputs
     
 
@@ -217,7 +217,12 @@ class SchNet_V2_Calculator:
 
     def __init__(self, model_path: str, val_model_paths: list,
                  nn_valid_freq: int, write_energy_freq: int,
-                 spin_multiplicity:int,total_charge:int) -> None:
+                 spin_multiplicity:int, total_charge:int,
+                 electrostatic_damping: str = "soft",
+                 electrostatic_sigma_A: float = 0.01,
+                 qeq_mode: str = "vacuum",
+                 ntwse: int = 0,
+                 val_thresh: float = 0.0) -> None:
         """
         Initialize the calculator.
         """
@@ -240,6 +245,55 @@ class SchNet_V2_Calculator:
         self.write_energy_freq = write_energy_freq
         self.spin_multiplicity = spin_multiplicity
         self.total_charge = total_charge
+
+        sigma_from_environment = os.environ.get(
+            "SCHNET_ELECTROSTATIC_SIGMA_A"
+        )
+        if sigma_from_environment is not None:
+            try:
+                electrostatic_sigma_A = float(sigma_from_environment)
+            except ValueError as error:
+                raise ValueError(
+                    "SCHNET_ELECTROSTATIC_SIGMA_A must be a number in angstrom"
+                ) from error
+
+        if electrostatic_damping not in {"soft", "erf", "none"}:
+            raise ValueError("electrostatic_damping must be 'soft', 'erf', or 'none'")
+        if not np.isfinite(electrostatic_sigma_A) or electrostatic_sigma_A <= 0.0:
+            raise ValueError(
+                "electrostatic_sigma_A must be a finite positive number in angstrom"
+            )
+        self.electrostatic_damping = electrostatic_damping
+        self.electrostatic_sigma_A = float(electrostatic_sigma_A)
+        qeq_mode = os.environ.get("SCHNET_QEQ_MODE", qeq_mode).strip().lower()
+        qeq_mode_aliases = {
+            "vac": "vacuum",
+            "vacqeq": "vacuum",
+            "vacuum": "vacuum",
+            "pol": "polarized",
+            "polqeq": "polarized",
+            "polarized": "polarized",
+        }
+        if qeq_mode not in qeq_mode_aliases:
+            raise ValueError(
+                "qeq_mode/SCHNET_QEQ_MODE must be vacuum (VacQEq) or "
+                "polarized (PolQEq)"
+            )
+        self.qeq_mode = qeq_mode_aliases[qeq_mode]
+        print(
+            "B2ELEC "
+            f"damping={self.electrostatic_damping} "
+            f"sigma_A={self.electrostatic_sigma_A:.8g} "
+            f"qeq_mode={self.qeq_mode}",
+            flush=True,
+        )
+        self.ntwse = int(ntwse)
+        self.val_thresh = float(val_thresh)
+
+        phi_output_file = os.environ.get("SCHNET_PHI_STATIC_FILE")
+        self.phi_static_output_file = Path(phi_output_file) if phi_output_file else None
+        if self.phi_static_output_file is not None:
+            self.phi_static_output_file.parent.mkdir(parents=True, exist_ok=True)
 
     
     def get_calculator(self, model_path) -> spk.interfaces.SpkCalculator:
@@ -329,13 +383,16 @@ class SchNet_V2_Calculator:
         r_or_A: torch.Tensor | None = None,
         q_or: torch.Tensor | None = None,
         cutoff_nm: float | None = None,
+        n_link_atoms: int = 0,
     ) -> list[float]:
         """
         Committee energy list.
 
         - legacy: model ASE energy (kJ/mol) (this is your E_mlp)
-        - dynamic_charges (B2): returns E_mlp (NOT E_total)
+        - dynamic_charges (B2): returns E_mlp only. Embedding-energy committee
+          values are retained separately as an opt-in diagnostic.
         """
+        self._last_val_embedding_energies = []
         if len(self.val_calculators) == 0:
             return []
 
@@ -353,15 +410,17 @@ class SchNet_V2_Calculator:
             rq = r_qeq_A.detach().clone().requires_grad_(True)
             ro = r_or_A.detach().clone().requires_grad_(True)
 
-            _, _, _, _, E_mlp, _ = self._b2_eval_model(
+            E_total, _, _, _, E_mlp, _ = self._b2_eval_model(
                 calculator=val_calc,
                 system=system,
                 r_qeq_A=rq,
                 r_or_A=ro,
                 q_or=q_or,
                 cutoff_nm=cutoff_nm,
+                n_link_atoms=n_link_atoms,
             )
             val_energies.append(float(E_mlp))
+            self._last_val_embedding_energies.append(float(E_total - E_mlp))
 
         return val_energies
     
@@ -373,12 +432,13 @@ class SchNet_V2_Calculator:
         r_or_A: torch.Tensor | None = None,
         q_or: torch.Tensor | None = None,
         cutoff_nm: float | None = None,
+        n_link_atoms: int = 0,
     ) -> float:
         """
         Committee max-force disagreement (max over atoms of sigmaF_alpha).
 
         - legacy: uses ASE forces (MLP forces)
-        - dynamic_charges (B2): uses forces from E_mlp only (NOT E_total)
+        - dynamic_charges (B2): uses MLP-only forces on QEq sites
         """
         if len(self.val_calculators) == 0:
             return 0.0
@@ -390,9 +450,6 @@ class SchNet_V2_Calculator:
                 model_forces.append(np.linalg.norm(f_kj_A, axis=1))
         else:
             assert r_qeq_A is not None and r_or_A is not None and q_or is not None and cutoff_nm is not None
-            assert self.forces_mlp is not None
-
-            # production model MLP-only forces
             model_forces = [np.linalg.norm(self.forces_mlp, axis=1)]
 
             for val_calc in self.val_calculators:
@@ -406,6 +463,7 @@ class SchNet_V2_Calculator:
                     r_or_A=ro,
                     q_or=q_or,
                     cutoff_nm=cutoff_nm,
+                    n_link_atoms=n_link_atoms,
                 )
                 model_forces.append(np.linalg.norm(F_mlp_qeq, axis=1))
 
@@ -421,11 +479,13 @@ class SchNet_V2_Calculator:
         r_or_A: torch.Tensor,
         q_or: torch.Tensor,
         cutoff_nm: float,
+        n_link_atoms: int = 0,
+        store_diagnostics: bool = False,
     ):
         """
         Evaluate one model in B2.
         Returns both:
-        - total:   E_total = E_mlp + sum_i q_i*phi_i   and forces from E_total
+        - total: E_total = E_mlp + 0.5*(q0 + q_phi) dot phi and its forces
         - mlp-only: E_mlp and forces from E_mlp
 
         Returns:
@@ -436,14 +496,18 @@ class SchNet_V2_Calculator:
         E_mlp_kJmol       : float
         F_mlp_qeq_kJmol_A : np.ndarray (Nq,3)
         """
-        r_qeq_nm = r_qeq_A * 0.1
-        r_or_nm  = r_or_A * 0.1
-
         inputs = calculator.converter(system)
         inputs[spk.properties.R] = r_qeq_A
 
-        phi = self._coulomb_phi_ev(r_qeq_nm, r_or_nm, q_or, cutoff_nm)
-        inputs["phi"] = phi
+        # GROMOS already supplies the pairlisted OR atoms. No second distance
+        # cutoff is applied here.
+        phi = self._coulomb_phi_kjmol(r_qeq_A, r_or_A, q_or)
+        phi = self._zero_link_atom_phi(phi, n_link_atoms)
+        inputs["phi_static"] = phi
+        inputs["qeq_polarize"] = torch.tensor(
+            getattr(self, "qeq_mode", "vacuum") == "polarized",
+            device=phi.device,
+        )
 
         # Forward without force modules
         model = calculator.model
@@ -462,14 +526,37 @@ class SchNet_V2_Calculator:
                 continue
             inputs = mod(inputs)
 
+        # This manual B2 path bypasses AtomisticModel.forward(), so reproduce
+        # its saved postprocessing step (including model-specific offsets).
+        if getattr(model, "do_postprocessing", False):
+            for postprocessor in getattr(model, "postprocessors", []):
+                inputs = postprocessor(inputs)
+
         out = inputs
 
         # --- energies ---
         E_mlp = out[calculator.energy_key].sum()   # kJ/mol (per your SpkCalculator config)
-        q = out["charges"]                        # e
+        q0 = out["charges_vac"]                    # vacuum QEq charges, e
+        q_phi = out["charges"]                     # field-polarized charges, e
+        E_embedding = out["qeq_embedding_energy"].sum()  # kJ/mol
+        E_total = E_mlp + E_embedding
 
-        E_qphi = torch.sum(q * phi) * EV_TO_KJMOL  # kJ/mol
-        E_total = E_mlp + E_qphi
+        # Fixed-vacuum-charge reference used only for force decomposition.
+        # The physical production force below differentiates the full
+        # variational embedding energy without detaching either charge solution.
+        if store_diagnostics:
+            E_static_direct = torch.sum(q0.detach() * phi)
+            dEdirect_dRqeq, dEdirect_dRor = torch.autograd.grad(
+                E_mlp + E_static_direct,
+                [r_qeq_A, r_or_A],
+                create_graph=False,
+                retain_graph=True,
+                allow_unused=True,
+            )
+            if dEdirect_dRqeq is None:
+                dEdirect_dRqeq = torch.zeros_like(r_qeq_A)
+            if dEdirect_dRor is None:
+                dEdirect_dRor = torch.zeros_like(r_or_A)
 
         # --- forces from E_total (what you integrate) ---
         dEt_dRqeq, dEt_dRor = torch.autograd.grad(
@@ -500,11 +587,37 @@ class SchNet_V2_Calculator:
 
         F_mlp_qeq = (-dEm_dRqeq).detach().cpu().numpy()
 
+        if store_diagnostics:
+            self._last_phi_static = phi.detach().cpu().numpy().astype(np.float32, copy=False)
+            F_direct_qeq = (-dEdirect_dRqeq).detach().cpu().numpy()
+            F_direct_or = (-dEdirect_dRor).detach().cpu().numpy()
+            F_response_qeq = F_total_qeq - F_direct_qeq
+            F_response_or = F_total_or - F_direct_or
+            self._last_b2_diag = self._collect_b2_diagnostics(
+                E_total=E_total,
+                E_mlp=E_mlp,
+                E_embedding=E_embedding,
+                qeq_mode=getattr(self, "qeq_mode", "vacuum"),
+                q0=q0,
+                q_phi=q_phi,
+                phi=phi,
+                r_qeq_A=r_qeq_A,
+                r_or_A=r_or_A,
+                F_total_qeq=F_total_qeq,
+                F_total_or=F_total_or,
+                F_direct_qeq=F_direct_qeq,
+                F_direct_or=F_direct_or,
+                F_response_qeq=F_response_qeq,
+                F_response_or=F_response_or,
+                F_mlp_qeq=F_mlp_qeq,
+                n_link_atoms=n_link_atoms,
+            )
+
         return (
             float(E_total.detach().cpu().item()),
             F_total_qeq,
             F_total_or,
-            q.detach().cpu().numpy(),
+            q_phi.detach().cpu().numpy(),
             float(E_mlp.detach().cpu().item()),
             F_mlp_qeq,
         )
@@ -518,11 +631,13 @@ class SchNet_V2_Calculator:
         or_positions_nm: list | None = None,
         or_charges_e: list | None = None,
         cutoff_nm: float | None = None,
+        n_link_atoms: int = 0,
     ) -> None:
         """
         Unified next-step:
         - dynamic_charges=False: classic SchNetPack ASE energy+forces
-        - dynamic_charges=True : B2 energy+forces (E_mlp + q·phi) + OR forces
+        - dynamic_charges=True : variational explicit-QEq energy+forces
+          (E_mlp + 0.5*(q0 + q_phi) dot phi) + OR forces
         Committee validation uses the SAME definition in each regime.
         """
         system = ase.Atoms(numbers=atomic_numbers, positions=positions_A)
@@ -554,6 +669,8 @@ class SchNet_V2_Calculator:
                 else:
                     all_E = np.array(val_energies + [self.energy], dtype=float)
                     self.nn_valid_ene = all_E.std(ddof=1)
+                self.nn_valid_mlp = self.nn_valid_ene
+                self.nn_valid_mlp_maxF = self.nn_valid_maxF
 
             return None
 
@@ -566,7 +683,7 @@ class SchNet_V2_Calculator:
         r_qeq_A = torch.tensor(positions_A, dtype=torch.float32, device=self.torchdevice, requires_grad=True)
 
         if len(or_positions_nm) > 0:
-            r_or_A = torch.tensor(or_positions_nm, dtype=torch.float32, device=self.torchdevice, requires_grad=True) * 10.0
+            r_or_A = torch.tensor(np.asarray(or_positions_nm) * 10.0, dtype=torch.float32, device=self.torchdevice, requires_grad=True)
             q_or = torch.tensor(or_charges_e, dtype=torch.float32, device=self.torchdevice)
         else:
             r_or_A = torch.zeros((0, 3), dtype=torch.float32, device=self.torchdevice, requires_grad=True)
@@ -580,6 +697,8 @@ class SchNet_V2_Calculator:
             r_or_A=r_or_A,
             q_or=q_or,
             cutoff_nm=cutoff_nm,
+            n_link_atoms=n_link_atoms,
+            store_diagnostics=True,
         )
 
         # what MD uses
@@ -592,6 +711,23 @@ class SchNet_V2_Calculator:
         self.energy_mlp = float(E_mlp)
         self.forces_mlp = F_mlp_qeq
 
+        if time_step % self.write_energy_freq == 0:
+            self._print_b2_diagnostics(time_step)
+
+        fd_freq = int(os.environ.get("SCHNET_B2_FD_CHECK_FREQ", "0"))
+        if fd_freq > 0 and time_step % fd_freq == 0:
+            self._print_b2_finite_difference_check(
+                calculator=self.pred_calculator,
+                system=system,
+                r_qeq_A=r_qeq_A,
+                r_or_A=r_or_A,
+                q_or=q_or,
+                cutoff_nm=cutoff_nm,
+                n_link_atoms=n_link_atoms,
+                F_total_qeq=F_total_qeq,
+                F_total_or=F_total_or,
+            )
+
         # committee validation (B2-consistent)
         if len(self.val_calculators) > 0 and time_step % self.nn_valid_freq == 0:
             val_energies = self.validate_prediction(
@@ -601,6 +737,7 @@ class SchNet_V2_Calculator:
                 r_or_A=r_or_A,
                 q_or=q_or,
                 cutoff_nm=cutoff_nm,
+                n_link_atoms=n_link_atoms,
             )
 
             self.nn_valid_maxF = self.validate_prediction_maxForceDeviation(
@@ -610,43 +747,351 @@ class SchNet_V2_Calculator:
                 r_or_A=r_or_A,
                 q_or=q_or,
                 cutoff_nm=cutoff_nm,
+                n_link_atoms=n_link_atoms,
             )
             
-            #print("validation energies: ", val_energies)
-
             if len(val_energies) == 1:
                 self.nn_valid_ene = (self.energy_mlp - val_energies[0]) / np.sqrt(2)
             else:
                 all_E = np.array(val_energies + [self.energy_mlp], dtype=float)
                 self.nn_valid_ene = all_E.std(ddof=1)
 
+            # The legacy fields/getters now deliberately carry MLP-only
+            # disagreement in explicit-QEq mode.
+            self.nn_valid_mlp = self.nn_valid_ene
+            self.nn_valid_mlp_maxF = self.nn_valid_maxF
+
+            embedding_energies = list(
+                getattr(self, "_last_val_embedding_energies", [])
+            )
+            production_embedding = self.energy - self.energy_mlp
+            if len(embedding_energies) == 1:
+                self.nn_valid_embedding = (
+                    production_embedding - embedding_energies[0]
+                ) / np.sqrt(2)
+            elif len(embedding_energies) > 1:
+                all_embedding = np.array(
+                    embedding_energies + [production_embedding], dtype=float
+                )
+                self.nn_valid_embedding = all_embedding.std(ddof=1)
+            else:
+                self.nn_valid_embedding = 0.0
+
+            if os.environ.get(
+                "SCHNET_NN_VALID_EMBEDDING", ""
+            ).strip().lower() in {"1", "true", "yes", "on"}:
+                print(
+                    "NN_VALIDATION "
+                    f"nn_valid_mlp={self.nn_valid_mlp:.10g} "
+                    f"nn_valid_mlp_maxF={self.nn_valid_mlp_maxF:.10g} "
+                    f"nn_valid_embedding={self.nn_valid_embedding:.10g}",
+                    flush=True,
+                )
+
+        if self._should_write_phi_static(time_step):
+            self._write_phi_static(time_step=time_step, n_mlp_atoms=len(atomic_numbers))
+
         return None
 
-    def _coulomb_phi_ev(self, r_qeq_nm, r_or_nm, q_or_e, cutoff_nm):
+    def _should_write_phi_static(self, time_step: int) -> bool:
+        """Apply the NTWSE/adaptive-sampling policy to potential output."""
+        if getattr(self, "phi_static_output_file", None) is None:
+            return False
+
+        ntwse = getattr(self, "ntwse", 0)
+        if ntwse < 0:
+            validation_is_current = (
+                len(self.val_calculators) > 0
+                and self.nn_valid_freq > 0
+                and time_step % self.nn_valid_freq == 0
+            )
+            if not validation_is_current:
+                return False
+
+            return abs(self.nn_valid_ene) > self.val_thresh
+
+        # NTWSE == 0 and NTWSE > 0 both use the forwarded write_val_step.
+        return self.nn_valid_freq > 0 and time_step % self.nn_valid_freq == 0
+
+    def _write_phi_static(self, time_step: int, n_mlp_atoms: int) -> None:
+        """Append a timestep and its float32 potential to one NumPy stream."""
+        output_file = getattr(self, "phi_static_output_file", None)
+        if output_file is None:
+            return
+
+        phi_static = getattr(self, "_last_phi_static", None)
+        if phi_static is None:
+            raise RuntimeError("phi_static export requested before the potential was evaluated")
+
+        phi_static = np.asarray(phi_static, dtype=np.float32)
+        if phi_static.shape != (n_mlp_atoms,):
+            raise ValueError(
+                f"phi_static must have shape ({n_mlp_atoms},), got {phi_static.shape}"
+            )
+
+        record = np.empty(
+            1,
+            dtype=[("step", np.int64), ("phi_static", np.float32, (n_mlp_atoms,))],
+        )
+        record["step"][0] = time_step
+        record["phi_static"][0] = phi_static
+
+        # Each np.save block is self-describing. Locking prevents concurrent
+        # writers from interleaving blocks in a shared output file.
+        with output_file.open("ab") as stream:
+            fcntl.flock(stream.fileno(), fcntl.LOCK_EX)
+            try:
+                np.save(stream, record, allow_pickle=False)
+                stream.flush()
+                os.fsync(stream.fileno())
+            finally:
+                fcntl.flock(stream.fileno(), fcntl.LOCK_UN)
+
+    def _collect_b2_diagnostics(
+        self,
+        E_total: torch.Tensor,
+        E_mlp: torch.Tensor,
+        E_embedding: torch.Tensor,
+        qeq_mode: str,
+        q0: torch.Tensor,
+        q_phi: torch.Tensor,
+        phi: torch.Tensor,
+        r_qeq_A: torch.Tensor,
+        r_or_A: torch.Tensor,
+        F_total_qeq: np.ndarray,
+        F_total_or: np.ndarray,
+        F_direct_qeq: np.ndarray,
+        F_direct_or: np.ndarray,
+        F_response_qeq: np.ndarray,
+        F_response_or: np.ndarray,
+        F_mlp_qeq: np.ndarray,
+        n_link_atoms: int,
+    ) -> dict:
+        n_qeq = int(q_phi.shape[0])
+        n_phys = max(n_qeq - int(n_link_atoms), 0)
+
+        q0_np = q0.detach().cpu().numpy()
+        qphi_np = q_phi.detach().cpu().numpy()
+        phi_np = phi.detach().cpu().numpy()
+        E_static = torch.sum(q0 * phi)
+        E_induced = 0.5 * torch.sum((q_phi - q0) * phi)
+        identity_error = torch.abs(E_embedding - E_static - E_induced)
+        f_qeq_sum = np.sum(F_total_qeq, axis=0) if F_total_qeq.size else np.zeros(3)
+        f_or_sum = np.sum(F_total_or, axis=0) if F_total_or.size else np.zeros(3)
+        f_mlp_sum = np.sum(F_mlp_qeq, axis=0) if F_mlp_qeq.size else np.zeros(3)
+
+        if r_or_A.shape[0] > 0 and n_phys > 0:
+            dist = torch.cdist(r_qeq_A[:n_phys], r_or_A)
+            min_qeq_or_A = float(torch.min(dist).detach().cpu().item())
+        else:
+            min_qeq_or_A = float("nan")
+
+        if n_link_atoms > 0 and r_or_A.shape[0] > 0:
+            dist_link = torch.cdist(r_qeq_A[n_phys:], r_or_A)
+            min_link_or_A = float(torch.min(dist_link).detach().cpu().item())
+        else:
+            min_link_or_A = float("nan")
+
+        return {
+            "E_total": float(E_total.detach().cpu().item()),
+            "E_mlp": float(E_mlp.detach().cpu().item()),
+            "E_static": float(E_static.detach().cpu().item()),
+            "E_induced": float(E_induced.detach().cpu().item()),
+            "E_embedding": float(E_embedding.detach().cpu().item()),
+            "qeq_mode": qeq_mode,
+            "embedding_identity_error": float(identity_error.detach().cpu().item()),
+            "q0_sum": float(np.sum(q0_np)),
+            "qphi_sum": float(np.sum(qphi_np)),
+            "q_phys_sum": float(np.sum(qphi_np[:n_phys])),
+            "q_link_sum": float(np.sum(qphi_np[n_phys:])),
+            "q_min": float(np.min(qphi_np)) if qphi_np.size else 0.0,
+            "q_max": float(np.max(qphi_np)) if qphi_np.size else 0.0,
+            "max_abs_dq": float(np.max(np.abs(qphi_np - q0_np))) if qphi_np.size else 0.0,
+            "phi_phys_min": float(np.min(phi_np[:n_phys])) if n_phys > 0 else 0.0,
+            "phi_phys_max": float(np.max(phi_np[:n_phys])) if n_phys > 0 else 0.0,
+            "phi_link_max_abs": float(np.max(np.abs(phi_np[n_phys:]))) if n_link_atoms > 0 else 0.0,
+            "F_qeq_max": float(np.max(np.linalg.norm(F_total_qeq, axis=1))) if F_total_qeq.size else 0.0,
+            "F_or_max": float(np.max(np.linalg.norm(F_total_or, axis=1))) if F_total_or.size else 0.0,
+            "F_direct_qeq_max": float(np.max(np.linalg.norm(F_direct_qeq, axis=1))) if F_direct_qeq.size else 0.0,
+            "F_direct_or_max": float(np.max(np.linalg.norm(F_direct_or, axis=1))) if F_direct_or.size else 0.0,
+            "F_response_qeq_max": float(np.max(np.linalg.norm(F_response_qeq, axis=1))) if F_response_qeq.size else 0.0,
+            "F_response_or_max": float(np.max(np.linalg.norm(F_response_or, axis=1))) if F_response_or.size else 0.0,
+            "F_mlp_qeq_max": float(np.max(np.linalg.norm(F_mlp_qeq, axis=1))) if F_mlp_qeq.size else 0.0,
+            "F_total_sum": f_qeq_sum + f_or_sum,
+            "F_qeq_sum": f_qeq_sum,
+            "F_or_sum": f_or_sum,
+            "F_mlp_sum": f_mlp_sum,
+            "min_qeq_or_A": min_qeq_or_A,
+            "min_link_or_A": min_link_or_A,
+            "n_qeq": n_qeq,
+            "n_link_atoms": int(n_link_atoms),
+            "n_or": int(r_or_A.shape[0]),
+        }
+
+    def _print_b2_diagnostics(self, time_step: int) -> None:
+        diag = getattr(self, "_last_b2_diag", None)
+        if not diag:
+            return
+
+        def v2s(vec):
+            return "[" + ", ".join(f"{x:.6e}" for x in vec) + "]"
+
+        print(
+            "B2DBG "
+            f"step={time_step} "
+            f"qeq_mode={diag['qeq_mode']} "
+            f"n_qeq={diag['n_qeq']} n_link={diag['n_link_atoms']} n_or={diag['n_or']} "
+            f"E_total={diag['E_total']:.10g} E_mlp={diag['E_mlp']:.10g} "
+            f"E_static={diag['E_static']:.10g} E_induced={diag['E_induced']:.10g} "
+            f"E_embedding={diag['E_embedding']:.10g} "
+            f"E_identity_err={diag['embedding_identity_error']:.3e} "
+            f"q0_sum={diag['q0_sum']:.8g} qphi_sum={diag['qphi_sum']:.8g} "
+            f"max_abs_dq={diag['max_abs_dq']:.6g} "
+            f"q_phys={diag['q_phys_sum']:.8g} q_link={diag['q_link_sum']:.8g} "
+            f"q_range=[{diag['q_min']:.6g},{diag['q_max']:.6g}] "
+            f"phi_phys=[{diag['phi_phys_min']:.6g},{diag['phi_phys_max']:.6g}] "
+            f"phi_link_max_abs={diag['phi_link_max_abs']:.3e} "
+            f"Fmax_qeq={diag['F_qeq_max']:.6g} Fmax_or={diag['F_or_max']:.6g} "
+            f"Fmax_mlp={diag['F_mlp_qeq_max']:.6g} "
+            f"Fsum_qeq={v2s(diag['F_qeq_sum'])} Fsum_or={v2s(diag['F_or_sum'])} "
+            f"Fsum_total={v2s(diag['F_total_sum'])} Fsum_mlp={v2s(diag['F_mlp_sum'])} "
+            f"min_qeq_or_A={diag['min_qeq_or_A']:.6g} min_link_or_A={diag['min_link_or_A']:.6g}",
+            flush=True,
+        )
+        print(
+            "B2RESP "
+            f"step={time_step} "
+            f"Fmax_qeq_full={diag['F_qeq_max']:.6g} "
+            f"Fmax_qeq_static_direct={diag['F_direct_qeq_max']:.6g} "
+            f"Fmax_qeq_polarization={diag['F_response_qeq_max']:.6g} "
+            f"Fmax_or_full={diag['F_or_max']:.6g} "
+            f"Fmax_or_static_direct={diag['F_direct_or_max']:.6g} "
+            f"Fmax_or_polarization={diag['F_response_or_max']:.6g}",
+            flush=True,
+        )
+
+    def _print_b2_finite_difference_check(
+        self,
+        calculator: spk.interfaces.SpkCalculator,
+        system: ase.Atoms,
+        r_qeq_A: torch.Tensor,
+        r_or_A: torch.Tensor,
+        q_or: torch.Tensor,
+        cutoff_nm: float,
+        n_link_atoms: int,
+        F_total_qeq: np.ndarray,
+        F_total_or: np.ndarray,
+    ) -> None:
+        h_A = float(os.environ.get("SCHNET_B2_FD_STEP_A", "0.001"))
+
+        probes: list[tuple[str, int, int, float]] = []
+        if F_total_qeq.size:
+            flat = int(np.argmax(np.abs(F_total_qeq)))
+            atom, dim = np.unravel_index(flat, F_total_qeq.shape)
+            probes.append(("qeq", int(atom), int(dim), float(F_total_qeq[atom, dim])))
+        if F_total_or.size:
+            flat = int(np.argmax(np.abs(F_total_or)))
+            atom, dim = np.unravel_index(flat, F_total_or.shape)
+            probes.append(("or", int(atom), int(dim), float(F_total_or[atom, dim])))
+
+        for kind, atom, dim, analytic_force in probes:
+            rq_plus = r_qeq_A.detach().clone()
+            rq_minus = r_qeq_A.detach().clone()
+            ro_plus = r_or_A.detach().clone()
+            ro_minus = r_or_A.detach().clone()
+
+            if kind == "qeq":
+                rq_plus[atom, dim] += h_A
+                rq_minus[atom, dim] -= h_A
+            else:
+                ro_plus[atom, dim] += h_A
+                ro_minus[atom, dim] -= h_A
+
+            e_plus = self._b2_eval_model(
+                calculator=calculator,
+                system=system,
+                r_qeq_A=rq_plus.requires_grad_(True),
+                r_or_A=ro_plus.requires_grad_(True),
+                q_or=q_or,
+                cutoff_nm=cutoff_nm,
+                n_link_atoms=n_link_atoms,
+            )[0]
+            e_minus = self._b2_eval_model(
+                calculator=calculator,
+                system=system,
+                r_qeq_A=rq_minus.requires_grad_(True),
+                r_or_A=ro_minus.requires_grad_(True),
+                q_or=q_or,
+                cutoff_nm=cutoff_nm,
+                n_link_atoms=n_link_atoms,
+            )[0]
+
+            fd_force = -(e_plus - e_minus) / (2.0 * h_A)
+            abs_err = abs(analytic_force - fd_force)
+            rel_err = abs_err / max(abs(analytic_force), abs(fd_force), 1.0)
+            print(
+                "B2FD "
+                f"kind={kind} atom={atom} dim={dim} h_A={h_A:g} "
+                f"F_autograd={analytic_force:.10g} F_fd={fd_force:.10g} "
+                f"abs_err={abs_err:.4e} rel_err={rel_err:.4e}",
+                flush=True,
+            )
+
+    @staticmethod
+    def _zero_link_atom_phi(phi: torch.Tensor, n_link_atoms: int) -> torch.Tensor:
         """
-        Compute phi_i = k_e * sum_j q_j / r_ij (plain Coulomb with cutoff)
-        Units:
-            r in nm
-            q in e
-            returns phi in eV per e
+        Link atoms are geometric capping sites. They may be present in the model
+        input and receive model/QEq quantities, but they should not couple
+        directly to the OR electrostatic potential.
         """
+        if n_link_atoms <= 0:
+            return phi
+        if n_link_atoms > phi.shape[0]:
+            raise ValueError("n_link_atoms cannot exceed the number of QEq sites")
 
-        if r_or_nm.shape[0] == 0:
-            return torch.zeros(r_qeq_nm.shape[0], device=r_qeq_nm.device)
-
-        # pair distances
-        diff = r_qeq_nm[:, None, :] - r_or_nm[None, :, :]
-        dist = torch.norm(diff, dim=-1)  # (Nq, Nor)
-
-        #mask = dist < cutoff_nm
-        #safe_dist = torch.where(mask, dist, torch.ones_like(dist))
-
-        #inv_r = torch.where(mask, 1.0 / safe_dist, torch.zeros_like(dist))
-        inv_r = 1.0 / dist.clamp_min(1e-8)
-
-        phi = K_E_EV_NM_E2 * torch.sum(inv_r * q_or_e[None, :], dim=1)
-
+        phi = phi.clone()
+        phi[-n_link_atoms:] = 0.0
         return phi
+
+    def _coulomb_phi_kjmol(
+        self,
+        r_qeq_A,
+        r_or_A,
+        q_or_e,
+        damping=None,
+        sigma_A=None,
+    ):
+        """
+        Compute the damped external electrostatic potential on QEq atoms.
+
+        Units:
+            coordinates and sigma in Å
+            q in e
+            returns phi in kJ/mol/e
+
+        The OR atoms are assumed to have already been pairlisted by GROMOS.
+        """
+        if r_or_A.shape[0] == 0:
+            return torch.zeros(r_qeq_A.shape[0], dtype=r_qeq_A.dtype, device=r_qeq_A.device)
+
+        damping = damping or getattr(self, "electrostatic_damping", "soft")
+        sigma_A = float(sigma_A if sigma_A is not None else getattr(self, "electrostatic_sigma_A", 0.8))
+        if damping not in {"soft", "erf", "none"}:
+            raise ValueError("damping must be 'soft', 'erf', or 'none'")
+        if sigma_A <= 0.0:
+            raise ValueError("sigma must be positive")
+
+        diff = r_qeq_A[:, None, :] - r_or_A[None, :, :]
+        r = torch.linalg.norm(diff, dim=-1).clamp_min(1.0e-8)
+
+        if damping == "soft":
+            inv_r = torch.rsqrt(r * r + sigma_A * sigma_A)
+        elif damping == "erf":
+            inv_r = torch.erf(r / sigma_A) / r
+        else:
+            inv_r = 1.0 / r
+
+        return K_E_KJMOL_A_E2 * torch.sum(inv_r * q_or_e[None, :], dim=1)
 
     def _model_forward_no_forces(self, inputs: dict) -> dict:
         """
@@ -685,102 +1130,25 @@ class SchNet_V2_Calculator:
         or_positions_nm: list,
         or_charges_e: list,
         cutoff_nm: float,
+        n_link_atoms: int = 0,
     ) -> None:
         """
-        B2: Compute phi internally from OR coords/charges, solve QEq in-model, and
-        return conservative forces on both QEq sites and OR sites.
-        Keeps same validation behavior as calculate_next_step().
-        All returned forces are stored in kJ/mol/Å.
+        Backward-compatible entry point for dynamic-charge/B2 calculations.
+
+        The public GROMOS interface remains in nm; ``calculate_next_step``
+        converts OR coordinates and the cutoff once and performs the model and
+        electrostatic calculation in Å.
         """
-        self.time_step = time_step
-
-        # --- Build ASE system for validation (same as calculate_next_step) ---
-        system = ase.Atoms(numbers=atomic_numbers, positions=positions_A)
-        system.info["total_charge"] = float(self.total_charge)
-        system.info["spin_multiplicity"] = float(self.spin_multiplicity)
-
-        # --- Leaf coords (Å) for autograd ---
-        r_qeq_A = torch.tensor(positions_A, dtype=torch.float32, device=self.torchdevice, requires_grad=True)
-
-        if len(or_positions_nm) > 0:
-            r_or_A = torch.tensor(or_positions_nm, dtype=torch.float32, device=self.torchdevice, requires_grad=True) * 10.0
-            q_or = torch.tensor(or_charges_e, dtype=torch.float32, device=self.torchdevice)
-        else:
-            r_or_A = torch.zeros((0, 3), dtype=torch.float32, device=self.torchdevice, requires_grad=True)
-            q_or = torch.zeros((0,), dtype=torch.float32, device=self.torchdevice)
-
-        # nm versions only for Coulomb distance
-        r_qeq_nm = r_qeq_A * 0.1
-        r_or_nm  = r_or_A * 0.1
-
-        # --- Prepare model inputs (converter) ---
-        inputs = self.pred_calculator.converter(system)
-        inputs[spk.properties.R] = r_qeq_A  # override with grad-enabled coords
-
-        # --- Compute phi in Torch (eV per e we need to later on reconvert) ---
-        phi = self._coulomb_phi_ev(r_qeq_nm, r_or_nm, q_or, cutoff_nm)  # (Nq,)
-        inputs["phi"] = phi
-
-        # for validation models (they expect phi via ASE arrays)
-        system.arrays["phi"] = phi.detach().cpu().numpy()
-
-        # --- Forward model (must output charges + chi + Jii if using QEqCharges head) ---
-        out = self._model_forward_no_forces(inputs)
-
-        E_mlp = out[self.pred_calculator.energy_key].sum()  
-
-        # QEq outputs (your QEqCharges head)
-        q   = out["charges"]
-        chi = out["chi_qeq"] # in units of phi feeded into torch
-        Jii = out["Jii_qeq"] # in units of phi feeded into torch
-
-        # --- QEq energy (eV) ---
-        E_qphi = torch.sum(q * phi)*EV_TO_KJMOL # we transform from eV back to kJ/mol
-        E_chiq = torch.sum(chi * q)*EV_TO_KJMOL
-        E_halfJiiqq = torch.sum(0.5 * Jii * q**2)*EV_TO_KJMOL
-        #print("E_qphi:", E_qphi.tolist(),"E_chiq:", E_chiq.tolist(),"E_halfJiiqq:", E_halfJiiqq.tolist())
-        E_qeq = E_qphi + E_chiq + E_halfJiiqq
-        E_total = E_mlp + E_qphi # we only add the classical electrostatic energy because we dont want self terms reflected by E_chiq and e_halfJiiqq
-        #print("phi: ", np.asarray(phi.tolist())*EV_TO_KJMOL)
-        #print("chi: ", np.asarray(chi.tolist())*EV_TO_KJMOL)
-        #print("Jii: ", np.asarray(Jii.tolist())*EV_TO_KJMOL)
-        #print("E_qphi:", E_qphi.tolist(),"E_mlp:", E_mlp.tolist(),"E_total:", E_total.tolist())
-
-        # --- Forces (eV/Å) ---
-        dE_dRqeq, dE_dRor = torch.autograd.grad(
-            E_total,
-            [r_qeq_A, r_or_A],
-            create_graph=False,
-            retain_graph=False,
-            allow_unused=True,
+        return self.calculate_next_step(
+            atomic_numbers=atomic_numbers,
+            positions_A=positions_A,
+            time_step=time_step,
+            dynamic_charges=True,
+            or_positions_nm=or_positions_nm,
+            or_charges_e=or_charges_e,
+            cutoff_nm=cutoff_nm,
+            n_link_atoms=n_link_atoms,
         )
-
-        if dE_dRqeq is None:
-            dE_dRqeq = torch.zeros_like(r_qeq_A)
-        if dE_dRor is None:
-            dE_dRor = torch.zeros_like(r_or_A)
-
-        # Store (kJ/mol and kJ/mol/Å)
-        self.energy = float(E_total.detach().cpu().item()) # if we fetch it with out[self.pred_calculator.energy_key].sum() we are already in kJ/mol
-        self.forces = (-dE_dRqeq).detach().cpu().numpy()
-        self.or_forces = (-dE_dRor).detach().cpu().numpy()
-
-        # Optional: charges (same behavior)
-        if self.has_partial_charges:
-            self.charges = q.detach().cpu().numpy()
-
-        # --- Validation (same logic as calculate_next_step) ---
-        if len(self.val_calculators) > 0 and time_step % self.nn_valid_freq == 0:
-            val_energies = self.validate_prediction(system=system)
-            self.nn_valid_maxF = self.validate_prediction_maxForceDeviation(system=system)
-
-            if len(val_energies) == 1:
-                self.nn_valid_ene = (E_mlp - val_energies[0]) / np.sqrt(2) # Remove the IR-OR  again
-            else:
-                val_energies = np.array(val_energies + E_mlp, dtype=float) # Remove IR-OR coupling again
-                self.nn_valid_ene = val_energies.std(ddof=1)
-
-        return None
 
     def get_or_forces(self):
         return self.or_forces
@@ -805,7 +1173,9 @@ class SchNet_V2_Calculator:
 
     def get_nn_valid_ene(self):
         """
-        Get the validation energy deviation calculated during the last validation step.
+        Get the MLP-only validation energy deviation.
+
+        The legacy name is retained for the C++ interface.
 
         Returns:
             float: Validation energy deviation.
@@ -814,7 +1184,7 @@ class SchNet_V2_Calculator:
 
     def get_nn_valid_maxF(self):
         """
-        Get the maximum force committee disagreement among all atom during the last validation step.
+        Get the MLP-only maximum force committee disagreement.
 
         Returns:
             float: Validation force deviation.
@@ -887,8 +1257,10 @@ class Pert_SchNet_V2_Calculator(SchNet_V2_Calculator):
         get_derivative(self):
             Get the derivative of the perturbed energy.
     """
-    def __init__(self, model_path: str, val_model_paths: list, nn_valid_freq: int, write_energy_freq: int, 
-                 spin_multiplicity:int,total_charge:int, lam: float, perturbed_qm_states: list) -> None:
+    def __init__(self, model_path: str, val_model_paths: list, nn_valid_freq: int, write_energy_freq: int,
+                 spin_multiplicity:int, total_charge:int, lam: float, perturbed_qm_states: list,
+                 endpoint_atomic_numbers_A=None, endpoint_atomic_numbers_B=None,
+                 ntwse: int = 0, val_thresh: float = 0.0) -> None:
         """
         Initialize the Pert_SchNet_V1_Calculator with necessary model paths, validation frequency, and perturbation settings.
 
@@ -904,13 +1276,42 @@ class Pert_SchNet_V2_Calculator(SchNet_V2_Calculator):
             None
         """
         # Call the constructor of the parent class, SchNet_V1_Calculator, with the provided model paths and frequencies.
-        super().__init__(model_path, val_model_paths, nn_valid_freq, write_energy_freq, spin_multiplicity, total_charge)
+        super().__init__(
+            model_path,
+            val_model_paths,
+            nn_valid_freq,
+            write_energy_freq,
+            spin_multiplicity,
+            total_charge,
+            ntwse=ntwse,
+            val_thresh=val_thresh,
+        )
         
         # Store the perturbation parameter lambda (lam) for interpolating between states.
         self.lam = lam
         
         # Convert the list of perturbed QM states into a numpy array for easier manipulation and indexing.
         self.perturbed_qm_states = np.array(perturbed_qm_states)
+        self.endpoint_atomic_numbers = {
+            "A": np.asarray(endpoint_atomic_numbers_A or [], dtype=int),
+            "B": np.asarray(endpoint_atomic_numbers_B or [], dtype=int),
+        }
+        # A shared physical atom whose endpoint nuclear charges differ is an
+        # alchemical transmutation (for example Mn, Z=25 -> Zn, Z=30).  Such a
+        # perturbation interpolates the two complete BuRNN/QEq endpoint
+        # Hamiltonians directly; it must not add the other endpoint's vacuum
+        # energy, as required by the older separate-region insertion/deletion
+        # construction.
+        za = self.endpoint_atomic_numbers["A"]
+        zb = self.endpoint_atomic_numbers["B"]
+        n_endpoint_z = min(len(self.perturbed_qm_states), len(za), len(zb))
+        self.direct_endpoint_interpolation = any(
+            self.perturbed_qm_states[i] == 0
+            and za[i] > 0
+            and zb[i] > 0
+            and za[i] != zb[i]
+            for i in range(n_endpoint_z)
+        )
         
         # Length of the QM zone.
         self.qmzone_size = len(self.perturbed_qm_states)
@@ -981,7 +1382,9 @@ class Pert_SchNet_V2_Calculator(SchNet_V2_Calculator):
         # Iterate over the indices of atoms in the specified state.
         for i in self.states_idx[state_id]:
             # Add atomic number and position to the respective lists.
-            atomic_numbers_vac.append(atomic_numbers[i])
+            endpoint_z = self.endpoint_atomic_numbers[state_id]
+            z = int(endpoint_z[i]) if i < len(endpoint_z) else 0
+            atomic_numbers_vac.append(z if z > 0 else atomic_numbers[i])
             positions_vac.append(positions[i])
 
         return atomic_numbers_vac, positions_vac
@@ -1074,6 +1477,23 @@ class Pert_SchNet_V2_Calculator(SchNet_V2_Calculator):
                 - perturbed_energy (float): The total perturbed energy.
                 - perturbed_energy_derivative (float): The derivative of the perturbed energy with respect to lambda.
         """
+        if (
+            getattr(self, "direct_endpoint_interpolation", False)
+            and "A" in self.states
+            and "B" in self.states
+        ):
+            energy_a = self.states["A"]["energy_burnn"]
+            energy_b = self.states["B"]["energy_burnn"]
+            self.states["A"]["perturbed_energy"] = (1.0 - self.lam) * energy_a
+            self.states["B"]["perturbed_energy"] = self.lam * energy_b
+            self.states["A"]["derivative"] = -energy_a
+            self.states["B"]["derivative"] = energy_b
+            return (
+                (1.0 - self.lam) * energy_a + self.lam * energy_b,
+                energy_b - energy_a,
+            )
+
+        # Older insertion/deletion behavior for distinct state-specific atoms.
         # Iterate over each state to calculate the perturbed energy and its derivative.
         for state in self.states.keys():
             if state == 'A':
@@ -1108,6 +1528,9 @@ class Pert_SchNet_V2_Calculator(SchNet_V2_Calculator):
 
         energy_burnn = self.states[state]['burnn'].get_potential_energy()
         energy_vac = self.states[state]['vac'].get_potential_energy()
+
+        if getattr(self, "direct_endpoint_interpolation", False):
+            return (1.0 - self.lam) * energy_burnn if state == 'A' else self.lam * energy_burnn
 
         if state == 'A':
             return (1 - self.lam) * energy_burnn + self.lam * energy_vac
@@ -1198,6 +1621,26 @@ class Pert_SchNet_V2_Calculator(SchNet_V2_Calculator):
         Returns:
             np.ndarray: A numpy array of shape (qm zone size + buffer size, 3) containing the calculated perturbed forces.
         """
+        if (
+            getattr(self, "direct_endpoint_interpolation", False)
+            and "A" in self.states
+            and "B" in self.states
+            and "burnn_full_indices" in self.states["A"]
+        ):
+            n_total = max(
+                max(self.states["A"]["burnn_full_indices"], default=-1),
+                max(self.states["B"]["burnn_full_indices"], default=-1),
+            ) + 1
+            forces = np.zeros((n_total, 3), dtype=float)
+            for state, weight in (("A", 1.0 - self.lam), ("B", self.lam)):
+                for local_index, full_index in enumerate(
+                    self.states[state]["burnn_full_indices"]
+                ):
+                    forces[full_index] += (
+                        weight * self.states[state]["forces_burnn"][local_index]
+                    )
+            return forces
+
         # Initialize the perturbed forces array, shape (qm zone size + buffer size, 3).
         forces = np.zeros((self.qmzone_size + (len(self.states['A']['forces_burnn']) - len(self.states['A']['forces_vac'])), 3), dtype=float)
 
@@ -1263,7 +1706,189 @@ class Pert_SchNet_V2_Calculator(SchNet_V2_Calculator):
             forces[self.qmzone_size:] = (1 - self.lam) * self.states['A']['forces_burnn'][len(self.states_idx['A']):] + self.lam * self.states['B']['forces_burnn'][len(self.states_idx['B']):]
             return forces
 
-    def calculate_next_step(self, atomic_numbers: list, positions: list, time_step: int) -> None:
+    def _burnn_full_indices(self, state: str, n_total: int) -> list[int]:
+        """Map a perturbed-state BuRNN array back to the full GROMOS order."""
+        return list(self.states_idx[state]) + list(range(self.qmzone_size, n_total))
+
+    def _calculate_next_step_dynamic(
+        self,
+        atomic_numbers: list,
+        positions: list,
+        time_step: int,
+        or_positions_nm: list,
+        or_charges_e: list,
+        cutoff_nm: float,
+        n_link_atoms: int,
+    ) -> None:
+        """Evaluate the lambda Hamiltonian with explicit QEq embedding.
+
+        Only the BuRNN endpoint contains the OR embedding, matching the
+        existing delta-model perturbation Hamiltonian.  Consequently the OR
+        force and effective dynamic charge use the same endpoint weights as
+        the BuRNN energies: (1-lambda) for A and lambda for B.
+        """
+        self.states = {}
+        n_total = len(atomic_numbers)
+        r_or_A = torch.tensor(
+            np.asarray(or_positions_nm, dtype=float).reshape((-1, 3)) * 10.0,
+            dtype=torch.float32,
+            device=self.torchdevice,
+            requires_grad=True,
+        )
+        q_or = torch.tensor(or_charges_e, dtype=torch.float32, device=self.torchdevice)
+
+        for state in ("A", "B"):
+            if state not in self.states_idx:
+                continue
+            state_vac, state_burnn = self.get_state(atomic_numbers, positions, state)
+            for system in (state_vac, state_burnn):
+                system.info["total_charge"] = float(self.total_charge)
+                system.info["spin_multiplicity"] = float(self.spin_multiplicity)
+
+            energy_vac, forces_vac = self.predict_energy_and_forces(state_vac)
+            r_burnn_A = torch.tensor(
+                state_burnn.positions,
+                dtype=torch.float32,
+                device=self.torchdevice,
+                requires_grad=True,
+            )
+            # Each endpoint needs its own OR coordinate leaf because autograd
+            # consumes the graph during the endpoint force evaluation.
+            endpoint_r_or_A = r_or_A.detach().clone().requires_grad_(True)
+            (
+                energy_burnn,
+                forces_burnn,
+                forces_or,
+                charges_burnn,
+                energy_mlp_burnn,
+                forces_mlp_burnn,
+            ) = self._b2_eval_model(
+                calculator=self.pred_calculator,
+                system=state_burnn,
+                r_qeq_A=r_burnn_A,
+                r_or_A=endpoint_r_or_A,
+                q_or=q_or,
+                cutoff_nm=cutoff_nm,
+                n_link_atoms=n_link_atoms,
+            )
+            self.states[state] = {
+                "vac": state_vac,
+                "burnn": state_burnn,
+                "energy_vac": energy_vac,
+                "forces_vac": forces_vac,
+                "energy_burnn": energy_burnn,
+                "forces_burnn": forces_burnn,
+                "energy_mlp_burnn": energy_mlp_burnn,
+                "forces_mlp_burnn": forces_mlp_burnn,
+                "forces_or": forces_or,
+                "charges_burnn": charges_burnn,
+                "burnn_full_indices": self._burnn_full_indices(state, n_total),
+            }
+
+        self.energy, self.derivative = self.calculate_perturbed_energy_and_derivative()
+        self.forces = self.calculate_perturbed_forces()
+
+        # dE/dR_OR and dE/dphi use exactly the BuRNN endpoint coefficients.
+        self.or_forces = np.zeros((len(or_charges_e), 3), dtype=float)
+        self.charges = np.zeros(n_total, dtype=float)
+        endpoint_weights = {"A": 1.0 - self.lam, "B": self.lam}
+        for state, data in self.states.items():
+            weight = endpoint_weights[state]
+            self.or_forces += weight * data["forces_or"]
+            for local_index, full_index in enumerate(data["burnn_full_indices"]):
+                self.charges[full_index] += weight * data["charges_burnn"][local_index]
+
+        # Keep the established validation output usable. It remains an
+        # MLP-only committee diagnostic, consistent with the non-perturbed B2
+        # path, and is deliberately separate from the integrated embedding.
+        if len(self.val_calculators) > 0 and time_step % self.nn_valid_freq == 0:
+            if getattr(self, "direct_endpoint_interpolation", False):
+                weights = {"A": 1.0 - self.lam, "B": self.lam}
+
+                def combine_mlp(endpoint_data):
+                    energy = 0.0
+                    forces = np.zeros((n_total, 3), dtype=float)
+                    for endpoint, data in endpoint_data.items():
+                        weight = weights[endpoint]
+                        energy += weight * data["energy_mlp_burnn"]
+                        for local_index, full_index in enumerate(
+                            data["burnn_full_indices"]
+                        ):
+                            forces[full_index] += (
+                                weight * data["forces_mlp_burnn"][local_index]
+                            )
+                    return float(energy), forces
+
+                production_mlp_energy, production_mlp_forces = combine_mlp(
+                    self.states
+                )
+                committee_energies = [production_mlp_energy]
+                committee_forces = [
+                    np.linalg.norm(production_mlp_forces, axis=1)
+                ]
+
+                for val_calculator in self.val_calculators:
+                    validation_states = {}
+                    for endpoint, data in self.states.items():
+                        rq = torch.tensor(
+                            data["burnn"].positions,
+                            dtype=torch.float32,
+                            device=self.torchdevice,
+                            requires_grad=True,
+                        )
+                        ro = r_or_A.detach().clone().requires_grad_(True)
+                        _, _, _, _, energy_mlp, forces_mlp = self._b2_eval_model(
+                            calculator=val_calculator,
+                            system=data["burnn"],
+                            r_qeq_A=rq,
+                            r_or_A=ro,
+                            q_or=q_or,
+                            cutoff_nm=cutoff_nm,
+                            n_link_atoms=n_link_atoms,
+                        )
+                        validation_states[endpoint] = {
+                            "energy_mlp_burnn": energy_mlp,
+                            "forces_mlp_burnn": forces_mlp,
+                            "burnn_full_indices": data["burnn_full_indices"],
+                        }
+                    val_energy, val_forces = combine_mlp(validation_states)
+                    committee_energies.append(val_energy)
+                    committee_forces.append(np.linalg.norm(val_forces, axis=1))
+
+                if len(committee_energies) == 2:
+                    self.nn_valid_ene = (
+                        committee_energies[0] - committee_energies[1]
+                    ) / np.sqrt(2.0)
+                else:
+                    self.nn_valid_ene = float(
+                        np.asarray(committee_energies).std(ddof=1)
+                    )
+
+                mean_force = np.mean(committee_forces, axis=0)
+                sigma_force = np.sqrt(
+                    np.mean(
+                        [(force - mean_force) ** 2 for force in committee_forces],
+                        axis=0,
+                    )
+                )
+                self.nn_valid_maxF = float(np.max(sigma_force))
+                self.nn_valid_mlp = self.nn_valid_ene
+                self.nn_valid_mlp_maxF = self.nn_valid_maxF
+            else:
+                self.nn_valid_ene = self.validate_perturbed_energy()
+                self.nn_valid_maxF = 0.0
+
+    def calculate_next_step(
+        self,
+        atomic_numbers: list,
+        positions: list,
+        time_step: int,
+        dynamic_charges: bool = False,
+        or_positions_nm: list | None = None,
+        or_charges_e: list | None = None,
+        cutoff_nm: float | None = None,
+        n_link_atoms: int = 0,
+    ) -> None:
         """
         Calculate the next step in the MLP/MM simulation by updating the states, predicting energies and forces,
         and calculating the perturbed energy and forces.
@@ -1276,6 +1901,22 @@ class Pert_SchNet_V2_Calculator(SchNet_V2_Calculator):
         Returns:
             None
         """
+        if dynamic_charges:
+            if or_positions_nm is None or or_charges_e is None or cutoff_nm is None:
+                raise ValueError(
+                    "dynamic_charges=True requires or_positions_nm, "
+                    "or_charges_e, and cutoff_nm"
+                )
+            return self._calculate_next_step_dynamic(
+                atomic_numbers=atomic_numbers,
+                positions=positions,
+                time_step=time_step,
+                or_positions_nm=or_positions_nm,
+                or_charges_e=or_charges_e,
+                cutoff_nm=cutoff_nm,
+                n_link_atoms=n_link_atoms,
+            )
+
         # Initialize the states dictionary to store vacuum and burnn states for each end state.
         self.states = {}
 

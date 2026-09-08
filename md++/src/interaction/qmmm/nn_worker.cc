@@ -123,6 +123,11 @@ int interaction::NN_Worker::init(const topology::Topology& topo
   // How often to write energy
   py::int_ write_energy_step = sim.param().write.energy;
 
+  // Special-trajectory/adaptive-sampling controls used for phi_static output.
+  py::int_ ntwse = sim.param().write.energy_index;
+  py::float_ val_thresh = py::cast(
+      sim.param().qmmm.nn.val_thresh / this->param->unit_factor_energy);
+
   // Determine the total_charge
   int system_charge = sim.param().qmmm.qm_zone.charge + sim.param().qmmm.buffer_zone.charge;
   py::int_ total_charge = system_charge;
@@ -218,14 +223,26 @@ int interaction::NN_Worker::init(const topology::Topology& topo
 
       // get perturbed QM states
       py::list perturbed_qm_states = py::cast(sim.param().qmmm.nn.pertqm_state);
+      py::list perturbed_atomic_numbers_A =
+          py::cast(sim.param().qmmm.nn.pertqm_atomic_number_A);
+      py::list perturbed_atomic_numbers_B =
+          py::cast(sim.param().qmmm.nn.pertqm_atomic_number_B);
 
       // Initialize mlp_calculator Pert_SchNet_V2_Calculator Python object
-      mlp_calculator = schnet_v2.attr("Pert_SchNet_V2_Calculator")(model_path, val_models_paths, write_val_step, write_energy_step, spin_mult, total_charge, lambda, perturbed_qm_states);
+      mlp_calculator = schnet_v2.attr("Pert_SchNet_V2_Calculator")(
+          model_path, val_models_paths, write_val_step, write_energy_step,
+          spin_mult, total_charge, lambda, perturbed_qm_states,
+          "endpoint_atomic_numbers_A"_a=perturbed_atomic_numbers_A,
+          "endpoint_atomic_numbers_B"_a=perturbed_atomic_numbers_B,
+          "ntwse"_a=ntwse, "val_thresh"_a=val_thresh);
     }
 
     else {
       // Initialize SchNet_V2_Calculator
-      mlp_calculator = schnet_class(model_path, val_models_paths, write_val_step, write_energy_step, spin_mult, total_charge);
+      mlp_calculator = schnet_class(
+          model_path, val_models_paths, write_val_step, write_energy_step,
+          spin_mult, total_charge,
+          "ntwse"_a=ntwse, "val_thresh"_a=val_thresh);
     }
 }
 
@@ -373,22 +390,42 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
 
   py::int_ step = sim.steps();
   py::int_ n_caps = static_cast<int>(qm_zone.link.size());
+  std::vector<std::pair<const interaction::MM_Atom*, bool> > or_sites;
 
   if (sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic) {
     // Dynamic/B2: build OR arrays + cutoff and pass them
     std::vector<std::vector<double>> or_coordinates_nm;
     std::vector<double> or_charges_e;
 
-    or_coordinates_nm.reserve(qm_zone.mm.size());
-    or_charges_e.reserve(qm_zone.mm.size());
+    or_coordinates_nm.reserve(2 * qm_zone.mm.size());
+    or_charges_e.reserve(2 * qm_zone.mm.size());
+    or_sites.reserve(2 * qm_zone.mm.size());
 
     for (auto mm_it = qm_zone.mm.begin(); mm_it != qm_zone.mm.end(); ++mm_it) {
-      // mm_it->pos is already in nm (GROMOS internal)
-      or_coordinates_nm.push_back({mm_it->pos[0], mm_it->pos[1], mm_it->pos[2]});
-      or_charges_e.push_back(mm_it->charge); // e
+      // Positions are already in nm (GROMOS internal). Polarizable atoms are
+      // represented by two external charge sites, as in the other QM workers.
+      if (mm_it->is_polarisable) {
+        const double atom_charge = mm_it->charge - mm_it->cos_charge;
+        or_coordinates_nm.push_back({mm_it->pos[0], mm_it->pos[1], mm_it->pos[2]});
+        or_charges_e.push_back(atom_charge);
+        or_sites.push_back(std::make_pair(&(*mm_it), false));
+
+        const math::Vec cos_pos = mm_it->pos + mm_it->cosV;
+        or_coordinates_nm.push_back({cos_pos[0], cos_pos[1], cos_pos[2]});
+        or_charges_e.push_back(mm_it->cos_charge);
+        or_sites.push_back(std::make_pair(&(*mm_it), true));
+      } else {
+        or_coordinates_nm.push_back({mm_it->pos[0], mm_it->pos[1], mm_it->pos[2]});
+        or_charges_e.push_back(mm_it->charge); // e
+        or_sites.push_back(std::make_pair(&(*mm_it), false));
+      }
     }
 
     const double cutoff_nm = sim.param().qmmm.cutoff;
+    DEBUG(10, "NN B2 OR list: mm_atoms=" << qm_zone.mm.size()
+              << " or_sites=" << or_sites.size()
+              << " link_atoms=" << n_caps
+              << " cutoff_nm=" << cutoff_nm);
 
     mlp_calculator.attr("calculate_next_step")(
         atomic_numbers,
@@ -397,7 +434,8 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
         "dynamic_charges"_a=true,
         "or_positions_nm"_a=or_coordinates_nm,
         "or_charges_e"_a=or_charges_e,
-        "cutoff_nm"_a=cutoff_nm
+        "cutoff_nm"_a=cutoff_nm,
+        "n_link_atoms"_a=n_caps
     );
   }
 
@@ -460,27 +498,27 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
     auto or_forces = mlp_calculator.attr("get_or_forces")()
         .cast<std::vector<std::vector<double>>>();
 
-    if (or_forces.size() != qm_zone.mm.size()) {
+    if (or_forces.size() != or_sites.size()) {
       throw std::runtime_error("OR force size mismatch");
     }
 
-    int mm_index = 0;
-    for (auto mm_it = qm_zone.mm.begin(); mm_it != qm_zone.mm.end(); ++mm_it, ++mm_index) {
-      mm_it->force[0] = or_forces[mm_index][0];
-      mm_it->force[1] = or_forces[mm_index][1];
-      mm_it->force[2] = or_forces[mm_index][2];
+    for (unsigned site = 0; site < or_sites.size(); ++site) {
+      const interaction::MM_Atom* mm = or_sites[site].first;
+      const bool is_cos_site = or_sites[site].second;
 
-      mm_it->force *= this->param->unit_factor_force;
-      DEBUG(15, "force from NN, OR atom " << mm_it->index << " : " << math::v2s(mm_it->force));
+      math::Vec force(or_forces[site][0], or_forces[site][1], or_forces[site][2]);
+      force *= this->param->unit_factor_force;
+
+      if (is_cos_site) {
+        mm->cos_force += force;
+        DEBUG(15, "force from NN, OR COS atom " << mm->index << " : " << math::v2s(mm->cos_force));
+      } else {
+        mm->force += force;
+        DEBUG(15, "force from NN, OR atom " << mm->index << " : " << math::v2s(mm->force));
       }
-
-    // CRUDE IMPLEMENTATION get_charges should be replaced or not used if we are in the perturbation
-    if (sim.param().perturbation.perturbation) {
-      io::messages.add("perturbation with DQ not in this compilation look at /pool/m_gillhofer/software/BuRNN/GROMOS/gromosXX/md++/src/interaction/qmmm/nn_worker.cc", io::message::error);
     }
-    
-    // Unperturbed behaviour
-    else {
+
+    {
       std::vector<double> partial_charges = mlp_calculator.attr("get_charges")().cast<std::vector<double>>();
       // Assign QM atom charges in the same order as sent (IR+BR).
       double tot_qm_charge = 0.0;
@@ -490,14 +528,17 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
         tot_qm_charge += a->qm_charge;
         DEBUG(10, "qm_charge from NN, atom " << a->index << " : " << a->qm_charge);
       }
-      // Assign link/cap charges in the same order as sent (iteration order of qm_zone.link).
+      // Link/cap charges are internal B2/QEq quantities only. Their
+      // electrostatic force contribution is already included in it->force and
+      // redistributed by the link-atom machinery, so do not assign qm_charge
+      // back to the fictitious link atoms.
       double tot_link_charge = 0.0;
       int i_cap = 0;
       for (auto it = qm_zone.link.begin(); it != qm_zone.link.end(); ++it, ++i_cap) {
-        it->qm_charge = partial_charges[qmb_size + i_cap] * this->param->unit_factor_charge;
-        tot_link_charge += it->qm_charge;
+        const double link_charge = partial_charges[qmb_size + i_cap] * this->param->unit_factor_charge;
+        tot_link_charge += link_charge;
         DEBUG(15, "qm_charge from NN, capping atom " << it->qm_index << "-" << it->mm_index
-                  << " : " << it->qm_charge);
+                  << " : " << link_charge << " (not assigned)");
       }
 
       double total_predicted_charge = tot_qm_charge + tot_link_charge;
@@ -510,40 +551,6 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
                 << " predicted=" << total_predicted_charge
                 << " (QM=" << tot_qm_charge
                 << ", LA=" << tot_link_charge << ")");
-
-      // Homogeneous background charge correction (if needed).
-      // We distribute the difference equally over all (IR+BR) atoms and all cap atoms.
-      double diff =  system_charge - total_predicted_charge;
-      //const double diffA = total_predicted_charge_A - system_charge;
-      const double abs_tol = 1e-4;
-
-      if (std::abs(diff) > abs_tol) {
-          double delta = diff /  (qm_zone.qm.size()+qm_zone.link.size());
-
-          DEBUG(10, "Applying homogeneous correction of " << delta
-                      << " to all QM and link atoms (" << qm_zone.qm.size()+qm_zone.link.size()
-                      << " atoms).");
-
-        // Apply correction to QM atoms (IR+BR) in the same order.
-        for (int i = 0; i < qmb_size; ++i) {
-          const interaction::QM_Atom* a = qm_atoms_order[i];
-          const double old = a->qm_charge;
-          a->qm_charge = old + delta;
-          DEBUG(10, "Charge adjusted for atom " << a->index
-                    << " from " << old << " to " << a->qm_charge);
-        }
-
-        // Apply correction to link/cap atoms.
-        i_cap = 0;
-        for (auto it = qm_zone.link.begin(); it != qm_zone.link.end(); ++it, ++i_cap) {
-          const double old = it->qm_charge;
-          it->qm_charge = old + delta;
-          DEBUG(10, "LA charge adjusted for atom " << it->mm_index
-                    << " from " << old << " to " << it->qm_charge);
-        }
-      } else {
-          DEBUG(10, "Predicted charge matches requested charge; no correction applied.");
-      }
     }
   }
 

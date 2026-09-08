@@ -4182,7 +4182,9 @@ namespace simulation
        */
       qm_zone_struct() :
                       charge(0)
-                    , spin_mult(1) {}
+                    , spin_mult(1)
+                    , pert_charge(0)
+                    , pert_spin_mult(1) {}
         /**
          * net charge
          */
@@ -4191,6 +4193,9 @@ namespace simulation
          * spin multiplicity
          */
         int spin_mult;
+        /** State-B values read from the PERTQMZONE header. */
+        int pert_charge;
+        int pert_spin_mult;
       } qm_zone;
 
       /**
@@ -4513,7 +4518,9 @@ namespace simulation
                       , model_type(nn_model_type_burnn) 
                       , learning_type(nn_learning_type_all)
                       , device(nn_device_auto)
-                      , pertqm_state(0) {}
+                      , pertqm_state(0)
+                      , pertqm_atomic_number_A(0)
+                      , pertqm_atomic_number_B(0) {}
         /**
          * Schnetpack model path
          */
@@ -4560,6 +4567,10 @@ namespace simulation
         qm_nn_device_enum device;
 
         std::vector<unsigned> pertqm_state;
+        /** Optional endpoint atomic numbers for PERTQMZONE atoms. A value of
+         * zero means: use the QMZONE atomic number for that endpoint. */
+        std::vector<unsigned> pertqm_atomic_number_A;
+        std::vector<unsigned> pertqm_atomic_number_B;
       } nn;
 
     } qmmm;

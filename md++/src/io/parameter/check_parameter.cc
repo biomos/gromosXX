@@ -291,15 +291,19 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
       io::messages.add("QMMM block: polarisable embedding but FF is non-polarisable",
                          "In_Parameter", io::message::error);
     }
-    // QMMM with perturbation is allowed only for mechanical embedding with NN
-    // and standard pairlist
+    // QMMM perturbation uses mechanical embedding with an NN. SchNet v1 keeps
+    // the legacy constant-charge restriction; SchNet v2 additionally supports
+    // the explicit dynamic-QEq path, including lambda-weighted OR forces.
     if (param.perturbation.perturbation &&
         param.qmmm.qmmm != simulation::qmmm_off &&
         ! (param.qmmm.qmmm == simulation::qmmm_mechanical &&
-            param.qmmm.qm_ch == simulation::qm_ch_constant &&
-            (param.qmmm.software == simulation::qm_schnetv1 || param.qmmm.software == simulation::qm_schnetv2)
+            ((param.qmmm.software == simulation::qm_schnetv1 &&
+              param.qmmm.qm_ch == simulation::qm_ch_constant) ||
+             (param.qmmm.software == simulation::qm_schnetv2 &&
+              (param.qmmm.qm_ch == simulation::qm_ch_constant ||
+               param.qmmm.qm_ch == simulation::qm_ch_dynamic)))
          )) {
-      io::messages.add("QMMM block: Perturbation allowed only with ME, constant charge, Schnet v1 or Schnet v2 and standard pairlist",
+      io::messages.add("QMMM block: Perturbation requires ME with constant-charge SchNet v1, or constant/dynamic-charge SchNet v2",
                          "In_Parameter", io::message::error);
     }
     // Polarisable FF should be only used with polarisable QMMM

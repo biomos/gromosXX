@@ -84,10 +84,11 @@ END
  * @verbatim
 PERTQMZONE
 # STATE: state number of the QM atom, 0 = both states, 1 = state A, 2 = state B
+# QMZ_A/QMZ_B: optional endpoint atomic numbers. Zero or omission uses QMZONE QMZ.
 #
 # Warning: the first 17 characters are ignored!
-# RESIDUE   ATOM     STATE
-    1 H2O   OW         1
+# RESIDUE   ATOM     STATE QMZ_A QMZ_B
+    1 H2O   OW         1     8     8
     1 H2O   HW1        1
     1 H2O   HW2        1
     2 H2O   OW         2
@@ -1638,8 +1639,23 @@ void io::In_QMMM::read_pert_qmzone(simulation::Simulation& sim
   _lineStream.clear();
   _lineStream.str(line);
 
+  // The first data line contains the electronic state-B metadata.
+  int IRcharge_state2 = 0, IRspin_mult_state2 = 1;
+  int BRcharge_state2 = 0, BRspin_mult_state2 = 1;
+  _lineStream >> IRcharge_state2 >> IRspin_mult_state2
+              >> BRcharge_state2 >> BRspin_mult_state2;
+  if (_lineStream.fail()) {
+    io::messages.add("Bad state-B charge/spin header in PERTQMZONE block.",
+                     "In_QMMM", io::message::error);
+    return;
+  }
+  sim.param().qmmm.qm_zone.pert_charge = IRcharge_state2;
+  sim.param().qmmm.qm_zone.pert_spin_mult = IRspin_mult_state2;
+  sim.param().qmmm.buffer_zone.pert_charge = BRcharge_state2;
+  sim.param().qmmm.buffer_zone.pert_spin_mult = BRspin_mult_state2;
+
   unsigned state = 0;
-  for (std::vector<std::string>::const_iterator it = buffer.begin() + 1
+  for (std::vector<std::string>::const_iterator it = buffer.begin() + 2
                                               , to = buffer.end() - 1
                                               ; it != to; ++it) {
     std::string line(*it);
@@ -1655,6 +1671,7 @@ void io::In_QMMM::read_pert_qmzone(simulation::Simulation& sim
     _lineStream.clear();
     _lineStream.str(line);
 
+    unsigned qmz_a = 0, qmz_b = 0;
     _lineStream >> state;
   
     if (_lineStream.fail()) {
@@ -1669,6 +1686,19 @@ void io::In_QMMM::read_pert_qmzone(simulation::Simulation& sim
       return;
     }
     sim.param().qmmm.nn.pertqm_state.push_back(state);
+    // Endpoint elements are optional for backwards compatibility.
+    if (!(_lineStream >> qmz_a)) {
+      _lineStream.clear();
+      qmz_a = 0;
+      qmz_b = 0;
+    } else if (!(_lineStream >> qmz_b)) {
+      io::messages.add(
+          "PERTQMZONE atom row provides QMZ_A but not QMZ_B.",
+          "In_QMMM", io::message::error);
+      return;
+    }
+    sim.param().qmmm.nn.pertqm_atomic_number_A.push_back(qmz_a);
+    sim.param().qmmm.nn.pertqm_atomic_number_B.push_back(qmz_b);
   }
   }
 
