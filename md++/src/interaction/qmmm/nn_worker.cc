@@ -234,6 +234,10 @@ int interaction::NN_Worker::init(const topology::Topology& topo
           spin_mult, total_charge, lambda, perturbed_qm_states,
           "endpoint_atomic_numbers_A"_a=perturbed_atomic_numbers_A,
           "endpoint_atomic_numbers_B"_a=perturbed_atomic_numbers_B,
+          "endpoint_total_charge_B"_a=(sim.param().qmmm.qm_zone.pert_charge +
+                                       sim.param().qmmm.buffer_zone.pert_charge),
+          "endpoint_spin_multiplicity_B"_a=(sim.param().qmmm.qm_zone.pert_spin_mult +
+                                            sim.param().qmmm.buffer_zone.pert_spin_mult - 1),
           "ntwse"_a=ntwse, "val_thresh"_a=val_thresh);
     }
 
@@ -543,9 +547,13 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
 
       double total_predicted_charge = tot_qm_charge + tot_link_charge;
 
-      const double system_charge =
-          sim.param().qmmm.qm_zone.charge +
-          sim.param().qmmm.buffer_zone.charge;
+      double system_charge = sim.param().qmmm.qm_zone.charge +
+                             sim.param().qmmm.buffer_zone.charge;
+      if (sim.param().perturbation.perturbation) {
+        const double charge_B = sim.param().qmmm.qm_zone.pert_charge +
+                                sim.param().qmmm.buffer_zone.pert_charge;
+        system_charge += sim.param().perturbation.lambda * (charge_B - system_charge);
+      }
 
       DEBUG(10, "NN charge summary: requested=" << system_charge
                 << " predicted=" << total_predicted_charge

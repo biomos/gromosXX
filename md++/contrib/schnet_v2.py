@@ -481,6 +481,7 @@ class SchNet_V2_Calculator:
         cutoff_nm: float,
         n_link_atoms: int = 0,
         store_diagnostics: bool = False,
+        energy_components: dict | None = None,
     ):
         """
         Evaluate one model in B2.
@@ -540,6 +541,15 @@ class SchNet_V2_Calculator:
         q_phi = out["charges"]                     # field-polarized charges, e
         E_embedding = out["qeq_embedding_energy"].sum()  # kJ/mol
         E_total = E_mlp + E_embedding
+
+        # Optional scalar diagnostics; do not retain or modify the force graph.
+        if energy_components is not None:
+            with torch.no_grad():
+                energy_components.update(
+                    burnn=float(E_mlp.detach().cpu().item()),
+                    elecstatic=float(torch.sum(q0 * phi).cpu().item()),
+                    elecinduced=float((0.5 * torch.sum((q_phi - q0) * phi)).cpu().item()),
+                )
 
         # Fixed-vacuum-charge reference used only for force decomposition.
         # The physical production force below differentiates the full
@@ -1260,7 +1270,8 @@ class Pert_SchNet_V2_Calculator(SchNet_V2_Calculator):
     def __init__(self, model_path: str, val_model_paths: list, nn_valid_freq: int, write_energy_freq: int,
                  spin_multiplicity:int, total_charge:int, lam: float, perturbed_qm_states: list,
                  endpoint_atomic_numbers_A=None, endpoint_atomic_numbers_B=None,
-                 ntwse: int = 0, val_thresh: float = 0.0) -> None:
+                 ntwse: int = 0, val_thresh: float = 0.0,
+                 endpoint_total_charge_B=None, endpoint_spin_multiplicity_B=None) -> None:
         """
         Initialize the Pert_SchNet_V1_Calculator with necessary model paths, validation frequency, and perturbation settings.
 
@@ -1271,6 +1282,8 @@ class Pert_SchNet_V2_Calculator(SchNet_V2_Calculator):
             write_energy_freq (int): Frequency (in steps) at which to write the energy predictions to output.
             lam (float): A parameter used for interpolating between different states.
             perturbed_qm_states (list): List specifying the QM states of each atom, where 0 indicates both states, 1 indicates state A, and 2 indicates state B.
+            endpoint_total_charge_B: Net QM + buffer charge for endpoint B; defaults to A.
+            endpoint_spin_multiplicity_B: Combined QM + buffer multiplicity for B; defaults to A.
 
         Returns:
             None
@@ -1289,6 +1302,16 @@ class Pert_SchNet_V2_Calculator(SchNet_V2_Calculator):
         
         # Store the perturbation parameter lambda (lam) for interpolating between states.
         self.lam = lam
+        # Keep endpoint electronic states fixed as lambda changes. Omitted B
+        # metadata preserves the historical same-charge/spin Python API.
+        self.endpoint_total_charge = {
+            "A": total_charge,
+            "B": total_charge if endpoint_total_charge_B is None else endpoint_total_charge_B,
+        }
+        self.endpoint_spin_multiplicity = {
+            "A": spin_multiplicity,
+            "B": spin_multiplicity if endpoint_spin_multiplicity_B is None else endpoint_spin_multiplicity_B,
+        }
         
         # Convert the list of perturbed QM states into a numpy array for easier manipulation and indexing.
         self.perturbed_qm_states = np.array(perturbed_qm_states)
@@ -1460,6 +1483,10 @@ class Pert_SchNet_V2_Calculator(SchNet_V2_Calculator):
 
         # Create ASE Atoms object for the Burnn state.
         state_burnn = ase.Atoms(numbers=atomic_numbers_burnn, positions=positions_burnn)
+
+        for system in (state_vac, state_burnn):
+            system.info["total_charge"] = float(self.endpoint_total_charge[state_id])
+            system.info["spin_multiplicity"] = float(self.endpoint_spin_multiplicity[state_id])
 
         return state_vac, state_burnn
 
@@ -1710,6 +1737,33 @@ class Pert_SchNet_V2_Calculator(SchNet_V2_Calculator):
         """Map a perturbed-state BuRNN array back to the full GROMOS order."""
         return list(self.states_idx[state]) + list(range(self.qmzone_size, n_total))
 
+    def _print_dynamic_dhdl(self, time_step: int, endpoint_components: dict) -> None:
+        """Report endpoint-weight derivatives in kJ/mol (lambda is dimensionless).
+
+        Static = q0 dot phi; induced = 0.5*(q_phi-q0) dot phi.
+        Endpoint charge solutions are lambda-independent in this Hamiltonian.
+        The residual exposes any mismatch with the model's embedding energy.
+        """
+        components = dict(burnn=0.0, elecstatic=0.0, elecinduced=0.0, vacuum=0.0)
+        direct = (
+            getattr(self, "direct_endpoint_interpolation", False)
+            and "A" in self.states and "B" in self.states
+        )
+        for state, energies in endpoint_components.items():
+            sign = -1.0 if state == "A" else 1.0
+            for name, energy in energies.items():
+                components[name] += sign * energy
+            if not direct:
+                components["vacuum"] -= sign * self.states[state]["energy_vac"]
+        total = sum(components.values())
+        print(
+            f"DHDL_DEBUG step={time_step} lambda={self.lam:.10g} units=kJ/mol "
+            + " ".join(f"d{name}/dlambda={value:.10g}" for name, value in components.items())
+            + f" sum={total:.10g} dH/dlambda={self.derivative:.10g} "
+            + f"residual={self.derivative - total:.10g}",
+            flush=True,
+        )
+
     def _calculate_next_step_dynamic(
         self,
         atomic_numbers: list,
@@ -1727,6 +1781,9 @@ class Pert_SchNet_V2_Calculator(SchNet_V2_Calculator):
         force and effective dynamic charge use the same endpoint weights as
         the BuRNN energies: (1-lambda) for A and lambda for B.
         """
+        # Collect and print the derivative breakdown on NN validation steps.
+        debug_dhdl = len(self.val_calculators) > 0 and time_step % self.nn_valid_freq == 0
+        endpoint_components = {}
         self.states = {}
         n_total = len(atomic_numbers)
         r_or_A = torch.tensor(
@@ -1741,9 +1798,6 @@ class Pert_SchNet_V2_Calculator(SchNet_V2_Calculator):
             if state not in self.states_idx:
                 continue
             state_vac, state_burnn = self.get_state(atomic_numbers, positions, state)
-            for system in (state_vac, state_burnn):
-                system.info["total_charge"] = float(self.total_charge)
-                system.info["spin_multiplicity"] = float(self.spin_multiplicity)
 
             energy_vac, forces_vac = self.predict_energy_and_forces(state_vac)
             r_burnn_A = torch.tensor(
@@ -1755,6 +1809,7 @@ class Pert_SchNet_V2_Calculator(SchNet_V2_Calculator):
             # Each endpoint needs its own OR coordinate leaf because autograd
             # consumes the graph during the endpoint force evaluation.
             endpoint_r_or_A = r_or_A.detach().clone().requires_grad_(True)
+            components = {} if debug_dhdl else None
             (
                 energy_burnn,
                 forces_burnn,
@@ -1770,7 +1825,10 @@ class Pert_SchNet_V2_Calculator(SchNet_V2_Calculator):
                 q_or=q_or,
                 cutoff_nm=cutoff_nm,
                 n_link_atoms=n_link_atoms,
+                **({"energy_components": components} if debug_dhdl else {}),
             )
+            if debug_dhdl:
+                endpoint_components[state] = components
             self.states[state] = {
                 "vac": state_vac,
                 "burnn": state_burnn,
@@ -1786,6 +1844,9 @@ class Pert_SchNet_V2_Calculator(SchNet_V2_Calculator):
             }
 
         self.energy, self.derivative = self.calculate_perturbed_energy_and_derivative()
+
+        if debug_dhdl:
+            self._print_dynamic_dhdl(time_step, endpoint_components)
         self.forces = self.calculate_perturbed_forces()
 
         # dE/dR_OR and dE/dphi use exactly the BuRNN endpoint coefficients.
