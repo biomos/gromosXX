@@ -38,6 +38,10 @@
 inline void interaction::Nonbonded_Term
 ::init(simulation::Simulation const &sim
      , simulation::interaction_func_enum int_func) {
+  m_schnet_v2_dynamic_charges =
+      sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic
+      && sim.param().qmmm.software == simulation::qm_schnetv2;
+  m_brbr_electrostatic_scale = sim.param().qmmm.buffer_zone.brbr_electrostatic_scale;
   if (int_func == simulation::default_func)
     int_func = sim.param().force.interaction_function;
   double cut3i = 0.0, crf = 0.0, crf_cut3i = 0.0, crf_2cut3i = 0.0, crf_cut = 0.0;
@@ -827,4 +831,3 @@ inline void interaction::Nonbonded_Term
   e_sasa = (1 - (p_i * pij * bij / surface));
 
 }
-

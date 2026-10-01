@@ -120,13 +120,31 @@ BUFFERZONE
 # QMZ:   atomic number of the QM atom
 # QMLI:  0,1 atom is a link atom
 # BRstat: 0,1,2 options. 0 = atom is part of the inner QM region. 1 = atom is part of the adaptiv BR, atom is part of the static BR region
-# NETCH SPINM BUFCUT
-      0     1    1.4
+# BRBRelecScale: optional finite nonnegative BR-BR pair electrostatic scale
+#               (default 1.0); used only for SchNet v2 with dynamic charges.
+#               Does not scale LJ or RF self-energy.
+# NETCH SPINM BUFCUT BRBRelecScale
+      0     1    1.4  1.0
 # Warning: the first 17 characters are ignored!
 # RESIDUE   ATOM     QMI   QMZ   QMLI   BRstat
     1 H2O   OW         1     8      0        1
     1 H2O   HW1        2     1      0        1
     1 H2O   HW2        3     1      0        1
+END
+@endverbatim
+ *
+ * @section brbrshell BRBRSHELL block
+ * Optional coordination-weighted interwater BR-BR RF and LJ screening for dynamic
+ * mechanical SchNet v2 with one Fe and all-solute water charge groups.
+ * BUFFERZONE BRBRelecScale must be 1.0. Omit this block to disable screening.
+ * v_i=1/(1+(r_FeO/R0)^N), s_ij=1-(1-SCALE)*v_i*v_j. Forces include switching
+ * derivatives and virial. Intramolecular terms are unchanged.
+ * Optional LJSCALE (default 1.0) applies the same switch to both LJ terms.
+ * R0 is in nm, 0<=SCALE<=1, N>=2, M=2*N (the coordination-number special case).
+ * @verbatim
+BRBRSHELL
+# SCALE R0 N M LJSCALE
+  0.6 0.300 20 40 0.6
 END
 @endverbatim
  *
@@ -660,6 +678,7 @@ void io::In_QMMM::read(topology::Topology& topo,
         "In_QMMM", io::message::notice);
   }
   this->read_zone(topo, sim, "BUFFERZONE");
+  this->read_brbr_shell(topo, sim);
 
   if (sim.param().perturbation.perturbation) {
       this->read_pert_qmzone(sim, &sim.param().qmmm.nn);
@@ -1702,6 +1721,102 @@ void io::In_QMMM::read_pert_qmzone(simulation::Simulation& sim
   }
   }
 
+void io::In_QMMM::read_brbr_shell(topology::Topology& topo,
+                                simulation::Simulation& sim) {
+  const std::vector<std::string>& block = m_block["BRBRSHELL"];
+  if (block.empty()) return;
+  block_read.insert("BRBRSHELL");
+  auto& p = sim.param().qmmm.brbr_shell;
+  auto error = [](const std::string& text) {
+    io::messages.add("BRBRSHELL: " + text, "In_QMMM", io::message::error);
+  };
+  if (block.size() != 3) {
+    error("expected one row: SCALE R0 N M [LJSCALE]"); return;
+  }
+  std::istringstream row(block[1]);
+  std::string extra;
+  if (!(row >> p.scale >> p.r0 >> p.n >> p.m)) {
+    error("expected SCALE R0 N M [LJSCALE]"); return;
+  }
+  p.lj_scale = 1.0;
+  row >> std::ws;
+  if (!row.eof() && !(row >> p.lj_scale)) {
+    error("LJSCALE must be a finite number in [0,1]"); return;
+  }
+  if ((row >> extra)
+      || !std::isfinite(p.lj_scale) || p.lj_scale < 0.0 || p.lj_scale > 1.0
+      || !std::isfinite(p.scale) || p.scale < 0.0 || p.scale > 1.0
+      || !std::isfinite(p.r0) || p.r0 <= 0.0
+      || p.n < 2 || p.n > 1000 || p.m != 2 * p.n) {
+    error("require 0 <= SCALE,LJSCALE <= 1, finite R0 > 0 (nm), 2 <= N <= 1000 and M = 2*N");
+    return;
+  }
+  const auto& q = sim.param().qmmm;
+  //if (q.software != simulation::qm_schnetv2 || q.qm_ch != simulation::qm_ch_dynamic
+     // || q.qmmm != simulation::qmmm_mechanical || !q.use_qm_buffer
+     // || q.buffer_zone.brbr_electrostatic_scale != 1.0) {
+    //error("requires dynamic-charge mechanical SchNet v2 with BUFFERZONE BRBRelecScale = 1.0");
+    //return;
+  //}
+  if (sim.param().boundary.boundary != math::rectangular
+      || sim.param().force.interaction_function != simulation::lj_crf_func
+      || sim.param().pairlist.skip_step != 1 || q.atomic_cutoff
+      || sim.param().perturbation.perturbation || sim.param().eds.eds
+      || sim.param().gamd.gamd || sim.param().polarise.cos
+      || sim.param().force.force_groups || sim.param().multicell.multicell
+      || topo.num_solute_atoms() != topo.num_atoms() || !topo.qmmm_link().empty()
+      || !topo.lj_exceptions().empty()) {
+    error("supported setup: rectangular, standard LJ/RF, NSNB=1, charge-group QM cutoff, "
+          "all-solute waters; no perturbation, EDS, GaMD, polarizable sites, force groups, multicell, LJ exceptions or caps");
+    return;
+  }
+  p.oxygen.assign(topo.num_atoms(), -1);
+  p.center = -1;
+  for (unsigned i = 0; i < topo.num_atoms(); ++i) {
+    if (topo.is_qm(i)) {
+      if (p.center >= 0 || topo.qm_atomic_number(i) != 26) {
+        error("requires exactly one Fe atom in IR"); return;
+      }
+      p.center = i;
+    }
+  }
+  if (p.center < 0) { error("no Fe atom found in IR"); return; }
+  unsigned waters = 0;
+  for (unsigned cg = 0; cg < topo.num_solute_chargegroups(); ++cg) {
+    const unsigned begin = topo.chargegroup(cg), end = topo.chargegroup(cg + 1);
+    bool candidate = false;
+    for (unsigned a = begin; a < end; ++a) candidate |= topo.is_qm_buffer(a) != 0;
+    if (!candidate) continue;
+    int oxygen = -1; unsigned hydrogens = 0;
+    for (unsigned a = begin; a < end; ++a) {
+      if (!topo.is_qm_buffer(a)) { error("buffer water must include its complete charge group"); return; }
+      if (topo.qm_atomic_number(a) == 8 && oxygen < 0) oxygen = a;
+      else if (topo.qm_atomic_number(a) == 1) ++hydrogens;
+    }
+    if (end - begin != 3 || oxygen < 0 || hydrogens != 2) {
+      error("each buffer charge group must be one O/H/H water"); return;
+    }
+    for (unsigned a = begin; a < end; ++a) {
+      p.oxygen[a] = oxygen;
+      for (auto j : topo.one_four_pair(a)) {
+        if (j < begin || j >= end) {
+          error("interwater 1-4 interactions are unsupported"); return;
+        }
+      }
+    }
+    ++waters;
+  }
+  if (!waters) { error("no buffer waters found"); return; }
+  p.enabled = true;
+  std::ostringstream message;
+  message << "BRBRSHELL enabled: screened scale=" << p.scale << ", outer scale=1, R0="
+          << p.r0 << " nm, N=" << p.n << ", M=" << p.m
+          << ", Fe atom=" << p.center + 1 << ", candidate waters=" << waters
+          << ", LJ screened scale=" << p.lj_scale
+          << "; interwater RF and LJ, including switching forces and virial";
+  io::messages.add(message.str(), "In_QMMM", io::message::notice);
+}
+
 void io::In_QMMM::read_zone(topology::Topology& topo
                            , simulation::Simulation& sim
                            , const std::string& blockname)
@@ -1729,6 +1844,28 @@ void io::In_QMMM::read_zone(topology::Topology& topo
   _lineStream >> charge >> spin_mult;
   if (blockname == "BUFFERZONE") {
     _lineStream >> sim.param().qmmm.buffer_zone.cutoff;
+    // Optional fourth header field; default to full-strength electrostatics.
+    sim.param().qmmm.buffer_zone.brbr_electrostatic_scale = 1.0;
+    if (!_lineStream.fail() && !_lineStream.eof()) {
+      _lineStream >> std::ws;
+      if (!_lineStream.eof()) {
+        double scale = 1.0;
+        if (!(_lineStream >> scale) || !std::isfinite(scale) || scale < 0.0) {
+          io::messages.add("BUFFERZONE: BRBRelecScale must be a finite nonnegative number",
+                          "In_QMMM", io::message::error);
+          return;
+        }
+        sim.param().qmmm.buffer_zone.brbr_electrostatic_scale = scale;
+        if (!_lineStream.eof()) {
+          _lineStream >> std::ws;
+          if (!_lineStream.eof()) {
+            io::messages.add("BUFFERZONE: unexpected data after BRBRelecScale",
+                            "In_QMMM", io::message::error);
+            return;
+          }
+        }
+      }
+    }
     if (sim.param().pairlist.skip_step > 1) {
     // Adaptive QM buffer and skipping pairlist may suddenly appear/disappear particles
       io::messages.add("BUFFERZONE block: With adaptive QM buffer, the pairlist should be generated every step"

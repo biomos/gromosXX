@@ -65,6 +65,7 @@
 #endif
 
 #include <algorithm>
+#include "brbr_shell.h"
 
 #undef MODULE
 #undef SUBMODULE
@@ -88,6 +89,78 @@ interaction::Nonbonded_Outerloop
 // interaction loops
 //==================================================
 
+/** Add independently weighted RF and LJ corrections for active interwater BR pairs from this thread's
+ * ordinary pairlist. Reusing the RF kernel preserves its energy zero and
+ * cutoff convention; the same correction applies to short and long lists.
+ */
+static void brbr_shell_outerloop(topology::Topology& topo,
+                                configuration::Configuration& conf,
+                                simulation::Simulation& sim,
+                                interaction::Pairlist const& pairs,
+                                interaction::Nonbonded_Parameter& param,
+                                interaction::Storage& storage) {
+  const auto& p = sim.param().qmmm.brbr_shell;
+  if (!p.enabled || (p.scale == 1.0 && p.lj_scale == 1.0)) return;
+  math::Periodicity<math::rectangular> periodicity(conf.current().box);
+  interaction::Nonbonded_Term term;
+  term.init(sim);
+  const unsigned count = topo.num_atoms();
+  std::vector<double> weights(count, 0.0);
+  std::vector<math::Vec> gradients(count, math::Vec(0.0));
+  std::vector<math::Vec> displacement(count, math::Vec(0.0));
+  for (unsigned o = 0; o < count; ++o) {
+    if (p.oxygen[o] != int(o) || topo.is_qm_buffer(o) <= 0) continue;
+    periodicity.nearest_image(conf.current().pos(o), conf.current().pos(p.center),
+                             displacement[o]);
+    const double r = math::abs(displacement[o]);
+    const auto w = interaction::brbr_shell::weight(r, p.r0, p.n);
+    weights[o] = w.value;
+    if (r > 0.0) gradients[o] = (w.derivative / r) * displacement[o];
+  }
+  // Each pair force includes a matching reaction force and its atomic virial.
+  auto add_force = [&](unsigned a, unsigned b, const math::Vec& r,
+                       const math::Vec& f) {
+    storage.force(a) += f;
+    storage.force(b) -= f;
+    for (int u = 0; u < 3; ++u)
+      for (int v = 0; v < 3; ++v)
+        storage.virial_tensor(u, v) += r(u) * f(v);
+  };
+  for (unsigned i = 0; i < pairs.size(); ++i) {
+    const int oi = p.oxygen[i];
+    if (oi < 0 || topo.is_qm_buffer(i) <= 0) continue;
+    for (const unsigned j : pairs[i]) {
+      const int oj = p.oxygen[j];
+      if (oj < 0 || oi == oj || topo.is_qm_buffer(j) <= 0) continue;
+      math::Vec rij;
+      periodicity.nearest_image(conf.current().pos(i), conf.current().pos(j), rij);
+      double rf_coefficient = 0.0, lj_coefficient = 0.0;
+      double rf_energy = 0.0, lj_energy = 0.0, unused = 0.0;
+      if (p.scale != 1.0)
+        term.lj_crf_interaction(rij, 0.0, 0.0, topo.charge(i) * topo.charge(j),
+                               rf_coefficient, unused, rf_energy);
+      if (p.lj_scale != 1.0) {
+        const auto& lj = param.lj_parameter(topo.iac(i), topo.iac(j));
+        term.lj_crf_interaction(rij, lj.c6, lj.c12, 0.0,
+                               lj_coefficient, lj_energy, unused);
+      }
+      const auto c = interaction::brbr_shell::correction(p.scale, weights[oi], weights[oj]);
+      const auto l = interaction::brbr_shell::correction(p.lj_scale, weights[oi], weights[oj]);
+      storage.energies.crf_energy[topo.atom_energy_group(i)][topo.atom_energy_group(j)]
+          += c.delta * rf_energy;
+      storage.energies.lj_energy[topo.atom_energy_group(i)][topo.atom_energy_group(j)]
+          += l.delta * lj_energy;
+      add_force(i, j, rij, (c.delta * rf_coefficient + l.delta * lj_coefficient) * rij);
+      // -U_RF*grad(s_RF) - U_LJ*grad(s_LJ), with reactions on the Fe center.
+      // Oxygen weights apply to every atom of each water.
+      add_force(oi, p.center, displacement[oi],
+                (-rf_energy * c.dvi - lj_energy * l.dvi) * gradients[oi]);
+      add_force(oj, p.center, displacement[oj],
+                (-rf_energy * c.dvj - lj_energy * l.dvj) * gradients[oj]);
+    }
+  }
+}
+
 void interaction::Nonbonded_Outerloop
 ::lj_crf_outerloop(topology::Topology & topo,
         configuration::Configuration & conf,
@@ -98,6 +171,7 @@ void interaction::Nonbonded_Outerloop
         bool longrange, util::Algorithm_Timer & timer, bool master) {
   SPLIT_INNERLOOP(_lj_crf_outerloop, topo, conf, sim,
           pairlist_solute, pairlist_solvent, storage, longrange, timer, master);
+  brbr_shell_outerloop(topo, conf, sim, pairlist_solute, m_param, storage);
 }
 
 /**

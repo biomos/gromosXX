@@ -120,17 +120,17 @@ class ExtendedConverter(spk.interfaces.AtomsConverter):
         # Add total_charge only if the model expects it
         if "total_charge" in atoms.info:
             charge = atoms.info.get("total_charge", 0.0)
-            inputs["total_charge"] = torch.tensor([charge], dtype=torch.float32, device=self.device)
+            inputs["total_charge"] = torch.tensor([charge], dtype=torch.float64, device=self.device)
 
         # Add spin_multiplicity only if the model expects it
         if "spin_multiplicity" in atoms.info:
             multiplicity = atoms.info.get("spin_multiplicity", 0.0)
-            inputs["spin_multiplicity"] = torch.tensor([multiplicity], dtype=torch.float32, device=self.device)
+            inputs["spin_multiplicity"] = torch.tensor([multiplicity], dtype=torch.float64, device=self.device)
             
         # Add per-atom external potential phi only if present
         if "phi_static" in atoms.arrays:
             phi = atoms.arrays["phi_static"]
-            phi = torch.tensor(phi, dtype=torch.float32, device=self.device)
+            phi = torch.tensor(phi, dtype=torch.float64, device=self.device)
             # ensure shape (N, 1) or (N,) depending on what your model expects
             inputs["phi_static"] = phi
         return inputs
@@ -338,7 +338,7 @@ class SchNet_V2_Calculator:
         
         calculator = spk.interfaces.SpkCalculator(
             model_file = model_path, # path to model
-            dtype=torch.float32, # 
+            dtype=torch.float64, # 
             converter=ExtendedConverter,
             neighbor_list=spk.transform.ASENeighborList(cutoff=cutoff), # neighbor list
             energy_key=energy_key, # name of energy property in model
@@ -349,6 +349,7 @@ class SchNet_V2_Calculator:
             device= self.torchdevice, # device for computation
         )
         
+        calculator.model = calculator.model.double().eval()
         return calculator
         
     def _energy_forces_kjmol(self, system: ase.Atoms, calculator) -> tuple[float, np.ndarray]:
@@ -561,13 +562,6 @@ class SchNet_V2_Calculator:
         E_embedding = out["qeq_embedding_energy"].sum()  # typically kJ/mol
         E_total = E_mlp + E_embedding
 
-        # Optional debug subclass: inspect the live graph before it is freed.
-        # The observer must not alter energies, charges, or returned MD forces.
-        observer = getattr(self, "_observe_force_decomposition", None)
-        if observer is not None and store_diagnostics:
-            observer(E_mlp, E_embedding, q0, q_phi, phi,
-                     r_qeq_A, r_or_A, q_or, system, n_link_atoms)
-
         # Optional scalar diagnostics; do not retain or modify the force graph.
         if energy_components is not None:
             with torch.no_grad():
@@ -636,7 +630,7 @@ class SchNet_V2_Calculator:
         F_mlp_qeq = (-dEm_dRqeq).detach().cpu().numpy()
 
         if store_diagnostics:
-            self._last_phi_static = phi.detach().cpu().numpy().astype(np.float32, copy=False)
+            self._last_phi_static = phi.detach().cpu().numpy().astype(np.float64, copy=False)
             F_direct_qeq = (-dEdirect_dRqeq).detach().cpu().numpy()
             F_direct_or = (-dEdirect_dRor).detach().cpu().numpy()
             F_response_qeq = F_total_qeq - F_direct_qeq
@@ -734,14 +728,14 @@ class SchNet_V2_Calculator:
         if or_positions_nm is None or or_charges_e is None or cutoff_nm is None:
             raise ValueError("dynamic_charges=True requires or_positions_nm, or_charges_e, cutoff_nm")
 
-        r_qeq_A = torch.tensor(positions_A, dtype=torch.float32, device=self.torchdevice, requires_grad=True)
+        r_qeq_A = torch.tensor(positions_A, dtype=torch.float64, device=self.torchdevice, requires_grad=True)
 
         if len(or_positions_nm) > 0:
-            r_or_A = torch.tensor(np.asarray(or_positions_nm) * 10.0, dtype=torch.float32, device=self.torchdevice, requires_grad=True)
-            q_or = torch.tensor(or_charges_e, dtype=torch.float32, device=self.torchdevice)
+            r_or_A = torch.tensor(np.asarray(or_positions_nm) * 10.0, dtype=torch.float64, device=self.torchdevice, requires_grad=True)
+            q_or = torch.tensor(or_charges_e, dtype=torch.float64, device=self.torchdevice)
         else:
-            r_or_A = torch.zeros((0, 3), dtype=torch.float32, device=self.torchdevice, requires_grad=True)
-            q_or = torch.zeros((0,), dtype=torch.float32, device=self.torchdevice)
+            r_or_A = torch.zeros((0, 3), dtype=torch.float64, device=self.torchdevice, requires_grad=True)
+            q_or = torch.zeros((0,), dtype=torch.float64, device=self.torchdevice)
 
         # production model B2
         E_total, F_total_qeq, F_total_or, q_qeq, E_mlp, F_mlp_qeq = self._b2_eval_model(
@@ -899,7 +893,7 @@ class SchNet_V2_Calculator:
             ("step", np.int64), ("dipole_eA", np.float64, (3,)),
             ("local_charge_e", np.float64),
             ("oxygen_model_indices", np.int32, (n_waters,)),
-            ("metal_O_distances_A", np.float32, (n_waters,)),
+            ("metal_O_distances_A", np.float64, (n_waters,)),
         ])
         record["step"][0] = time_step
         record["dipole_eA"][0] = dipole
@@ -919,8 +913,8 @@ class SchNet_V2_Calculator:
         if charges is None:
             raise RuntimeError("Observable export requested, but the model has no predicted charges")
         numbers = np.asarray(atomic_numbers, dtype=np.int16)
-        positions = np.asarray(positions_A, dtype=np.float32)
-        charges = np.asarray(charges, dtype=np.float32).reshape(-1)
+        positions = np.asarray(positions_A, dtype=np.float64)
+        charges = np.asarray(charges, dtype=np.float64).reshape(-1)
         if positions.shape != (len(numbers), 3) or charges.shape != (len(numbers),):
             raise ValueError("Cannot export charges: model atom arrays have different lengths")
         if not np.isfinite(charges).all() or not np.isfinite(positions).all():
@@ -934,8 +928,8 @@ class SchNet_V2_Calculator:
             record = np.empty(1, dtype=[
                 ("step", np.int64), ("n_link_atoms", np.int32),
                 ("atomic_numbers", np.int16, (len(numbers),)),
-                ("positions_A", np.float32, (len(numbers), 3)),
-                ("charges_e", np.float32, (len(numbers),)),
+                ("positions_A", np.float64, (len(numbers), 3)),
+                ("charges_e", np.float64, (len(numbers),)),
             ])
             record["step"][0] = time_step
             record["n_link_atoms"][0] = n_link_atoms
@@ -965,7 +959,7 @@ class SchNet_V2_Calculator:
         return self.nn_valid_freq > 0 and time_step % self.nn_valid_freq == 0
 
     def _write_phi_static(self, time_step: int, n_mlp_atoms: int) -> None:
-        """Append a timestep and its float32 potential to one NumPy stream."""
+        """Append a timestep and its float64 potential to one NumPy stream."""
         output_file = getattr(self, "phi_static_output_file", None)
         if output_file is None:
             return
@@ -974,7 +968,7 @@ class SchNet_V2_Calculator:
         if phi_static is None:
             raise RuntimeError("phi_static export requested before the potential was evaluated")
 
-        phi_static = np.asarray(phi_static, dtype=np.float32)
+        phi_static = np.asarray(phi_static, dtype=np.float64)
         if phi_static.shape != (n_mlp_atoms,):
             raise ValueError(
                 f"phi_static must have shape ({n_mlp_atoms},), got {phi_static.shape}"
@@ -982,7 +976,7 @@ class SchNet_V2_Calculator:
 
         record = np.empty(
             1,
-            dtype=[("step", np.int64), ("phi_static", np.float32, (n_mlp_atoms,))],
+            dtype=[("step", np.int64), ("phi_static", np.float64, (n_mlp_atoms,))],
         )
         record["step"][0] = time_step
         record["phi_static"][0] = phi_static
@@ -1967,11 +1961,11 @@ class Pert_SchNet_V2_Calculator(SchNet_V2_Calculator):
         n_total = len(atomic_numbers)
         r_or_A = torch.tensor(
             np.asarray(or_positions_nm, dtype=float).reshape((-1, 3)) * 10.0,
-            dtype=torch.float32,
+            dtype=torch.float64,
             device=self.torchdevice,
             requires_grad=True,
         )
-        q_or = torch.tensor(or_charges_e, dtype=torch.float32, device=self.torchdevice)
+        q_or = torch.tensor(or_charges_e, dtype=torch.float64, device=self.torchdevice)
 
         for state in ("A", "B"):
             if state not in self.states_idx:
@@ -1981,7 +1975,7 @@ class Pert_SchNet_V2_Calculator(SchNet_V2_Calculator):
             energy_vac, forces_vac = self.predict_energy_and_forces(state_vac)
             r_burnn_A = torch.tensor(
                 state_burnn.positions,
-                dtype=torch.float32,
+                dtype=torch.float64,
                 device=self.torchdevice,
                 requires_grad=True,
             )
@@ -2080,7 +2074,7 @@ class Pert_SchNet_V2_Calculator(SchNet_V2_Calculator):
                     for endpoint, data in self.states.items():
                         rq = torch.tensor(
                             data["burnn"].positions,
-                            dtype=torch.float32,
+                            dtype=torch.float64,
                             device=self.torchdevice,
                             requires_grad=True,
                         )

@@ -88,6 +88,8 @@ namespace io {
     /**
      * Read the list of QM atoms
      */
+    void read_brbr_shell(topology::Topology& topo, simulation::Simulation& sim);
+
     void read_zone(topology::Topology& topo
                     , simulation::Simulation& sim
                     , const std::string& blockname);

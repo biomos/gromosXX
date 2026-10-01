@@ -4208,12 +4208,25 @@ namespace simulation
        * - cutoff 0.0 (no adaptive QM buffer)
        */
       buffer_zone_struct() :
-                      cutoff(0.0) {}
+                      cutoff(0.0), brbr_electrostatic_scale(1.0) {}
         /**
          * Adaptive buffer zone cutoff
          */
         double cutoff;
+        /** BR-BR pair electrostatic scale for dynamic-charge SchNet v2. */
+        double brbr_electrostatic_scale;
       } buffer_zone;
+
+      /** Optional coordination-weighted interwater BR-BR RF and LJ screening. */
+      struct brbr_shell_struct {
+        brbr_shell_struct() : enabled(false), scale(1.0), lj_scale(1.0), r0(0.3),
+                             n(20), m(40), center(-1) {}
+        bool enabled;
+        double scale, lj_scale, r0;
+        int n, m, center;
+        // Topology atom -> oxygen of its buffer water; -1 for other atoms.
+        std::vector<int> oxygen;
+      } brbr_shell;
 
       /**
        * QM program unspecific parameters

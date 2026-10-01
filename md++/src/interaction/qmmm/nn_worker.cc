@@ -168,7 +168,7 @@ int interaction::NN_Worker::init(const topology::Topology& topo
     if (sim.param().perturbation.perturbation) {
 
       // get lambda parameter
-      py::float_ lambda = py::cast(sim.param().perturbation.lambda);
+      py::float_ lambda = py::cast(topo.lambda());
 
       // get perturbed QM states
       py::list perturbed_qm_states = py::cast(sim.param().qmmm.nn.pertqm_state);
@@ -185,7 +185,12 @@ int interaction::NN_Worker::init(const topology::Topology& topo
 
   if (software == simulation::qm_schnetv2) {
     // Initialize schnet_v2 module
-    py::module_ schnet_v2 = py::module_::import("schnet_v2");
+    const std::string schnet_module = py::module_::import("os").attr("environ")
+        .attr("get")("SCHNET_V2_MODULE", "schnet_v2").cast<std::string>();
+    if (schnet_module != "schnet_v2" && schnet_module != "schnet_v2_debug") {
+      throw std::runtime_error("SCHNET_V2_MODULE must be schnet_v2 or schnet_v2_debug");
+    }
+    py::module_ schnet_v2 = py::module_::import(schnet_module.c_str());
 
     // Access the SchNet_V2_Calculator class
     py::object schnet_class = schnet_v2.attr("SchNet_V2_Calculator");
@@ -219,7 +224,7 @@ int interaction::NN_Worker::init(const topology::Topology& topo
     // Decide if perturbation is performed or not
     if (sim.param().perturbation.perturbation) {
       // get lambda parameter
-      py::float_ lambda = py::cast(sim.param().perturbation.lambda);
+      py::float_ lambda = py::cast(topo.lambda());
 
       // get perturbed QM states
       py::list perturbed_qm_states = py::cast(sim.param().qmmm.nn.pertqm_state);
@@ -337,7 +342,12 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
                      , configuration::Configuration& conf
                      , simulation::Simulation& sim, interaction::QM_Zone & qm_zone) {
 #ifdef HAVE_PYBIND11
-  // run NN interface 
+  // Slow growth advances the topology lambda, not the input parameter.
+  // Refresh the existing calculator before evaluating energies, forces,
+  // charges and dH/dlambda (both SchNet versions store this as `lam`).
+  if (sim.param().perturbation.perturbation) {
+    mlp_calculator.attr("lam") = py::cast(topo.lambda());
+  }
 
   // Prepare the input for mlp_calculator object
   double length_to_nn = 1 / this->param->unit_factor_length;
@@ -430,6 +440,22 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
               << " or_sites=" << or_sites.size()
               << " link_atoms=" << n_caps
               << " cutoff_nm=" << cutoff_nm);
+
+    if (py::hasattr(mlp_calculator, "configure_debug_regions")) {
+      std::vector<unsigned int> debug_ids, debug_or_ids;
+      unsigned int debug_n_ir = 0;
+      for (const auto* a : qm_atoms_order) {
+        debug_ids.push_back(a->index + 1); // topology atom IDs, one-based
+        if (topo.is_qm(a->index)) ++debug_n_ir;
+      }
+      for (const auto& site : or_sites) {
+        if (site.first->is_polarisable) {
+          throw std::runtime_error("SchNet force debug does not support polarizable OR sites");
+        }
+        debug_or_ids.push_back(site.first->index + 1);
+      }
+      mlp_calculator.attr("configure_debug_regions")(debug_ids, debug_n_ir, debug_or_ids);
+    }
 
     mlp_calculator.attr("calculate_next_step")(
         atomic_numbers,
@@ -552,7 +578,7 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
       if (sim.param().perturbation.perturbation) {
         const double charge_B = sim.param().qmmm.qm_zone.pert_charge +
                                 sim.param().qmmm.buffer_zone.pert_charge;
-        system_charge += sim.param().perturbation.lambda * (charge_B - system_charge);
+        system_charge += topo.lambda() * (charge_B - system_charge);
       }
 
       DEBUG(10, "NN charge summary: requested=" << system_charge

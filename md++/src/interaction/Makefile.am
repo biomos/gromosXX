@@ -44,6 +44,7 @@ xxintnb_HEADERS = nonbonded/create_nonbonded.h\
 
 xxintnbintdir = $(includedir)/md++/interaction/nonbonded/interaction
 xxintnbint_HEADERS = nonbonded/interaction/nonbonded_parameter.h\
+        nonbonded/interaction/brbr_shell.h\
 	nonbonded/interaction/nonbonded_term.h\
 	nonbonded/interaction/nonbonded_term.cc\
 	nonbonded/interaction/nonbonded_innerloop.h\

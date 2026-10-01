@@ -397,7 +397,7 @@ namespace interaction
     /**
      * helper function to calculate the product of charges
      */
-    inline static double charge_product(topology::Topology const & topo, 
+    inline double charge_product(topology::Topology const & topo,
             unsigned i, unsigned j);
   };
 } // interaction

@@ -40,7 +40,8 @@ namespace interaction
     /**
      * Constructor.
      */
-    Nonbonded_Term(){};
+    Nonbonded_Term() : m_schnet_v2_dynamic_charges(false),
+                      m_brbr_electrostatic_scale(1.0) {};
     
     /**
      * initialize constants
@@ -224,6 +225,10 @@ namespace interaction
                                  double surface, double & e_sasa);
 
   protected:
+    // Select explicit embedding only for SchNet v2 with dynamic QM charges.
+    bool m_schnet_v2_dynamic_charges;
+    double m_brbr_electrostatic_scale;
+
     /**
      * Force:
      * reaction field constant.

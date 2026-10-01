@@ -1698,11 +1698,10 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
     case simulation::lj_crf_func:
     {
       // this will only contribute in the energy, the force should be zero.
-      // The SchNet embedding supplies the IR electrostatics. Do not add
-      // an RF self energy from its geometry-dependent predicted charge.
-      // BR and OR retain their static MM self terms.
-      const double q = (m_schnet_v2_dynamic_charges && topo.is_qm(i))
-          ? 0.0 : topo.charge()(i);
+      double q = topo.charge()(i);
+      if (t_nonbonded_spec::charge_type == simulation::qm_buffer_charge) {
+        q += topo.qm_delta_charge(i);
+      }
       rf_interaction(r, q * q, f, e_crf);
       storage.energies.crf_energy[topo.atom_energy_group(i)]
               [topo.atom_energy_group(i)] += 0.5 * e_crf;
@@ -2048,9 +2047,10 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
     case simulation::lj_shifted_crf_corr_func:
     {
       // this will only contribute in the energy, the force should be zero.
-      // Apply the same IR self exclusion to shifted RF electrostatics.
-      const double q = (m_schnet_v2_dynamic_charges && topo.is_qm(i))
-          ? 0.0 : topo.charge()(i);
+      double q = topo.charge()(i);
+      if (t_nonbonded_spec::charge_type == simulation::qm_buffer_charge) {
+        q += topo.qm_delta_charge(i);
+      }
       double e_extra_orig;
       double e_extra_phys;
 
@@ -2679,35 +2679,62 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::ls_real_excluded_innerloop
 }
 
 /**
- * Static charge product with explicit SchNet v2 embedding exclusions.
+ * calculate the product of charges based on the charge type
+ * this function implements variable charges for the QM buffer region
  */
+// template <typename t_nonbonded_spec>
+// double interaction::Nonbonded_Innerloop<t_nonbonded_spec>::charge_product(
+//         topology::Topology const & topo, 
+//         unsigned i, unsigned j) {
+//   double q = topo.charge(i) * topo.charge(j);
+//   switch (t_nonbonded_spec::charge_type) {
+//     case simulation::mm_charge : break;
+//     case simulation::qm_buffer_charge : {
+//       if (topo.is_adaptive_qm_buffer(i) != topo.is_adaptive_qm_buffer(j)) {
+//         DEBUG(11, "\tqm_delta_charge i=" << topo.qm_delta_charge(i) << " j=" << topo.qm_delta_charge(j));
+//         q +=  topo.charge(i) * topo.qm_delta_charge(j)
+//             + topo.charge(j) * topo.qm_delta_charge(i);
+//       }
+//       break;
+//     }
+//     default : io::messages.add("Charge type not implemented.", "nonbonded_innerloop", io::message::warning);
+//   }
+//   return q;
+// }
 template <typename t_nonbonded_spec>
 double interaction::Nonbonded_Innerloop<t_nonbonded_spec>::charge_product(
         topology::Topology const & topo,
         unsigned i, unsigned j)
 {
 
-  if (m_schnet_v2_dynamic_charges) {
-    // IR interactions are handled by the model/embedding.
-    if (topo.is_qm(i) || topo.is_qm(j)) {
-      return 0.0;
-    }
+  // --- Disable QM/MM electrostatics cross terms (B2) ---
+  const bool i_qm_side = topo.is_qm(i) || (topo.is_qm_buffer(i) > 0);
+  const bool j_qm_side = topo.is_qm(j) || (topo.is_qm_buffer(j) > 0);
 
-    const bool i_buffer = topo.is_qm_buffer(i) > 0;
-    const bool j_buffer = topo.is_qm_buffer(j) > 0;
-
-    // BR-OR electrostatics are handled by the Python embedding.
-    if (i_buffer != j_buffer) {
-      return 0.0;
-    }
-
-    // Scale classical BR-BR electrostatics for dynamic-charge SchNet v2.
-    // Scaling the charge product scales both pair energy and pair force.
-    if (i_buffer && j_buffer) {
-      return m_brbr_electrostatic_scale * topo.charge(i) * topo.charge(j);
-    }
+  // exactly one is QM-side -> cross term -> no classical electrostatics
+  if (i_qm_side || j_qm_side) {
+    return 0.0;
   }
 
-  // All other retained pairs use unscaled topology charge products.
-  return topo.charge(i) * topo.charge(j);
+  // otherwise, normal behavior
+  double q = topo.charge(i) * topo.charge(j);
+
+  switch (t_nonbonded_spec::charge_type) {
+    case simulation::mm_charge:
+      break;
+
+    case simulation::qm_buffer_charge: {
+      // legacy buffer-MM electrostatics using delta charges
+      if (topo.is_adaptive_qm_buffer(i) != topo.is_adaptive_qm_buffer(j)) {
+        q +=  topo.charge(i) * topo.qm_delta_charge(j)
+            + topo.charge(j) * topo.qm_delta_charge(i);
+      }
+      break;
+    }
+
+    default:
+      io::messages.add("Charge type not implemented.", "nonbonded_innerloop", io::message::warning);
+  }
+
+  return q;
 }
