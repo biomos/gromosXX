@@ -36,7 +36,7 @@
 #include <fftw3.h>
 #endif
 
-#include <config.h>
+#include "config.h"
 // these macros will create the FFTW libraries function names.
 // it has to be that complicated due to interpolation of the FFTW_PREFIX
 // define in config.h

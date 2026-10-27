@@ -3,7 +3,7 @@
  * @brief Implementation of utility math functions for colvars
  */
 
-#include "../../stdheader.h"
+#include "stdheader.h"
 #include "colvar_utils.h"
 #include <cmath>
 

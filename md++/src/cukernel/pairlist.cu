@@ -24,11 +24,11 @@
  */
 
 #include <iostream>
-#include "gpu_status.h"
+#include "cukernel/gpu_status.h"
 
-#include "lib/math.h"
-#include "lib/utils.h"
-#include "../util/debug.h"
+#include "cukernel/lib/math.h"
+#include "cukernel/lib/utils.h"
+#include "util/debug.h"
 
 
 #undef MODULE

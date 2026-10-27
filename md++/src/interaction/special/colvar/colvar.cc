@@ -3,7 +3,7 @@
  * @brief Implementation of base Colvar class
  */
 
-#include "../../stdheader.h"
+#include "stdheader.h"
 #include "colvar.h"
 
 #undef MODULE

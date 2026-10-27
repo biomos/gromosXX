@@ -23,32 +23,32 @@
  * contains replica_exchange_slave_2d_l_T_HREMD class
  */
 
-#include <stdheader.h>
+#include "stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
+#include "algorithm/algorithm.h"
+#include "topology/topology.h"
+#include "simulation/simulation.h"
+#include "configuration/configuration.h"
 
-#include <algorithm/algorithm/algorithm_sequence.h>
-#include <interaction/interaction.h>
-#include <interaction/forcefield/forcefield.h>
+#include "algorithm/algorithm/algorithm_sequence.h"
+#include "interaction/interaction.h"
+#include "interaction/forcefield/forcefield.h"
 
-#include <io/argument.h>
-#include <util/usage.h>
-#include <util/error.h>
+#include "io/argument.h"
+#include "util/usage.h"
+#include "util/error.h"
 
-#include <io/read_input.h>
-#include <io/print_block.h>
+#include "io/read_input.h"
+#include "io/print_block.h"
 
 #include <time.h>
 #include <unistd.h>
 
-#include <io/configuration/out_configuration.h>
+#include "io/configuration/out_configuration.h"
 
-#include <replicaExchange/replica/replica.h>
-#include <replicaExchange/replica_exchangers/replica_exchange_slave_interface.h>
-#include <replicaExchange/replica_exchangers/2D_T_lambda_REPEX/re_base_2d_l_T_HREMD.h>
+#include "replicaExchange/replica/replica.h"
+#include "replicaExchange/replica_exchangers/replica_exchange_slave_interface.h"
+#include "replicaExchange/replica_exchangers/2D_T_lambda_REPEX/re_base_2d_l_T_HREMD.h"
 
 #ifdef XXMPI
 #include <mpi.h>
