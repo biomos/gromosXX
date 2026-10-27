@@ -26,7 +26,7 @@
 #ifndef INCLUDED_VOLUME_H
 #define INCLUDED_VOLUME_H
 
-#include <math/gmath.h>
+#include "math/gmath.h"
 
 namespace math
 {

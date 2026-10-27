@@ -32,7 +32,7 @@
 #include <mpi.h>
 #endif
 
-#include <stdheader.h>
+#include "stdheader.h"
 
 namespace re{
     class replica_graph_control {

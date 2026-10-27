@@ -23,18 +23,18 @@
  * implements methods of In_RDC
  */
 
-#include <stdheader.h>
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <interaction/interaction_types.h>
-#include <configuration/configuration.h>
-#include <io/instream.h>
-#include <io/blockinput.h>
+#include "stdheader.h"
+#include "algorithm/algorithm.h"
+#include "topology/topology.h"
+#include "simulation/simulation.h"
+#include "interaction/interaction_types.h"
+#include "configuration/configuration.h"
+#include "io/instream.h"
+#include "io/blockinput.h"
 #include <vector>
 #include <iosfwd>
-#include <math/random.h>
-#include <io/topology/in_rdc.h>
+#include "math/random.h"
+#include "io/topology/in_rdc.h"
 
 #undef MODULE
 #undef SUBMODULE

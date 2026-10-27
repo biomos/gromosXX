@@ -26,7 +26,7 @@
 #ifndef INCLUDED_TEMPERATURE_BERENDSEN_H
 #define INCLUDED_TEMPERATURE_BERENDSEN_H
 
-#include <algorithm/temperature/thermostat.h>
+#include "algorithm/temperature/thermostat.h"
 
 namespace algorithm
 {

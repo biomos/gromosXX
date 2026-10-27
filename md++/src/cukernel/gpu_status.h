@@ -27,9 +27,9 @@
 #ifndef _GPU_STATUS_H
 #define	_GPU_STATUS_H
 
-#include <cukernel/parameter.h>
-#include <cukernel/pairlist.h>
-#include <cukernel/lib/types.h>
+#include "cukernel/parameter.h"
+#include "cukernel/pairlist.h"
+#include "cukernel/lib/types.h"
 
 /**
  * @struct gpu_status

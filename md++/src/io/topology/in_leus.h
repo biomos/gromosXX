@@ -47,7 +47,7 @@
 #ifndef INCLUDED_IN_LEUS_H
 #define INCLUDED_IN_LEUS_H
 
-#include <io/instream.h>
+#include "io/instream.h"
 
 namespace io {
 

@@ -24,10 +24,10 @@
  */
 
 #include <cstring>
-#include <stdheader.h>
-#include <io/message.h>
+#include "stdheader.h"
+#include "io/message.h"
 #include <ios>
-#include <io/blockinput.h>
+#include "io/blockinput.h"
 
 #undef MODULE
 #define MODULE io

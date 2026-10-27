@@ -23,9 +23,9 @@
  * definition of the message class.
  */
 
-#include <stdheader.h>
+#include "stdheader.h"
 
-#include <io/message.h>
+#include "io/message.h"
 
 namespace io
 {  

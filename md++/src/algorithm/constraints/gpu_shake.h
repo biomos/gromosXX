@@ -26,11 +26,11 @@
 #define	_GPU_SHAKE_H
 
 #ifdef HAVE_LIBCUDART
-#include <cudaKernel.h>
+#include "cudaKernel.h"
 #else
 #define gpu_status void
 #endif
-#include <algorithm/constraints/gpu_shake_thread.h>
+#include "algorithm/constraints/gpu_shake_thread.h"
 
 namespace interaction {
   struct bond_type_struct;

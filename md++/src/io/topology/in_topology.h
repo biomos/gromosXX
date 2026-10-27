@@ -28,8 +28,8 @@
 
 #include <vector>
 
-#include <io/ifp.h>
-#include <io/instream.h>
+#include "io/ifp.h"
+#include "io/instream.h"
 
 namespace io {
 

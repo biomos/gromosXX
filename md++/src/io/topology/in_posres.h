@@ -37,7 +37,7 @@
 #ifndef INCLUDED_IN_POSRES_H
 #define INCLUDED_IN_POSRES_H
 
-#include <io/instream.h>
+#include "io/instream.h"
 
 namespace io {
 

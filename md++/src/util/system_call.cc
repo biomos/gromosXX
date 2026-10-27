@@ -28,7 +28,7 @@
 
 #include <unistd.h>
 
-#include <util/system_call.h>
+#include "util/system_call.h"
 
 #include "config.h"
 

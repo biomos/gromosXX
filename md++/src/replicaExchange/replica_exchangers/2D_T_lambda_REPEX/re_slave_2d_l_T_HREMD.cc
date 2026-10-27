@@ -25,25 +25,25 @@
  * Created on April 29, 2011, 2:06 PM
  */
 
-#include <replicaExchange/replica_exchangers/replica_exchange_slave_interface.h>
-#include <replicaExchange/replica_exchangers/2D_T_lambda_REPEX/re_slave_2d_l_T_HREMD.h>
+#include "replicaExchange/replica_exchangers/replica_exchange_slave_interface.h"
+#include "replicaExchange/replica_exchangers/2D_T_lambda_REPEX/re_slave_2d_l_T_HREMD.h"
 
-#include <stdheader.h>
+#include "stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
+#include "algorithm/algorithm.h"
+#include "topology/topology.h"
+#include "simulation/simulation.h"
+#include "configuration/configuration.h"
 
-#include <algorithm/algorithm/algorithm_sequence.h>
-#include <interaction/interaction.h>
-#include <interaction/forcefield/forcefield.h>
+#include "algorithm/algorithm/algorithm_sequence.h"
+#include "interaction/interaction.h"
+#include "interaction/forcefield/forcefield.h"
 
-#include <io/argument.h>
+#include "io/argument.h"
 #include <time.h>
 #include <unistd.h>
 
-#include <io/configuration/out_configuration.h>
+#include "io/configuration/out_configuration.h"
 
 
 #ifdef XXMPI

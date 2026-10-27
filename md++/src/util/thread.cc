@@ -28,7 +28,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include "config.h"
-#include <util/thread.h>
+#include "util/thread.h"
 
 extern "C" void * util::launchThread(void * t) {
   Thread * thread = (Thread*)(t);

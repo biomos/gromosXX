@@ -25,8 +25,8 @@
  * Created on April 18, 2018, 3:20 PM
  * Modified June 18, 2021 - bschroed, srieder
  */
-#include <replicaExchange/replica_graph_control.h>
-#include <replicaExchange/replica_exchangers/1D_S_RE_EDS/re_master_eds.h>
+#include "replicaExchange/replica_graph_control.h"
+#include "replicaExchange/replica_exchangers/1D_S_RE_EDS/re_master_eds.h"
 
 #undef MODULE
 #undef SUBMODULE

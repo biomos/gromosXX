@@ -25,23 +25,23 @@
 
 #include <time.h>
 
-#include <stdheader.h>
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
-#include <interaction/interaction.h>
-#include <interaction/interaction_types.h>
-#include <interaction/forcefield/forcefield.h>
-#include <interaction/special/rdc_restraint_interaction.h>
-#include <math/periodicity.h>
-#include <math/random.h>
-#include <util/error.h>
-#include <util/template_split.h>
-#include <create_special.h>
-#include <topology/core/body_term.h>
+#include "stdheader.h"
+#include "algorithm/algorithm.h"
+#include "topology/topology.h"
+#include "simulation/simulation.h"
+#include "configuration/configuration.h"
+#include "interaction/interaction.h"
+#include "interaction/interaction_types.h"
+#include "interaction/forcefield/forcefield.h"
+#include "interaction/special/rdc_restraint_interaction.h"
+#include "math/periodicity.h"
+#include "math/random.h"
+#include "util/error.h"
+#include "util/template_split.h"
+#include "create_special.h"
+#include "topology/core/body_term.h"
 
-#include <util/debug.h>
+#include "util/debug.h"
 
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_multimin.h>

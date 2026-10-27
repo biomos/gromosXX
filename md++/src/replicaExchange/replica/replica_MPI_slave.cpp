@@ -29,12 +29,12 @@
     #include <mpi.h>
 #endif
 
-#include <stdheader.h>
+#include "stdheader.h"
 
-#include <replicaExchange/replica/replica_MPI_slave.h>
-#include <io/argument.h>
-#include <util/error.h>
-#include <math/volume.h>
+#include "replicaExchange/replica/replica_MPI_slave.h"
+#include "io/argument.h"
+#include "util/error.h"
+#include "math/volume.h"
 
 #undef MODULE
 #undef SUBMODULE

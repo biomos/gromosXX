@@ -26,30 +26,30 @@
  * Modified June 18, 2021 - bschroed, srieder
  */
 
-#include <stdheader.h>
+#include "stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
+#include "algorithm/algorithm.h"
+#include "topology/topology.h"
+#include "simulation/simulation.h"
+#include "configuration/configuration.h"
 
-#include <algorithm/algorithm/algorithm_sequence.h>
-#include <interaction/interaction.h>
-#include <interaction/forcefield/forcefield.h>
+#include "algorithm/algorithm/algorithm_sequence.h"
+#include "interaction/interaction.h"
+#include "interaction/forcefield/forcefield.h"
 
-#include <io/argument.h>
-#include <util/usage.h>
-#include <util/error.h>
+#include "io/argument.h"
+#include "util/usage.h"
+#include "util/error.h"
 
-#include <io/read_input.h>
-#include <io/print_block.h>
+#include "io/read_input.h"
+#include "io/print_block.h"
 
 #include <time.h>
 #include <unistd.h>
 
-#include <io/configuration/out_configuration.h>
-#include <replicaExchange/replica/replica.h>
-#include <replicaExchange/replica_exchangers/replica_exchange_master_interface.h>
+#include "io/configuration/out_configuration.h"
+#include "replicaExchange/replica/replica.h"
+#include "replicaExchange/replica_exchangers/replica_exchange_master_interface.h"
 
 #include <string>
 

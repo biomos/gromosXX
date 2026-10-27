@@ -23,12 +23,12 @@
  * generate velocities from Maxwell distribution.
  */
 
-#include <stdheader.h>
-#include <math/random.h>
-#include <simulation/multibath.h>
-#include <simulation/parameter.h>
+#include "stdheader.h"
+#include "math/random.h"
+#include "simulation/multibath.h"
+#include "simulation/parameter.h"
 
-#include <util/generate_velocities.h>
+#include "util/generate_velocities.h"
 
 #undef MODULE
 #undef SUBMODULE

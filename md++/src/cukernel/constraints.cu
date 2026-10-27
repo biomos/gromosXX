@@ -23,13 +23,13 @@
  * implementation of constraints algorithms
 */
 
-#include <cukernel/gpu_status.h>
-#include <cukernel/constraints.h>
-#include <cukernel/parameter.h>
-#include <cukernel/lib/math.h>
-#include <cukernel/lib/utils.h>
+#include "cukernel/gpu_status.h"
+#include "cukernel/constraints.h"
+#include "cukernel/parameter.h"
+#include "cukernel/lib/math.h"
+#include "cukernel/lib/utils.h"
 
-#include <util/debug.h>
+#include "util/debug.h"
 
 #undef MODULE
 #undef SUBMODULE

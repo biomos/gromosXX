@@ -63,29 +63,29 @@
 
 #include <map>
 #include <sstream>
-#include <stdheader.h>
+#include "stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
+#include "algorithm/algorithm.h"
+#include "topology/topology.h"
+#include "simulation/simulation.h"
+#include "configuration/configuration.h"
 
-#include <interaction/interaction_types.h>
-#include <math/periodicity.h>
-#include <math/volume.h>
+#include "interaction/interaction_types.h"
+#include "math/periodicity.h"
+#include "math/volume.h"
 
-#include <interaction/nonbonded/pairlist/pairlist.h>
-#include <interaction/nonbonded/interaction/storage.h>
-#include <interaction/nonbonded/interaction/nonbonded_parameter.h>
+#include "interaction/nonbonded/pairlist/pairlist.h"
+#include "interaction/nonbonded/interaction/storage.h"
+#include "interaction/nonbonded/interaction/nonbonded_parameter.h"
 
-#include <interaction/nonbonded/interaction/nonbonded_term.h>
-#include <interaction/nonbonded/interaction/latticesum.h>
-#include <configuration/mesh.h>
-#include <interaction/nonbonded/interaction/nonbonded_innerloop.h>
+#include "interaction/nonbonded/interaction/nonbonded_term.h"
+#include "interaction/nonbonded/interaction/latticesum.h"
+#include "configuration/mesh.h"
+#include "interaction/nonbonded/interaction/nonbonded_innerloop.h"
 #include <locale>
 
-#include <io/argument.h>
-#include <util/usage.h>
+#include "io/argument.h"
+#include "util/usage.h"
 #include <map>
 
 using namespace std;

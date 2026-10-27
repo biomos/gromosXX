@@ -22,8 +22,8 @@
  * @file replica.h
  * Holds all the information for a single replica
  */
-#include <stdheader.h>
-#include <replicaExchange/replica/_replica_Interface.h>
+#include "stdheader.h"
+#include "replicaExchange/replica/_replica_Interface.h"
 
 #ifndef REPLICA_H
 #define REPLICA_H

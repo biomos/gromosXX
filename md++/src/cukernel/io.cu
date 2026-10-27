@@ -24,9 +24,9 @@
  */
 #include <iostream>
 
-#include <cukernel/parameter.h>
-#include <cukernel/gpu_status.h>
-#include <cukernel/lib/utils.h>
+#include "cukernel/parameter.h"
+#include "cukernel/gpu_status.h"
+#include "cukernel/lib/utils.h"
 
 
 extern "C" gpu_status * cudaInit(int & device_number,
