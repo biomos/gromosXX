@@ -220,7 +220,7 @@ DISTANCERES
 #         0: zero initial averages
 #      != 0: not implemented.
 #    CDIR >= 0.0 force constant for distance restraining
-#    DIR0 >= 0.0 distance offset in restraining function
+#    RLIN >= 0.0 distance offset in restraining function
 #  TAUDIR >= 0.0 coupling time for time averaging
 #      != 0: not implemented
 # FORCESCALE 0..2 controls approximation of force scaling
@@ -231,7 +231,7 @@ DISTANCERES
 #         0: no contribution
 #         1: distance restraints contribute to virial
 #
-#   NTDIR  NTDIRA    CDIR    DIR0  TAUDIR  FORCESCALE VDIR NTWDIR
+#   NTDIR  NTDIRA    CDIR    RLIN  TAUDIR  FORCESCALE VDIR NTWDIR
         2       0  1000.0     0.3     0.1           0    0      0
 END
 ANGLERES

@@ -133,3 +133,12 @@ class AEDS_Tests_tre(Basic_Tests_tre):
         """
         self._test_almost_eq_var('e1', 'e2', 'e3', 'e4')
         self._test_almost_eq_var('e1r', 'e2r', 'e3r', 'e4r')
+
+class extTI_Tests_tre(Basic_Tests_tre):
+    "class for extTI tests related to energy trajectory"
+
+    def test_extTI_energy(self):
+        """
+        Checks for extendedTI energy consistency between ref data and new md.
+        """
+        self._test_almost_eq_subbl('PRECALCLAM')
