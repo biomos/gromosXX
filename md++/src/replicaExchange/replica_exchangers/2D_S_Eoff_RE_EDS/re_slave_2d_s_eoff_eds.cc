@@ -24,7 +24,7 @@
  *
  * Created on March 29, 2020, 11:05 AM
  */
-#include <replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/re_slave_2d_s_eoff_eds.h>
+#include "replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/re_slave_2d_s_eoff_eds.h"
 
 
 #undef MODULE

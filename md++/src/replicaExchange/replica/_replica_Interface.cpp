@@ -32,15 +32,15 @@
  */
 
 
-#include <stdheader.h>
-#include <io/argument.h>
-#include <util/error.h>
-#include <math/volume.h>
+#include "stdheader.h"
+#include "io/argument.h"
+#include "util/error.h"
+#include "math/volume.h"
 
 #ifdef XXMPI
 #include <mpi.h>
 #endif
-#include <replicaExchange/replica/_replica_Interface.h>
+#include "replicaExchange/replica/_replica_Interface.h"
 
 #undef MODULE
 #undef SUBMODULE

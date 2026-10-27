@@ -3,25 +3,25 @@
  * template methods of Colvar_Restraint_Interaction
  */
 
-#include "../../stdheader.h"
+#include "stdheader.h"
 
-#include "../../algorithm/algorithm.h"
-#include "../../topology/topology.h"
-#include "../../simulation/simulation.h"
-#include "../../configuration/configuration.h"
-#include "../../interaction/interaction.h"
+#include "algorithm/algorithm.h"
+#include "topology/topology.h"
+#include "simulation/simulation.h"
+#include "configuration/configuration.h"
+#include "interaction/interaction.h"
 
-#include "../../math/periodicity.h"
+#include "math/periodicity.h"
 
 // special interactions
-#include "../../interaction/interaction_types.h"
+#include "interaction/interaction_types.h"
 
-#include "../../interaction/special/colvar_restraint_interaction.h"
-#include "../../interaction/special/colvar/colvar.h"
-#include "../../interaction/special/colvar/coordnum.h"
+#include "interaction/special/colvar_restraint_interaction.h"
+#include "interaction/special/colvar/colvar.h"
+#include "interaction/special/colvar/coordnum.h"
 
-#include "../../util/template_split.h"
-#include "../../util/debug.h"
+#include "util/template_split.h"
+#include "util/debug.h"
 
 #undef MODULE
 #undef SUBMODULE

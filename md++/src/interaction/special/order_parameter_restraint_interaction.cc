@@ -22,26 +22,26 @@
  * @file order_parameter_restraint_interaction.cc
  * order parameter restraint interaction implementation
  */
-#include <stdheader.h>
+#include "stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
-#include <interaction/interaction.h>
-#include <interaction/forcefield/forcefield.h>
+#include "algorithm/algorithm.h"
+#include "topology/topology.h"
+#include "simulation/simulation.h"
+#include "configuration/configuration.h"
+#include "interaction/interaction.h"
+#include "interaction/forcefield/forcefield.h"
 
-#include <math/periodicity.h>
+#include "math/periodicity.h"
 
 // special interactions
-#include <interaction/interaction_types.h>
+#include "interaction/interaction_types.h"
 
-#include <interaction/special/order_parameter_restraint_interaction.h>
+#include "interaction/special/order_parameter_restraint_interaction.h"
 
-#include <util/template_split.h>
-#include <util/debug.h>
+#include "util/template_split.h"
+#include "util/debug.h"
 
-#include <io/topology/in_order.h>
+#include "io/topology/in_order.h"
 #include <list>
 
 #undef MODULE

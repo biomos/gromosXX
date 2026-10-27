@@ -26,9 +26,9 @@
 #ifndef __RDC_RESTRAINT_INTERACTION_H__
 #define __RDC_RESTRAINT_INTERACTION_H__
 
-#include <stdheader.h>
-#include <topology/topology.h>
-#include <interaction/interaction.h>
+#include "stdheader.h"
+#include "topology/topology.h"
+#include "interaction/interaction.h"
 
 //  //math::eps0_i is defined as N_A/\epsilon_0 = 1.7459 *10^3 (kJ nm)/(e^2 mol)
 //  //math::spd_l is defined as c = 2.9979 *10^5 nm/ps

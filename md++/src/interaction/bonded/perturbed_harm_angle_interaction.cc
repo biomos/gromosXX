@@ -23,16 +23,16 @@
  * methods of Perturbed_Harm_Angle_Interaction.
  */
 
-#include "../../stdheader.h"
+#include "stdheader.h"
 
-#include "../../algorithm/algorithm.h"
-#include "../../topology/topology.h"
-#include "../../simulation/simulation.h"
-#include "../../configuration/configuration.h"
-#include "../../interaction/interaction.h"
-#include "../../math/periodicity.h"
+#include "algorithm/algorithm.h"
+#include "topology/topology.h"
+#include "simulation/simulation.h"
+#include "configuration/configuration.h"
+#include "interaction/interaction.h"
+#include "math/periodicity.h"
 #include "perturbed_harm_angle_interaction.h"
-#include "../../util/template_split.h"
+#include "util/template_split.h"
 
 template<math::boundary_enum B, math::virial_enum V>
 static int _calculate_perturbed_harm_angle_interactions

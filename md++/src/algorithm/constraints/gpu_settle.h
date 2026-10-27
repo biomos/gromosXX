@@ -26,7 +26,7 @@
 #ifndef _GPU_SETTLE_H
 #define	_GPU_SETTLE_H
 
-#include <cudaKernel.h>
+#include "cudaKernel.h"
 
 namespace interaction {
   struct bond_type_struct;

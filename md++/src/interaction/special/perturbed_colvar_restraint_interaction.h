@@ -6,7 +6,7 @@
 #ifndef INCLUDED_PERTURBED_COLVAR_RESTRAINT_INTERACTION_H
 #define INCLUDED_PERTURBED_COLVAR_RESTRAINT_INTERACTION_H
 
-#include "../../interaction/special/colvar/colvar.h"
+#include "interaction/special/colvar/colvar.h"
 
 namespace interaction
 {

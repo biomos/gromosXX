@@ -26,20 +26,20 @@
  * Modified June 18, 2021 - bschroed, srieder
  */
 
-#include <stdheader.h>
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
-#include <algorithm/algorithm/algorithm_sequence.h>
-#include <interaction/interaction.h>
-#include <interaction/forcefield/forcefield.h>
-#include <io/configuration/out_configuration.h>
-#include <io/argument.h>
-#include <io/read_input.h>
-#include <math/random.h>
-#include <util/usage.h>
-#include <replicaExchange/repex_mpi.h>
+#include "stdheader.h"
+#include "algorithm/algorithm.h"
+#include "topology/topology.h"
+#include "simulation/simulation.h"
+#include "configuration/configuration.h"
+#include "algorithm/algorithm/algorithm_sequence.h"
+#include "interaction/interaction.h"
+#include "interaction/forcefield/forcefield.h"
+#include "io/configuration/out_configuration.h"
+#include "io/argument.h"
+#include "io/read_input.h"
+#include "math/random.h"
+#include "util/usage.h"
+#include "replicaExchange/repex_mpi.h"
 
 #ifndef REPLICA_INTERFACE_H
 #define REPLICA_INTERFACE_H

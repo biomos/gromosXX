@@ -29,7 +29,7 @@
 #ifndef REPLICA_GRAPH_CONTROL_H
 #define REPLICA_GRAPH_CONTROL_H
 #ifdef XXMPI
-#include "mpi.h"
+#include <mpi.h>
 #endif
 
 #include "stdheader.h"
