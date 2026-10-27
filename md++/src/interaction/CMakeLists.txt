@@ -32,6 +32,7 @@ set(INTERACTION_CC
     bonded/angle_interaction.cc
     bonded/harm_angle_interaction.cc
     bonded/perturbed_angle_interaction.cc
+    bonded/perturbed_harm_angle_interaction.cc
     bonded/perturbed_soft_angle_interaction.cc
     bonded/improper_dihedral_interaction.cc
     bonded/perturbed_improper_dihedral_interaction.cc
