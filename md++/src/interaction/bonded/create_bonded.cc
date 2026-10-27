@@ -55,6 +55,7 @@
 #include "interaction/bonded/perturbed_soft_improper_interaction.h"
 #include "interaction/bonded/perturbed_dihedral_interaction.h"
 #include "interaction/bonded/perturbed_dihedral_new_interaction.h"
+#include "interaction/bonded/perturbed_harm_angle_interaction.h"
 
 // #include "../../io/instream.h"
 #include "io/ifp.h"
@@ -74,6 +75,12 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
 				   bool quiet)
 {
   DEBUG(8, "creating g96 bonded");
+  if (param.force.angle == 2 && param.perturbation.perturbation &&
+      !topo.perturbed_solute().softangles().empty()){
+    io::messages.add("PERTANGLESOFT is not implemented for harmonic angles",
+                     "create bonded", io::message::error);
+    return 1;
+  }
   if (param.force.bond == 1){
     if (!quiet)
       os << "\tquartic bond interaction\n";
@@ -185,15 +192,11 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
     ff.push_back(a);
 
     if (param.perturbation.perturbation){
-      io::messages.add("perturbed harmonic (g87) angle potential not implemented",
-		       "create bonded", io::message::error);
-      /*
       if (!quiet)
-	os <<"\tperturbed bond angle interaction\n";
-      interaction::Perturbed_Angle_Interaction * pa =
-	new interaction::Perturbed_Angle_Interaction(*a);
+	os <<"\tperturbed harmonic bond angle interaction\n";
+      interaction::Perturbed_Harm_Angle_Interaction * pa =
+	new interaction::Perturbed_Harm_Angle_Interaction();
       ff.push_back(pa);
-      */
     }
   }
 

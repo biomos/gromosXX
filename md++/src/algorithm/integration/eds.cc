@@ -332,17 +332,12 @@ int algorithm::EDS
         // Adaptive AEDS search
         // at this point we have already computed the free energies of the difference endstates to the reference
         if (sim.param().eds.form == simulation::aeds_advanced_search || sim.param().eds.form == simulation::aeds_advanced_search2){
-          // compute the prevalence of each endstate over this frame
-          std::vector<double> exp_vi(numstates);
+          // Reuse the log weights and log-sum-exp normalization computed above
+          // to avoid overflow when calculating the endstate prevalence.
           double prevalence = 0.0;
-          double total_endstates_ene = 0.0;
-          for (unsigned int state = 0; state < numstates; state++) {
-            exp_vi[state] = exp(-1.0 * beta * (eds_vi[state] - eir[state]));
-            total_endstates_ene += exp_vi[state];
-          }
 
           for (unsigned int state = 0; state < numstates; state++) {
-            prevalence = exp_vi[state]/ total_endstates_ene;
+            prevalence = exp(prefactors[state] - sum_prefactors);
             // Now check if the frame is contributing to the free energy
             // only states that have contributed at least 1/numstates on this frame will be checked to avoid counting frames of states that have not been sampled yet
             if (prevalence >= (1.0/numstates)){

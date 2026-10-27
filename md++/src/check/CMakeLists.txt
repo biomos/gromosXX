@@ -75,7 +75,7 @@ endif()
 
 # executables
 #set(EXEC_NAMES aladip aladip_unperturbed aladip_special aladip_atomic aladip_ls c16_cg lambdas)
-set(EXEC_NAMES aladip aladip_unperturbed aladip_special aladip_atomic c16_cg lambdas)
+set(EXEC_NAMES aladip aladip_unperturbed aladip_special aladip_atomic c16_cg lambdas perturbed_harm_angle)
 
 add_executable(aladip ${ALADIP_CC} ${GROMOS_OBJECTS})
 add_executable(aladip_unperturbed ${ALADIP_UNPERTURBED_CC} ${GROMOS_OBJECTS})
@@ -85,6 +85,7 @@ add_executable(aladip_atomic ${ALADIP_ATOMIC_CC} ${GROMOS_OBJECTS})
 
 add_executable(c16_cg ${C16_CG_CC} ${GROMOS_OBJECTS})
 add_executable(lambdas ${LAMBDAS_CC} ${GROMOS_OBJECTS})
+add_executable(perturbed_harm_angle perturbed_harm_angle.t.cc ${GROMOS_OBJECTS})
 
 # links and includes for tests
 foreach(LOOP_VAR ${EXEC_NAMES})
