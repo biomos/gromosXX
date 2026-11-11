@@ -37,3 +37,15 @@ list(REMOVE_DUPLICATES EXTERNAL_LIBRARIES)
 
 # md, md_mpi, eds, repex_mpi, ...
 add_subdirectory(program)
+
+# Match the Autotools data installation, including compact CV trajectory readers.
+include(GNUInstallDirs)
+install(FILES
+  data/ene_ana.md++.lib
+  data/ene_ana.md++.blocks.lib
+  data/ene_ana.md++.2026-10-27-compact.lib
+  data/ene_ana.md++.blocks.2026-10-27-compact.lib
+  data/ene_ana.md++.2026-10-27.lib
+  data/ene_ana.md++.blocks.2026-10-27.lib
+  data/ene_ana.md++.2023-04-15.lib
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/md++)

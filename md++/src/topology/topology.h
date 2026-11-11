@@ -1066,6 +1066,10 @@ namespace topology
     /**
      * individual lambda values
      */
+    /** Effective lambda and d(effective lambda)/d(global lambda), without mutation. */
+    std::pair<double, double> individual_lambda_at(int type, unsigned int group1,
+                                                  unsigned int group2, double global_lambda) const;
+
     std::vector< std::vector< double > >  & individual_lambda(int i)
     {
       return m_individual_lambda[i];
@@ -1348,6 +1352,16 @@ namespace topology
     {
       return m_distance_restraint;
     }
+
+    /** Ordinary geometries followed by perturbed distance-difference geometries. */
+    std::vector<distance_difference_restraint_struct> & distance_difference_restraints()
+    {
+      return m_distance_difference_restraint;
+    }
+    std::vector<distance_difference_restraint_struct> const & distance_difference_restraints() const
+    {
+      return m_distance_difference_restraint;
+    }
     /**
      * const perturbed distance restraints accessor.
      */
@@ -1432,6 +1446,27 @@ namespace topology
     std::vector<eds_distance_restraint_struct>  & eds_distance_restraints()
     {
       return m_eds_distance_restraint;
+    }
+
+    /** CV geometries only; ordinary entries precede perturbed entries.
+     * Kept separate from mode-3 angular constraint definitions used by SHAKE
+     * and by the constrained degrees-of-freedom calculation.
+     */
+    std::vector<angle_restraint_struct> & colvar_angle_geometries()
+    {
+      return m_colvar_angle_geometries;
+    }
+    std::vector<angle_restraint_struct> const & colvar_angle_geometries() const
+    {
+      return m_colvar_angle_geometries;
+    }
+    std::vector<dihedral_restraint_struct> & colvar_dihedral_geometries()
+    {
+      return m_colvar_dihedral_geometries;
+    }
+    std::vector<dihedral_restraint_struct> const & colvar_dihedral_geometries() const
+    {
+      return m_colvar_dihedral_geometries;
     }
 
     /**
@@ -1959,6 +1994,7 @@ namespace topology
      * distance restraints
      */
     std::vector<distance_restraint_struct> m_distance_restraint;
+    std::vector<distance_difference_restraint_struct> m_distance_difference_restraint;
     /**
      * perturbed distance restraints
      */
@@ -1983,9 +2019,10 @@ namespace topology
      * perturbed coordnum restraints 
      */
     std::vector<perturbed_coordnum_restraint_struct > m_perturbed_coordnum_restraint;
-    /**
-     * angle restraints
-     */
+    /** Ordinary followed by perturbed CV geometries, never SHAKE constraints. */
+    std::vector<angle_restraint_struct> m_colvar_angle_geometries;
+    std::vector<dihedral_restraint_struct> m_colvar_dihedral_geometries;
+    // Legacy angular geometry vectors below are reserved for constraints.
     std::vector<angle_restraint_struct> m_angle_restraint;
     /**
      * perturbed angle restraints

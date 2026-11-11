@@ -24,7 +24,7 @@ namespace interaction
   public:
     /** Constructor. */
     Colvar_Restraint_Interaction() : Interaction("ColvarRestraint"), sum(false),
-              Ctot0(0) {}
+              Ctot0(0), m_average_step(-1) {}
 
     /** Destructor. */
     virtual ~Colvar_Restraint_Interaction();
@@ -50,22 +50,22 @@ namespace interaction
 
     /** type name matching each colvar */
     std::vector<std::string> m_colvar_types;
+    std::vector<unsigned int> m_spec_ordinals;
 
     /** put the bias on the sum of all collective variables */
     bool sum;
 
     /** sum of all target values */
     double Ctot0;
+    long long m_average_step;
 
     /** apply forces and calculate potential for given colvar */
     double apply_restraint(topology::Topology & topo,
       configuration::Configuration & conf,
       simulation::Simulation & sim,
-      const std::vector< util::Virtual_Atom* > &atoms,
-      const math::VArray &derivatives,
-      double curr,
+      const Colvar &cv,
       const std::string &type,
-      Colvar_Bias &bias);
+      Colvar_Bias &bias, bool advance_average);
 
     /** construct reusable bias settings from one COLVARRES line */
     Colvar_Bias::Settings settings_from_spec(

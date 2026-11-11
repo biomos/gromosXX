@@ -493,10 +493,7 @@ namespace io
     os << type << "SASA                 : " << std::setw(30) << e.sasa_total << "\n";
     os << type << "SASA Volume          : " << std::setw(30) << e.sasa_volume_total << "\n";
     os << type << "Constraints          : " << std::setw(30) << e.constraints_total << "\n";
-    os << type << "Distanceres          : " << std::setw(30) << e.distanceres_total << "\n";
     os << type << "Disfieldres          : " << std::setw(30) << e.disfieldres_total << "\n";
-    os << type << "Angrest              : " << std::setw(30) << e.angrest_total << "\n";
-    os << type << "Dihrest              : " << std::setw(30) << e.dihrest_total << "\n";
     os << type << "Posrest              : " << std::setw(30) << e.posrest_total << "\n";
     os << type << "Jrest                : " << std::setw(30) << e.jvalue_total << "\n";
     os << type << "X-ray restraints     : " << std::setw(30) << e.xray_total << "\n";
@@ -510,6 +507,26 @@ namespace io
     os << type << "NN validation        : " << std::setw(30) << e.nn_valid << "\n";
     os << type << "NN validation Fmax   : " << std::setw(30) << e.nn_valid_maxF << "\n";
     os << type << "Collective variables : " << std::setw(30) << e.colvarres_total << "\n";
+    os << type << "CV contributions\n"
+       << type << std::setw(23) << "Type" << std::setw(18) << "Ordinary"
+       << std::setw(18) << "Perturbed" << std::setw(18) << "Combined" << '\n';
+    for (unsigned int cv = 0; cv < configuration::Energy::colvar_type_count; ++cv) {
+      os << type << std::setw(23) << configuration::Energy::colvar_type_name(cv)
+         << std::setw(18) << e.colvarres_type_status_total[cv][0]
+         << std::setw(18) << e.colvarres_type_status_total[cv][1]
+         << std::setw(18) << e.colvarres_type_total[cv] << '\n';
+    }
+    os << type << std::setw(23) << "ALL_CV"
+       << std::setw(18) << e.colvarres_status_total[0]
+       << std::setw(18) << e.colvarres_status_total[1]
+       << std::setw(18) << e.colvarres_total << '\n';
+    if (!e.eds_vi.empty()) {
+      os << type << "EDS end-state energies (special includes EDS CV biases)\n";
+      for (size_t state = 0; state < e.eds_vi.size(); ++state)
+        os << type << "State " << state+1 << " total " << e.eds_vi[state]
+           << " special " << e.eds_vi_special[state] << '\n';
+    }
+    os << type << "DFUNCT               : " << std::setw(30) << e.dfunct_total << '\n';
     os << "\n";
 
     os << std::setw(20) << "COV";
@@ -734,17 +751,11 @@ namespace io
     os << "\n" << std::setw(20) << type + "Constraints";
     for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.constraints_energy[i];
 
-    os << "\n" << std::setw(20) << type + "Distanceres";
-    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.distanceres_energy[i];
-
     os << "\n" << std::setw(20) << type + "Disfieldres";
     for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.disfieldres_energy[i];
 
-    os << "\n" << std::setw(20) << type + "Angrest";
-    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.angrest_energy[i];
-
-    os << "\n" << std::setw(20) << type + "Dihrest";
-    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.dihrest_energy[i];
+    os << "\n" << std::setw(20) << type + "DFUNCT";
+    for (unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.dfunct_energy[i];
 
     os << "\n" << std::setw(20) << type + "Posrest";
     for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.posrest_energy[i];

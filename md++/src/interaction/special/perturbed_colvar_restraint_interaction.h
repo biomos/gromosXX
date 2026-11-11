@@ -23,7 +23,7 @@ namespace interaction
      * Constructor.
      */
     Perturbed_Colvar_Restraint_Interaction() : Interaction("PerturbedColvarRestraint"), sum(false),
-              Ctot0(0) {}
+              Ctot0(0), m_average_step(-1) {}
     
     /**
      * Destructor.
@@ -52,8 +52,20 @@ namespace interaction
       Colvar_Bias *bias;
       simulation::Parameter::colvar_bias_spec A;
       simulation::Parameter::colvar_bias_spec B;
+      unsigned int ordinal;
       std::string type;
     };
+
+    struct Bias_Evaluation {
+      double energy, derivative, force_derivative;
+    };
+
+    bool evaluate_bias(const Term &term, Colvar_Bias &bias,
+      simulation::Simulation &sim, double lambda, double lambda_derivative,
+      bool advance_average, Bias_Evaluation &evaluation) const;
+    bool sample_lambdas(const topology::Topology &topo,
+      configuration::Configuration &conf, simulation::Simulation &sim,
+      const Term &term, unsigned int energy_group) const;
 
     /**
      * store all specified perturbed colvars
@@ -69,6 +81,7 @@ namespace interaction
      * sum of all target values
      */  
      double Ctot0;
+     long long m_average_step;
      
     /** apply forces and calculate potential for given colvar
      * using the biasing function specified in the COLVARRES block
@@ -76,7 +89,7 @@ namespace interaction
      double apply_restraint(topology::Topology & topo,
       configuration::Configuration & conf, simulation::Simulation & sim,
       Term &term, double lambda, double lambda_derivative,
-      unsigned int energy_group);
+      unsigned int energy_group, bool advance_average);
 
      Colvar_Bias::Settings settings_from_spec(
       const simulation::Parameter::colvar_bias_spec &spec,

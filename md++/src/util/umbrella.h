@@ -25,10 +25,14 @@
 
 #ifndef INCLUDED_UMBRELLA_H
 #define	INCLUDED_UMBRELLA_H
+#include <memory>
 
 namespace configuration {
   class Configuration;
 }
+
+namespace topology { class Topology; }
+namespace simulation { class Simulation; }
 
 namespace util {
   class LE_Coordinate;
@@ -53,7 +57,8 @@ namespace util {
             Umbrella_Weight_Factory * factory = NULL);
     /**
      * copy constructor
-     * this will pass the factory to the new instance
+     * Visit-count histories are copied independently. Specialized providers
+     * retain their existing external lifetime and context contract.
      */
     Umbrella(const Umbrella & u);
     /**
@@ -105,6 +110,9 @@ namespace util {
       /** unkown */ vt_unkown = 0,
       /** dihedral */ vt_dihedral = 1,
       /** distance */ vt_distance = 2,
+      /** bounded bond angle (degrees in input/output) */ vt_angle = 3,
+      /** signed d(A,B)-d(C,D) */ vt_distance_difference = 4,
+      /** dimensionless coordination number */ vt_coordnum = 5,
       /** distancefield */ vt_distancefield = 6
     };
     /**
@@ -210,6 +218,17 @@ namespace util {
      * the factory for the umbrella weights
      */
     Umbrella_Weight_Factory * umbrella_weight_factory;
+    /** Create an owned visit-count provider if no specialized provider is set. */
+    void initialise_weight_factory();
+    bool validate_grid() const;
+    std::string definition_signature() const;
+    // Restarted deposition guard uses physical time, not the run-local step number.
+    bool has_deposition;
+    double last_deposition_time, deposition_timestep;
+    std::string restart_signature;
+    int deposition_due(double time, double timestep) const;
+    void mark_deposition(double time, double timestep);
+
     /**
      * a function to read the configuration after setting the umbrella weights
      */
@@ -228,6 +247,7 @@ namespace util {
      *               and force and wherin the force is stored.
      */
     void calculate_coordinates(configuration::Configuration & conf);
+    int calculate_coordinates(topology::Topology &, configuration::Configuration &, simulation::Simulation &);
     /**
      * built-up the umbrella
      * This will find the grid point and add it to the visited configurations
@@ -238,7 +258,7 @@ namespace util {
      * apply the umbrella
      * @param[in,out] conf the configuration
      */
-    void apply(configuration::Configuration & conf);
+    void apply(configuration::Configuration & conf,bool include_virial=false);
     /**
      * convert to a nice formated string
      */
@@ -251,6 +271,10 @@ namespace util {
      * the position of the stream in this block
      */
     std::istringstream::pos_type configuration_block_pos;
+  private:
+    // Only the default visit-count provider is owned/cloned here. Specialized
+    // providers keep their existing external lifetime/context contract.
+    std::shared_ptr<Umbrella_Weight_Factory> m_visit_factory_owner;
   };
 
 }

@@ -3625,7 +3625,7 @@ namespace simulation
       /**
        * constructor
        */
-      localelev_struct() : localelev(localelev_off), read(false), write(0) {}
+      localelev_struct() : localelev(localelev_off), read(false), write(0), virial(0) {}
       /**
        * use the method or not
        */
@@ -3638,6 +3638,8 @@ namespace simulation
        * write to special traj
        */
       int write;
+      /** Optional LE bias virial; zero preserves historical behavior. */
+      unsigned int virial;
       /**
        * ids of the umbrella potentials to apply
        * true if building up
@@ -4660,6 +4662,7 @@ namespace simulation
       double target;
       double k;
 
+      unsigned int hidden_n, hidden_m; // lambda envelope exponents; zero disables it
       int rah;           // raw RAH value for legacy distance dimensionality
       int method;        // raw METHOD value from the COLVAR restraint file
       int averaging;     // decoded METHOD: 0 NONE, 1 TIME/EXP, 2 INV3
@@ -4670,12 +4673,19 @@ namespace simulation
 
       int force_scale;
       bool constraining;
+      // Inferred from a complementary angular wall on the same ordered atoms.
+      bool paired_wall;
+      double wall_partner_target;
+      bool explicit_periodic_branch;
+      double branch_delta; // radians: legacy upper bound is target + DELTA
 
       colvar_bias_spec()
         : index(0),
           type(""),
           target(0.0),
           k(0.0),
+          hidden_n(0),
+          hidden_m(0),
           rah(0),
           method(0),
           averaging(0),
@@ -4683,7 +4693,11 @@ namespace simulation
           virial(0),
           linear_tail(0.0),
           force_scale(0),
-          constraining(false)
+          constraining(false),
+          paired_wall(false),
+          wall_partner_target(0.0),
+          explicit_periodic_branch(false),
+          branch_delta(0.0)
       {}
     };
 
@@ -4703,6 +4717,8 @@ namespace simulation
 
       std::vector<colvar_bias_spec> bias_specs;
       std::vector<colvar_bias_spec> pert_bias_specs;
+      // One shared geometry/settings row, with a target and strength per EDS state.
+      std::vector<std::vector<colvar_bias_spec> > eds_bias_specs;
 
     } colvarres;
 

@@ -46,6 +46,7 @@
 #include "../io/topology/in_distanceres.h"
 #include "../io/topology/in_angrest.h"
 #include "../io/topology/in_dihrest.h"
+#include "../io/topology/in_colvarres.h"
 #include "../io/topology/in_xray.h"
 #include "../io/topology/in_leus.h"
 #include "../io/topology/in_order.h"
@@ -77,7 +78,8 @@ int util::create_simulation(std::string topo,
 			    std::string led,
 			    std::string lud,
           std::string order,
-			    bool quiet)
+			    bool quiet,
+                            std::string colvarres)
 {
 
   // a topology is needed
@@ -170,6 +172,19 @@ int util::create_simulation(std::string topo,
   }
 
   sim.topo.init(sim.sim);
+
+  // Read CV definitions before configuration initialization allocates averages.
+  if (!colvarres.empty()) {
+    io::igzstream colvar_file(colvarres.c_str());
+    if (!colvar_file.is_open()) {
+      io::messages.add("opening collective-variable restraints failed",
+                      "create_simulation", io::message::error);
+      return -1;
+    }
+    io::In_Colvarres reader(colvar_file);
+    reader.quiet = quiet;
+    reader.read(sim.topo, sim.sim);
+  }
 
   // read special
   if (distanceres != ""){
@@ -307,6 +322,11 @@ int util::create_simulation(std::string topo,
   }
 
 
+  if (io::messages.contains(io::message::error) ||
+      io::messages.contains(io::message::critical)) {
+    io::messages.display(std::cerr);
+    return -1;
+  }
   return 0;
 }
 

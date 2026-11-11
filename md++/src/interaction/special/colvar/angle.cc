@@ -32,16 +32,19 @@ static int _calculate_angle_colvar(
   configuration::Configuration &conf,
   simulation::Simulation &sim,
   math::VArray &derivatives,
-  topology::angle_restraint_struct *params,
-  double &ct)
+  const std::vector<util::Virtual_Atom*> &atoms,
+  double &ct,
+  int &error,
+  math::Matrix &strain_derivative)
 {
+  error = 0;
+  strain_derivative = 0.0;
   math::Periodicity<B> periodicity(conf.current().box);
-  math::VArray &pos = conf.current().pos;
   std::fill(derivatives.begin(), derivatives.end(), math::Vec(0));
 
   math::Vec rij, rkj;
-  periodicity.nearest_image(pos(params->i), pos(params->j), rij);
-  periodicity.nearest_image(pos(params->k), pos(params->j), rkj);
+  periodicity.nearest_image(atoms[0]->pos(conf,topo), atoms[1]->pos(conf,topo), rij);
+  periodicity.nearest_image(atoms[2]->pos(conf,topo), atoms[1]->pos(conf,topo), rkj);
 
   const double dij = math::abs(rij);
   const double dkj = math::abs(rkj);
@@ -49,6 +52,7 @@ static int _calculate_angle_colvar(
     io::messages.add("ANGLE colvar: zero-length angle vector.",
                      "Angle_Colvar", io::message::error);
     ct = 0.0;
+    error = 1;
     return 1;
   }
 
@@ -72,6 +76,13 @@ static int _calculate_angle_colvar(
   derivatives[2] = -dcost_dk / sint;
   derivatives[1] = -derivatives[0] - derivatives[2];
 
+  for (int a = 0; a < 3; ++a) {
+    for (int b = 0; b < 3; ++b) {
+      strain_derivative(a, b) = rij(a) * derivatives[0](b)
+                              + rkj(a) * derivatives[2](b);
+    }
+  }
+
   return 0;
 }
 
@@ -79,9 +90,10 @@ int Angle_Colvar::calculate(topology::Topology &topo,
                             configuration::Configuration &conf,
                             simulation::Simulation &sim)
 {
+  int error = 1; // Also fail if boundary/virial dispatch rejects the setup.
   SPLIT_VIRIAL_BOUNDARY(_calculate_angle_colvar,
-    topo, conf, sim, derivatives, params, ct);
-  return 0;
+    topo, conf, sim, derivatives, atoms, ct, error, strain_derivative);
+  return error;
 }
 
 int Angle_Colvar::init(topology::Topology &topo,
@@ -93,10 +105,14 @@ int Angle_Colvar::init(topology::Topology &topo,
   targetvalue = params->theta;
   w0 = params->w0;
 
+  if (endpoints && endpoints->size()!=3) return 1;
   m_atoms.clear();
-  m_atoms.push_back(util::Virtual_Atom(util::va_explicit, std::vector<int>(1, params->i)));
-  m_atoms.push_back(util::Virtual_Atom(util::va_explicit, std::vector<int>(1, params->j)));
-  m_atoms.push_back(util::Virtual_Atom(util::va_explicit, std::vector<int>(1, params->k)));
+  if (endpoints) m_atoms=*endpoints;
+  else {
+    m_atoms.push_back(util::Virtual_Atom(util::va_explicit, std::vector<int>(1, params->i)));
+    m_atoms.push_back(util::Virtual_Atom(util::va_explicit, std::vector<int>(1, params->j)));
+    m_atoms.push_back(util::Virtual_Atom(util::va_explicit, std::vector<int>(1, params->k)));
+  }
 
   atoms.clear();
   for (size_t i = 0; i < m_atoms.size(); ++i) {

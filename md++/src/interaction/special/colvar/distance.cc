@@ -75,17 +75,22 @@ static int _calculate_distance_colvar(
   math::VArray &derivatives,
   topology::distance_restraint_struct *params,
   const math::Vec &dim_mask,
-  double &ct)
+  double &ct,
+  int &error,
+  math::Matrix &strain_derivative)
 {
+  error = 0;
+  strain_derivative = 0.0;
   math::Periodicity<B> periodicity(conf.current().box);
 
   std::fill(derivatives.begin(), derivatives.end(), math::Vec(0));
 
-  math::Vec v;
+  math::Vec displacement;
   periodicity.nearest_image(params->v1.pos(conf, topo),
                             params->v2.pos(conf, topo),
-                            v);
+                            displacement);
 
+  math::Vec v = displacement;
   for (int i = 0; i < 3; ++i)
     v[i] *= dim_mask[i];
 
@@ -94,6 +99,11 @@ static int _calculate_distance_colvar(
   if (ct > 1.0e-12) {
     derivatives[0] =  v / ct;
     derivatives[1] = -v / ct;
+    for (int a = 0; a < 3; ++a) {
+      for (int b = 0; b < 3; ++b) {
+        strain_derivative(a, b) = displacement(a) * derivatives[0](b);
+      }
+    }
   }
 
   return 0;
@@ -103,9 +113,10 @@ int Distance_Colvar::calculate(topology::Topology &topo,
                                configuration::Configuration &conf,
                                simulation::Simulation &sim)
 {
+  int error = 1; // Also fail if boundary/virial dispatch rejects the setup.
   SPLIT_VIRIAL_BOUNDARY(_calculate_distance_colvar,
-    topo, conf, sim, derivatives, params, dim_mask, ct);
-  return 0;
+    topo, conf, sim, derivatives, params, dim_mask, ct, error, strain_derivative);
+  return error;
 }
 
 int Distance_Colvar::init(topology::Topology &topo,

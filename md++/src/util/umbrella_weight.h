@@ -86,7 +86,15 @@ namespace util {
     virtual double get_weight() const { return double(weight); }
     virtual void increment_weight() { ++weight; }
     virtual void write(std::ostream & os) const;
-    virtual void read(std::istream & is) { is >> weight; }
+    virtual void read(std::istream & is) {
+      long long value = -1;
+      if (!(is >> value) || value < 0
+          || static_cast<unsigned long long>(value) > std::numeric_limits<unsigned int>::max()) {
+        is.setstate(std::ios::failbit);
+        return;
+      }
+      weight = static_cast<unsigned int>(value);
+    }
   protected:
     unsigned int weight;
   };

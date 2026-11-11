@@ -474,6 +474,15 @@ namespace topology {
     unsigned int seq;
   };
 
+  /** Geometry of the signed CV |A-B| - |C-D|, independent of bias settings. */
+  struct distance_difference_restraint_struct {
+    distance_difference_restraint_struct(const util::Virtual_Atom &a,
+        const util::Virtual_Atom &b, const util::Virtual_Atom &c,
+        const util::Virtual_Atom &d) : endpoints{a, b, c, d} {}
+
+    std::vector<util::Virtual_Atom> endpoints;
+  };
+
   struct distance_restraint_struct {
 
     /**

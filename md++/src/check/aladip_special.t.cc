@@ -72,12 +72,10 @@
 #endif
 
 void hard_coded_values(std::map<std::string, double> & m){
-  m["DistanceRestraint"] = 257.189539;
-  m["PerturbedDistanceRestraint"] = 195.899012;
-  m["AngleRestraint"] = 54.5267;
-  m["PerturbedAngleRestraint"] = 4.60917;
-  m["DihedralRestraint"] = 2127.910749;
-  m["PerturbedDihedralRestraint"] = 399.820792;
+  // Cartesian reference: d(5,9), angle(2,6,10), dihedral(2,4,6,8).
+  // Harmonic radians; perturbed terms include 4*lambda*(1-lambda), lambda=0.125.
+  m["ColvarRestraint"] = 6.17781013380949;
+  m["PerturbedColvarRestraint"] = 6.63043981085383;
   m["XrayRestraint"] = 5.9411e+03;
   m["Local Elevation"] = 3.5284e+01;
   m["OrderParameterRestraint"] = 3.316416e-02;
@@ -103,17 +101,14 @@ int main(int argc, char* argv[]) {
   int total = 0;
 
   util::Known knowns;
-  knowns << "topo" << "pttopo" << "conf" << "input" << "distanceres" << "angrest"
-         << "dihrest" << "xray" << "led" << "lud" << "order" << "verb";
+  knowns << "topo" << "pttopo" << "conf" << "input" << "colvarres" << "xray" << "led" << "lud" << "order" << "verb";
     
   std::string usage = argv[0];
   usage += "\n\t[@topo      <topology>]\n";
   usage += "\t[@pttopo   <perturbation topology>]\n";
   usage += "\t[@conf      <starting configuration>]\n";
   usage += "\t[@input     <input>]\n";
-  usage += "\t[@distanceres  <distanceres>]\n";
-  usage += "\t[@angrest   <angrest>]\n";
-  usage += "\t[@dihrest   <dihrest>]\n";
+  usage += "\t[@colvarres <CV restraint specification>]\n";
   usage += "\t[@xray      <xray>]\n";
   usage += "\t[@led       <le definition file>]\n";
   usage += "\t[@lud       <le umbrella file>]\n";
@@ -129,7 +124,7 @@ int main(int argc, char* argv[]) {
   // parse the verbosity flag and set debug levels
   util::parse_verbosity(args);
       
-  std::string stopo, spttopo, sconf, sinput, sdistanceres, sangrest, sdihrest, sxray, sled, slud, sorder;
+  std::string stopo, spttopo, sconf, sinput, scolvarres, sxray, sled, slud, sorder;
   bool quiet = true;
 
   if (args.count("verb") != -1) quiet = false;
@@ -154,20 +149,10 @@ int main(int argc, char* argv[]) {
   else
     GETFILEPATH(sinput, "aladip_special.in", "src/check/data/");
 
-  if(args.count("distanceres") == 1)
-    sdistanceres = args["distanceres"];
+  if(args.count("colvarres") == 1)
+    scolvarres = args["colvarres"];
   else
-    GETFILEPATH(sdistanceres, "aladip.distrest", "src/check/data/");
-
-  if(args.count("angrest") ==1)
-    sdihrest = args["angrest"];
-  else
-    GETFILEPATH(sangrest, "aladip.angrest", "src/check/data/");
-
-  if(args.count("dihrest") ==1)
-    sdihrest = args["dihrest"];
-  else
-    GETFILEPATH(sdihrest, "aladip.dihrest", "src/check/data/");
+    GETFILEPATH(scolvarres, "aladip.colvarres", "src/check/data/");
 
   if(args.count("led") ==1)
     sled = args["led"];
@@ -201,9 +186,7 @@ int main(int argc, char* argv[]) {
 	      << "topology :      " << stopo << "\n"
 	      << "perturbation :  " << spttopo << "\n"
 	      << "input :         " << sinput << "\n"
-	      << "distanceres :   " << sdistanceres << "\n"
-	      << "angrest :       " << sangrest << "\n"
-	      << "dihrest :       " << sdihrest << "\n"
+              << "colvarres :      " << scolvarres << "\n"
         << "xray :          " << sxray << "\n"
 	      << "led :           " << sled << "\n"
 	      << "lud :           " << slud << "\n"
@@ -226,15 +209,15 @@ int main(int argc, char* argv[]) {
 			      sinput,
 			      aladip_sim,
 			      in_topo,
-			      sdistanceres,
-			      sangrest,
-			      sdihrest,
+			      "",
+			      "",
+			      "",
             sxray,
             "", // qmmm
 			      sled,
 			      slud,
             sorder,  
-			      quiet
+			      quiet, scolvarres
 			      ) != 0 ){
     std::cerr << "creating simulation failed!" << std::endl;
     return 1;
@@ -261,7 +244,20 @@ int main(int argc, char* argv[]) {
   io::messages.display(std::cout);
   io::messages.clear();
 
-  ff->init(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, std::cout,  quiet);
+  bool ordinary_cv = false, perturbed_cv = false;
+  for (interaction::Forcefield::iterator it = ff->begin(); it != ff->end(); ++it) {
+    ordinary_cv |= ((*it)->name == "ColvarRestraint");
+    perturbed_cv |= ((*it)->name == "PerturbedColvarRestraint");
+  }
+  if (!ordinary_cv || !perturbed_cv ||
+      ff->init(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, std::cout, quiet) ||
+      io::messages.contains(io::message::error) ||
+      io::messages.contains(io::message::critical)) {
+    io::messages.display(std::cerr);
+    std::cerr << "CV forcefield registration/initialization failed!" << std::endl;
+    delete ff;
+    return 1;
+  }
 
   // first check the forcefield
   total += check::check_forcefield(aladip_sim.topo, aladip_sim.conf, 
@@ -270,5 +266,6 @@ int main(int argc, char* argv[]) {
   io::messages.display(std::cout);
   io::messages.clear();
 
+  delete ff;
   return total;
 }

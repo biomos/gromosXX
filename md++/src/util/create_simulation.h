@@ -75,7 +75,8 @@ namespace util
 			std::string lud = "",
 			std::string led = "",
                         std::string order = "",
-			bool quiet = false);
+			bool quiet = false,
+                        std::string colvarres = "");
 }
 
 #endif

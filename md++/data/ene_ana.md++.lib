@@ -2,7 +2,7 @@ TITLE
   XX Library file for ene_ana
 END
 ENEVERSION
-  2023-04-15
+  2026-11-06-compact
 END
 ENERTRJ
 # block definition for the energy trajectory file.
@@ -21,26 +21,29 @@ ENERTRJ
   block TIMESTEP
     subblock TIME 2 1
   block ENERGY03
-    subblock ENER 52 1
+    subblock ENER 50 1
     size NUM_BATHS
     subblock KINENER NUM_BATHS 3
     size NUM_ENERGY_GROUPS
     subblock BONDED NUM_ENERGY_GROUPS 5
     subblock NONBONDED matrix_NUM_ENERGY_GROUPS 6
-    subblock SPECIAL NUM_ENERGY_GROUPS 13
+    subblock SPECIAL NUM_ENERGY_GROUPS 11
     size NUM_EDS_STATES
     subblock EDS NUM_EDS_STATES 6
     size NUM_GAMD_GROUPS
     subblock GAMD NUM_GAMD_GROUPS 5 
     size NUM_LAMBDAS
-    subblock PRECALCLAM NUM_LAMBDAS 12
+    subblock PRECALCLAM NUM_LAMBDAS 10
     subblock ABDIH 1 2
+    subblock CVENER 6 3
+    subblock CVGROUPS NUM_ENERGY_GROUPS 10
   block VOLUMEPRESSURE03
     subblock MASS 1 1
     size NUM_BATHS
     subblock TEMPERATURE  NUM_BATHS 4
     subblock VOLUME 10 1
     subblock PRESSURE 30 1
+
 END
 FRENERTRJ
 # block definition for the free energy trajectory file.
@@ -54,22 +57,27 @@ FRENERTRJ
     subblock TIME 2 1
   block FREEENERDERIVS03
     subblock RLAM 1 1
-    subblock FREEENER 52 1
+    subblock FREEENER 50 1
     size NUM_BATHS
     subblock FREEKINENER NUM_BATHS 3
     size NUM_ENERGY_GROUPS
     subblock FREEBONDED NUM_ENERGY_GROUPS 5
     subblock FREENONBONDED matrix_NUM_ENERGY_GROUPS 6
-    subblock FREESPECIAL NUM_ENERGY_GROUPS 13
+    subblock FREESPECIAL NUM_ENERGY_GROUPS 11
     size NUM_EDS_STATES
     subblock FREEEDS NUM_EDS_STATES 6
     size NUM_GAMD_GROUPS
     subblock FREEGAMD NUM_GAMD_GROUPS 5 
     size NUM_LAMBDAS
-    subblock FREEPRECALCLAM NUM_LAMBDAS 12
+    subblock FREEPRECALCLAM NUM_LAMBDAS 10
     subblock FREEABDIH 1 2
+    subblock FREECVENER 6 3
+    subblock FREECVGROUPS NUM_ENERGY_GROUPS 10
+
 END
 VARIABLES
+dfunct = ENER[50]
+dfunct_dvdl = FREEENER[50]
 # Here you can define variables to be calculated by the program ene_ana
 # In principal the program refers to the blocknames you have defined above,
 # accessing individual element using array indices (one- or two-dimensional)
@@ -112,22 +120,20 @@ totspecial = ENER[21]
 totsasa = ENER[22]
 totsasavol = ENER[23]
 totconstraint = ENER[24]
-totdisres = ENER[25]
-totdisfieldres = ENER[26]
-totdihres = ENER[27]
-totposres = ENER[28]
-totjval = ENER[29]
-totxray = ENER[30]
-totle = ENER[31]
-totorder = ENER[32]
-totsymm = ENER[33]
-eds_vmix = ENER[34]
-eds_vr = ENER[35]
-free_eds_vr = FREEENER[35]
-eds_emax = ENER[36]
-eds_emin = ENER[37]
-eds_globmin = ENER[38]
-eds_globminfluc = ENER[39]
+totdisfieldres = ENER[25]
+totposres = ENER[26]
+totjval = ENER[27]
+totxray = ENER[28]
+totle = ENER[29]
+totorder = ENER[30]
+totsymm = ENER[31]
+eds_vmix = ENER[32]
+eds_vr = ENER[33]
+free_eds_vr = FREEENER[33]
+eds_emax = ENER[34]
+eds_emin = ENER[35]
+eds_globmin = ENER[36]
+eds_globminfluc = ENER[37]
 e1 = EDS[1][1]
 e2 = EDS[2][1]
 e3 = EDS[3][1]
@@ -206,19 +212,42 @@ e23r = EDS[23][4]
 e24r = EDS[24][4]
 e25r = EDS[25][4]
 e26r = EDS[26][4]
-entropy = ENER[40]
-totqm = ENER[41]
-totbsleus = ENER[42]
-totrdc = ENER[43]
-totangres = ENER[44]
-nnvalid = ENER[45]
-nnvalid_maxF = ENER[46]
-totene_shift = ENER[47]
-totene_phys = ENER[48]
-eds_vr_shift = ENER[49]
-eds_vr_phys = ENER[50]
-totgamd_dV = ENER[51]
-colvar = ENER[52]
+entropy = ENER[38]
+totqm = ENER[39]
+totbsleus = ENER[40]
+totrdc = ENER[41]
+nnvalid = ENER[42]
+nnvalid_maxF = ENER[43]
+totene_shift = ENER[44]
+totene_phys = ENER[45]
+eds_vr_shift = ENER[46]
+eds_vr_phys = ENER[47]
+totgamd_dV = ENER[48]
+colvar = ENER[49]
+colvar_dvdl = FREEENER[49]
+colvar_total = CVENER[6][3]
+colvar_ordinary = CVENER[6][1]
+colvar_perturbed = CVENER[6][2]
+colvar_distance = CVENER[1][3]
+colvar_distance_ordinary = CVENER[1][1]
+colvar_distance_perturbed = CVENER[1][2]
+colvar_distance_dvdl = FREECVENER[1][3]
+colvar_angle = CVENER[2][3]
+colvar_angle_ordinary = CVENER[2][1]
+colvar_angle_perturbed = CVENER[2][2]
+colvar_angle_dvdl = FREECVENER[2][3]
+colvar_dihedral = CVENER[3][3]
+colvar_dihedral_ordinary = CVENER[3][1]
+colvar_dihedral_perturbed = CVENER[3][2]
+colvar_dihedral_dvdl = FREECVENER[3][3]
+colvar_coordnum = CVENER[4][3]
+colvar_coordnum_ordinary = CVENER[4][1]
+colvar_coordnum_perturbed = CVENER[4][2]
+colvar_coordnum_dvdl = FREECVENER[4][3]
+colvar_distance_difference = CVENER[5][3]
+colvar_distance_difference_ordinary = CVENER[5][1]
+colvar_distance_difference_perturbed = CVENER[5][2]
+colvar_distance_difference_dvdl = FREECVENER[5][3]
 gamd_dV1 = GAMD[2][5]
 gamd_ed1 = GAMD[2][1]
 gamd_et1 = GAMD[2][2]
@@ -285,5 +314,8 @@ offP3 = PRESSURE[9]
 offP4 = PRESSURE[7]
 offP5 = PRESSURE[10]
 offP6 = PRESSURE[11]
+# Perturbed CV extended TI at the first lambda-grid point.
+colvar_exti_1 = PRECALCLAM[1][10]
+colvar_exti_dvdl_1 = FREEPRECALCLAM[1][10]
 END 
 

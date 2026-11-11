@@ -98,10 +98,10 @@ static int _calculate_dfunct_substitution_form(topology::Topology& topo,
 	conf.current().force(atom_l) += force_l;
 
 	// distribute potential over all participating atoms
-	conf.current().energies.distanceres_energy[topo.atom_energy_group()[atom_i]] += 0.25 * V_bias;
-	conf.current().energies.distanceres_energy[topo.atom_energy_group()[atom_j]] += 0.25 * V_bias;
-	conf.current().energies.distanceres_energy[topo.atom_energy_group()[atom_k]] += 0.25 * V_bias;
-	conf.current().energies.distanceres_energy[topo.atom_energy_group()[atom_l]] += 0.25 * V_bias;
+	conf.current().energies.dfunct_energy[topo.atom_energy_group()[atom_i]] += 0.25 * V_bias;
+	conf.current().energies.dfunct_energy[topo.atom_energy_group()[atom_j]] += 0.25 * V_bias;
+	conf.current().energies.dfunct_energy[topo.atom_energy_group()[atom_k]] += 0.25 * V_bias;
+	conf.current().energies.dfunct_energy[topo.atom_energy_group()[atom_l]] += 0.25 * V_bias;
 	return 0;
 }
 
@@ -166,10 +166,10 @@ static int _calculate_dfunct_cycloaddition_form(topology::Topology& topo,
 	DEBUG(10, "DFUNCT V_bias " << V_bias);
 
 	// distribute potential over all participating atoms
-	conf.current().energies.distanceres_energy[topo.atom_energy_group()[atom_i]] += 0.25 * V_bias;
-	conf.current().energies.distanceres_energy[topo.atom_energy_group()[atom_j]] += 0.25 * V_bias;
-	conf.current().energies.distanceres_energy[topo.atom_energy_group()[atom_k]] += 0.25 * V_bias;
-	conf.current().energies.distanceres_energy[topo.atom_energy_group()[atom_l]] += 0.25 * V_bias;
+	conf.current().energies.dfunct_energy[topo.atom_energy_group()[atom_i]] += 0.25 * V_bias;
+	conf.current().energies.dfunct_energy[topo.atom_energy_group()[atom_j]] += 0.25 * V_bias;
+	conf.current().energies.dfunct_energy[topo.atom_energy_group()[atom_k]] += 0.25 * V_bias;
+	conf.current().energies.dfunct_energy[topo.atom_energy_group()[atom_l]] += 0.25 * V_bias;
 	return 0;
 }
 

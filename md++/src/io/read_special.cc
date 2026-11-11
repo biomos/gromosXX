@@ -76,6 +76,16 @@ int io::read_special(io::Argument const & args,
 		     std::ostream & os,
 		     bool quiet)
 {
+  // Retired restraint arguments must not silently become unused inputs.
+  // @distrest remains the input channel for distance-field geometry; angular
+  // mode 3 constraints also retain their existing geometry readers.
+  if ((args.count("distrest") >= 0 && !sim.param().distancefield.distancefield)
+      || (args.count("angrest") >= 0 && sim.param().angrest.angrest != simulation::angle_constr)
+      || (args.count("dihrest") >= 0 && sim.param().dihrest.dihrest != simulation::dihedral_constr)) {
+    io::messages.add("Legacy distance/angle/dihedral restraint inputs are retired. Use COLVARRES and @colvarres; @distrest remains valid for distance fields, and angular mode 3 constraint inputs remain valid.",
+                     "read special", io::message::error);
+    return -1;
+  }
   // POSRES
   if (sim.param().posrest.posrest){
     io::igzstream posresspec_file;

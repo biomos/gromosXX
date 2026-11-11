@@ -9,9 +9,11 @@ namespace interaction {
 
 class Angle_Colvar : public Colvar {
 public:
-  Angle_Colvar() : Colvar("Angle") {}
+  Angle_Colvar() : Colvar("Angle"), endpoints(NULL) {}
 
   topology::angle_restraint_struct *params;
+  // Optional owned-by-caller endpoints, e.g. virtual sites supplied by LE.
+  const std::vector<util::Virtual_Atom> *endpoints;
 
   int init(
     topology::Topology &topo,

@@ -34,7 +34,7 @@ namespace interaction {
     /**
      * Constructor.
      */
-    Colvar(std::string name) : name(name), w0(1), w0A(1), w0B(1), m_timer(name) {};
+    Colvar(std::string name) : name(name), w0(1), w0A(1), w0B(1), strain_derivative(0.0), m_timer(name) {};
     /**
      * Destructor.
      */
@@ -65,7 +65,30 @@ namespace interaction {
      * derivatives with respect to the atom positions for the above atoms
      */
     math::VArray derivatives;
+
+    /**
+     * Derivative of the CV under affine deformation of its endpoint positions
+     * and periodic box: component (a,b) corresponds to x_b += epsilon * x_a.
+     * Geometry must use the same periodic images as the value calculation.
+     */
+    math::Matrix strain_derivative;
+
+    /**
+     * Apply the bias forces through the endpoint coordinate derivatives.
+     * Optionally add the geometry virial and virtual-site chain-rule correction.
+     * molecular_virial converts this contribution to the native pressure-group
+     * convention without including pre-existing forces.
+     */
+    void apply_forces(topology::Topology &topo, configuration::Configuration &conf,
+                      double dE_dinstant, bool include_virial,
+                      bool molecular_virial=false) const;
     
+    /** Apply into state-specific buffers, e.g. before EDS mixing. */
+    void apply_forces(topology::Topology &topo, configuration::Configuration &conf,
+                      double dE_dinstant, bool include_virial,
+                      math::VArray &forces, math::Matrix &virial,
+                      bool molecular_virial=false) const;
+
     /**
      * initialise
      */
@@ -91,6 +114,9 @@ namespace interaction {
     }
     
   protected:
+    /** Add the affine-endpoint part of the internal virial. */
+    void add_virial(math::Matrix &virial, double dE_dinstant) const;
+
     /**
      * store time used in algorithm.
      */

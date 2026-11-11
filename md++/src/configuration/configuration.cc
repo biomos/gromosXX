@@ -210,6 +210,8 @@ configuration::Configuration::Configuration
   special().dihedralres.d = conf.special().dihedralres.d;
   
   special().pscale = conf.special().pscale;
+  special().colvarres = conf.special().colvarres;
+  special().pertcolvarres = conf.special().pertcolvarres;
 
   special().orderparamres.S2_avg = conf.special().orderparamres.S2_avg;
   special().orderparamres.energy = conf.special().orderparamres.energy;
@@ -357,6 +359,8 @@ configuration::Configuration & configuration::Configuration::operator=
   special().rdc = conf.special().rdc;
 
   special().pscale = conf.special().pscale;
+  special().colvarres = conf.special().colvarres;
+  special().pertcolvarres = conf.special().pertcolvarres;
   
   special().rottrans_constr = conf.special().rottrans_constr;
 

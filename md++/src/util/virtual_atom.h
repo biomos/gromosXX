@@ -134,6 +134,10 @@ namespace util
      * accessor to the type
      */
     virtual_type type() const { return m_type; }
+    /** Geometry metadata for complete CV restart definitions. */
+    double dish() const { return m_dish; }
+    double disc() const { return m_disc; }
+    int orientation() const { return m_orientation; }
     /**
      * accessor to the charge
      */

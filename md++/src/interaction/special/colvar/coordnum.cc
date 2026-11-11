@@ -35,8 +35,12 @@ static int _calculate_coordnum_colvar(
   simulation::Simulation &sim,
   math::VArray &derivatives,
   topology::coordnum_restraint_struct *params,
-  double &ct)
+  double &ct,
+  int &error,
+  math::Matrix &strain_derivative)
 {
+  error = 0;
+  strain_derivative = 0.0;
   math::Periodicity<B> periodicity(conf.current().box);
   ct = 0;
   std::fill(derivatives.begin(), derivatives.end(), math::Vec(0));
@@ -66,6 +70,11 @@ static int _calculate_coordnum_colvar(
       math::Vec d = (dfunc / (*params).rcut) * v / rdist;
       derivatives[i] += d;
       derivatives[(*params).atoms1.size() + j] -= d;
+      for (int a = 0; a < 3; ++a) {
+        for (int b = 0; b < 3; ++b) {
+          strain_derivative(a, b) += v(a) * d(b);
+        }
+      }
     }
   }
   return 0;
@@ -75,9 +84,10 @@ int Coordnum_Colvar::calculate(topology::Topology &topo,
                                configuration::Configuration &conf,
                                simulation::Simulation &sim)
 {
+  int error = 1; // Also fail if boundary/virial dispatch rejects the setup.
   SPLIT_VIRIAL_BOUNDARY(_calculate_coordnum_colvar,
-    topo, conf, sim, derivatives, params, ct);
-  return 0;
+    topo, conf, sim, derivatives, params, ct, error, strain_derivative);
+  return error;
 }
 
 int Coordnum_Colvar::init(topology::Topology &topo,

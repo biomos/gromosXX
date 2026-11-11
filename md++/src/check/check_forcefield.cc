@@ -961,6 +961,15 @@ int check::check_forcefield(topology::Topology & topo,
         }
       }
     }
+    else if ((*it)->name == "ColvarRestraint" ||
+             (*it)->name == "PerturbedColvarRestraint") {
+      if (ref.find((*it)->name) == ref.end())
+        continue;
+      total += check_interaction(topo, conf, sim, **it,
+              topo.num_solute_atoms(), ref[(*it)->name], 0.000001, 0.001);
+      if ((*it)->name == "PerturbedColvarRestraint")
+        total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001, false);
+    }
     else if ((*it)->name == "DistanceRestraint") {
       if (ref.find((*it)->name) == ref.end())
         continue;

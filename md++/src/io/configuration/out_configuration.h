@@ -309,6 +309,8 @@ namespace io {
             configuration::Configuration const &conf,
             topology::Topology const &topo,
             std::ostream &os);
+    void _print_colvar_average_states(configuration::Configuration const &conf,
+                                      std::ostream &os);
 
     void _print_disfield_restraints(
             configuration::Configuration const &conf,

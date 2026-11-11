@@ -16,6 +16,7 @@ set(UTIL_CC
     virtual_atom.cc
     coding.cc
     feature.cc
+    le_colvar_coordinate.cc
     le_coordinate.cc
     umbrella.cc
     umbrella_weight.cc

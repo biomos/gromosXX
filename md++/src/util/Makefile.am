@@ -21,6 +21,7 @@ xxinclude_HEADERS = error.h\
 	virtual_atom.h\
 	coding.h\
 	feature.h\
+	le_colvar_coordinate.h\
 	le_coordinate.h\
 	umbrella.h\
 	umbrella_weight.h\
@@ -47,6 +48,7 @@ libgroutil_la_SOURCES =	cycle_thread.cc\
 	virtual_atom.cc\
 	coding.cc\
 	feature.cc\
+	le_colvar_coordinate.cc\
 	le_coordinate.cc\
 	umbrella.cc\
 	umbrella_weight.cc\

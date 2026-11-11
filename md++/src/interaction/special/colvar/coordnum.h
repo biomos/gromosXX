@@ -2,7 +2,7 @@
 #define INCLUDED_COORDNUM_COLVAR
 
 #include "colvar.h"
-#include "../../topology/topology.h"
+#include "../../../topology/topology.h"
 
 namespace interaction {
 

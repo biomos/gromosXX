@@ -36,18 +36,12 @@
 #include "../../interaction/interaction_types.h"
 
 #include "../../interaction/special/position_restraint_interaction.h"
-#include "../../interaction/special/distance_restraint_interaction.h"
 #include "../../interaction/special/distance_field_interaction.h"
 #include "../../interaction/special/colvar_restraint_interaction.h"
+#include "eds_colvar_restraint_interaction.h"
 #include "../../interaction/special/perturbed_colvar_restraint_interaction.h"
-#include "../../interaction/special/angle_restraint_interaction.h"
-#include "../../interaction/special/dihedral_restraint_interaction.h"
 #include "../../interaction/special/dfunct_interaction.h"
-#include "../../interaction/special/perturbed_distance_restraint_interaction.h"
 #include "../../interaction/special/perturbed_distance_field_interaction.h"
-#include "../../interaction/special/eds_distance_restraint_interaction.h"
-#include "../../interaction/special/perturbed_angle_restraint_interaction.h"
-#include "../../interaction/special/perturbed_dihedral_restraint_interaction.h"
 #include "../../interaction/special/jvalue_restraint_interaction.h"
 #include "../../util/umbrella_weight.h"
 #include "../../interaction/special/xray_restraint_interaction.h"
@@ -108,40 +102,6 @@ int interaction::create_special(interaction::Forcefield & ff,
     io::messages.add("Wrong value for position restraints",
 		     "create_special", io::message::error);
   }
-  // Distance restraints 
-  // as this function is called before read_special, we do not know if we 
-  // really need the (perturbed) interactions
-  // so we generate them, but need to check inside if we really do something
-  if (abs(param.distanceres.distanceres) == 1 || 
-      abs(param.distanceres.distanceres) == 2){
-
-    if(!quiet)
-      os <<"\tDistance restraints\n";
-
-    interaction::Distance_Restraint_Interaction *dr =
-      new interaction::Distance_Restraint_Interaction();
-
-    ff.push_back(dr);
-    
-    if(param.perturbation.perturbation){
-      if(!quiet)
-	os <<"\tPerturbed distance restraints\n";
-      
-      interaction::Perturbed_Distance_Restraint_Interaction *pdr =
-	new interaction::Perturbed_Distance_Restraint_Interaction;
-
-      ff.push_back(pdr); 
-    }
-    if(param.eds.eds){
-      if(!quiet)
-        os << "\tEDS perturbed distance restraints\n";
-      interaction::Eds_Distance_Restraint_Interaction *edr =
-        new interaction::Eds_Distance_Restraint_Interaction;
-      
-      ff.push_back(edr);
-    }
-  }
-  
   // Distance field restraint
   // as this function is called before read_special, we do not know if we 
   // really need the (perturbed) interactions
@@ -175,6 +135,7 @@ int interaction::create_special(interaction::Forcefield & ff,
 
     ff.push_back(cr);
     DEBUG(10, "COLVAR interaction pushed back");
+    if (param.eds.eds) ff.push_back(new interaction::Eds_Colvar_Restraint_Interaction());
 
     if (param.perturbation.perturbation){
       if(!quiet)
@@ -186,52 +147,6 @@ int interaction::create_special(interaction::Forcefield & ff,
     }
   }
   
-  // Angle restraints 
-  if (param.angrest.angrest == simulation::angle_restr_inst ||
-      param.angrest.angrest == simulation::angle_restr_inst_weighted){
-
-    if(!quiet)
-      os <<"\tAngle restraints\n";
-
-    interaction::Angle_Restraint_Interaction *dr =
-      new interaction::Angle_Restraint_Interaction();
-
-    ff.push_back(dr);
-    
-    if(param.perturbation.perturbation){
-      if(!quiet)
-	os <<"\tPerturbed angle restraints\n";
-      
-      interaction::Perturbed_Angle_Restraint_Interaction *pdr =
-	new interaction::Perturbed_Angle_Restraint_Interaction;
-      
-      ff.push_back(pdr); 
-    }
-  }
-  
-  // Dihedral restraints 
-  if (param.dihrest.dihrest == simulation::dihedral_restr_inst ||
-      param.dihrest.dihrest == simulation::dihedral_restr_inst_weighted){
-
-    if(!quiet)
-      os <<"\tDihedral restraints\n";
-
-    interaction::Dihedral_Restraint_Interaction *dr =
-      new interaction::Dihedral_Restraint_Interaction();
-
-    ff.push_back(dr);
-    
-    if(param.perturbation.perturbation){
-      if(!quiet)
-	os <<"\tPerturbed dihedral restraints\n";
-      
-      interaction::Perturbed_Dihedral_Restraint_Interaction *pdr =
-	new interaction::Perturbed_Dihedral_Restraint_Interaction;
-      
-      ff.push_back(pdr); 
-    }
-  }
-
   // J-Value restraints
   if (param.jvalue.mode != simulation::jvalue_restr_off){
     if(!quiet){

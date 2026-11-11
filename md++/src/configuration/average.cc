@@ -474,10 +474,21 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
   ENERGY_AVG(eds_vr);
   ENERGY_AVG(entropy_term);
   ENERGY_AVG(nn_valid);
+  ENERGY_AVG(dfunct_total);
   ENERGY_AVG(colvarres_total);
+  for (unsigned int type = 0; type < Energy::colvar_type_count; ++type) {
+    ENERGY_AVG(colvarres_type_total[type]);
+    for (unsigned int status = 0; status < Energy::colvar_status_count; ++status) {
+      ENERGY_AVG(colvarres_type_status_total[type][status]);
+    }
+  }
+  for (unsigned int status = 0; status < Energy::colvar_status_count; ++status) {
+    ENERGY_AVG(colvarres_status_total[status]);
+  }
 
   // ANITA
   for(size_t i=0; i < e.A_lj_total.size(); ++i){
+    ENERGY_AVG(AB_colvar[i]);
     ENERGY_AVG(A_lj_total[i]); 
     ENERGY_AVG(B_lj_total[i]); 
     ENERGY_AVG(A_crf_total[i]); 
@@ -554,7 +565,13 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
     ENERGY_AVG(dihrest_energy[i]);
     ENERGY_AVG(disfieldres_energy[i]);
     ENERGY_AVG(constraints_energy[i]);
+    ENERGY_AVG(dfunct_energy[i]);
     ENERGY_AVG(colvarres_energy[i]);
+    for (unsigned int type = 0; type < Energy::colvar_type_count; ++type) {
+      for (unsigned int status = 0; status < Energy::colvar_status_count; ++status) {
+        ENERGY_AVG(colvarres_type_status_energy[type][status][i]);
+      }
+    }
     ENERGY_AVG(jvalue_energy[i]);
     ENERGY_AVG(rdc_energy[i]);
     ENERGY_AVG(self_energy[i]);
@@ -723,11 +740,22 @@ void configuration::Average::Block_Average
   ENERGY_RES(entropy_term);
   ENERGY_RES(self_total);
   ENERGY_RES(nn_valid);
+  ENERGY_RES(dfunct_total);
   ENERGY_RES(colvarres_total);
+  for (unsigned int type = 0; type < Energy::colvar_type_count; ++type) {
+    ENERGY_RES(colvarres_type_total[type]);
+    for (unsigned int status = 0; status < Energy::colvar_status_count; ++status) {
+      ENERGY_RES(colvarres_type_status_total[type][status]);
+    }
+  }
+  for (unsigned int status = 0; status < Energy::colvar_status_count; ++status) {
+    ENERGY_RES(colvarres_status_total[status]);
+  }
 
 
   // ANITA
   for(size_t i=0; i < e.A_lj_total.size(); ++i){
+    ENERGY_RES(AB_colvar[i]);
     ENERGY_RES(A_lj_total[i]);
     ENERGY_RES(B_lj_total[i]);
     ENERGY_RES(A_crf_total[i]);
@@ -790,7 +818,13 @@ void configuration::Average::Block_Average
     ENERGY_RES(angrest_energy[i]);
     ENERGY_RES(dihrest_energy[i]);
     ENERGY_RES(disfieldres_energy[i]);
+    ENERGY_RES(dfunct_energy[i]);
     ENERGY_RES(colvarres_energy[i]);
+    for (unsigned int type = 0; type < Energy::colvar_type_count; ++type) {
+      for (unsigned int status = 0; status < Energy::colvar_status_count; ++status) {
+        ENERGY_RES(colvarres_type_status_energy[type][status][i]);
+      }
+    }
     ENERGY_RES(constraints_energy[i]);
     ENERGY_RES(jvalue_energy[i]);
     ENERGY_RES(rdc_energy[i]);

@@ -71,6 +71,9 @@ void interaction::Perturbed_Nonbonded_Pair
 			   simulation::Simulation & sim,
 			   Storage & storage)
 {
+  // EDS can be active without A/B atom pairs (e.g. state-specific CV biases).
+  // The A/B dispatch below requires PERTURBATION, even for an empty pair list.
+  if (topo.perturbed_solute().atompairs().empty()) return;
   SPLIT_PERTURBATION(_perturbed_pair_outerloop,
 		     topo, conf, sim, storage);
 }

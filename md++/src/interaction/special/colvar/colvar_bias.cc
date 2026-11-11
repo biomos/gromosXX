@@ -69,6 +69,10 @@ Colvar_Bias::Settings::Settings()
     wall_mode(wall_two_sided),
     periodic(false),
     period(0.0),
+    paired_wall(false),
+    wall_partner_target(0.0),
+    explicit_periodic_branch(false),
+    branch_delta(0.0),
     average_transform(average_none),
     force_scale_mode(forcescale_none),
     exponential_term(0.0),
@@ -82,6 +86,8 @@ Colvar_Bias::Result::Result()
     energy(0.0),
     dE_dinstant(0.0),
     dE_dvalue(0.0),
+    dE_dlinear_cutoff(0.0),
+    dE_dk(0.0),
     force_scale(1.0),
     active(false),
     linear(false)
@@ -138,6 +144,16 @@ void Colvar_Bias::reset_average(double instant_value)
   m_average_initialised = true;
 }
 
+bool Colvar_Bias::restore_average_state(double state, bool initialised)
+{
+  if (!std::isfinite(state)
+      || (initialised && m_settings.average_transform == average_inverse_cubic && state <= 0.0))
+    return false;
+  m_average_state = state;
+  m_average_initialised = initialised;
+  return true;
+}
+
 double Colvar_Bias::transformed_value(double x) const
 {
   if (m_settings.average_transform == average_inverse_cubic) {
@@ -176,8 +192,9 @@ double Colvar_Bias::d_inverse_transformed_dy(double y) const
  * For non-periodic CVs this is simply:
  *   value - target
  *
- * For periodic CVs, the shortest wrapped difference is used. This is needed
- * for angular CVs such as dihedrals.
+ * Full harmonic periodic biases use the shortest wrapped difference. Paired
+ * walls instead share an image about the allowed arc's midpoint, so their
+ * combined energy is continuous across the periodic branch.
  */
 double Colvar_Bias::periodic_delta(double value, double target) const
 {
@@ -185,6 +202,35 @@ double Colvar_Bias::periodic_delta(double value, double target) const
 
   if (!m_settings.periodic || m_settings.period <= 0.0) {
     return delta;
+  }
+
+  if (m_settings.explicit_periodic_branch) {
+    if (!std::isfinite(m_settings.branch_delta)) return std::numeric_limits<double>::quiet_NaN();
+    // Match the legacy DELTA interval, including its endpoint convention.
+    // Normalize DELTA while preserving the legacy distinction between zero
+    // and a positive whole turn (the target lies at the opposite endpoint).
+    double upper = std::fmod(m_settings.branch_delta, m_settings.period);
+    if (upper < 0.0) upper += m_settings.period;
+    if (upper == 0.0 && m_settings.branch_delta > 0.0) upper = m_settings.period;
+    const double lower = upper - m_settings.period;
+    if (delta < lower)
+      delta += m_settings.period * std::ceil((lower - delta) / m_settings.period);
+    if (delta > upper)
+      delta -= m_settings.period * std::ceil((delta - upper) / m_settings.period);
+    return delta;
+  }
+
+  if (m_settings.paired_wall && m_settings.wall_mode != wall_two_sided) {
+    const bool lower = m_settings.wall_mode == wall_lower;
+    const double lower_target = lower ? target : m_settings.wall_partner_target;
+    const double upper_target = lower ? m_settings.wall_partner_target : target;
+    double width = upper_target - lower_target;
+    width -= m_settings.period * std::floor(width / m_settings.period);
+    // Both walls use the same image about the allowed arc's midpoint. Their
+    // sum is flat inside the arc and rises toward the opposite midpoint.
+    delta = value - (lower_target + 0.5 * width);
+    delta -= m_settings.period * std::floor(delta / m_settings.period + 0.5);
+    return delta + (lower ? 0.5 * width : -0.5 * width);
   }
 
   delta -= m_settings.period * std::floor(delta / m_settings.period + 0.5);
@@ -231,7 +277,7 @@ bool Colvar_Bias::restraint_active(double delta) const
  * The interaction layer should multiply Result::dE_dinstant by the CV
  * derivative ds/dx.
  */
-Colvar_Bias::Result Colvar_Bias::evaluate(double instant_value)
+Colvar_Bias::Result Colvar_Bias::evaluate(double instant_value, bool advance_average)
 {
   Result result;
 
@@ -243,11 +289,11 @@ Colvar_Bias::Result Colvar_Bias::evaluate(double instant_value)
       reset_average(instant_value);
     }
 
-    const double old_average = m_average_state;
-    const double current_transformed = transformed_value(instant_value);
-
-    m_average_state = (1.0 - m_settings.exponential_term) * current_transformed
-                    +        m_settings.exponential_term  * old_average;
+    if (advance_average) {
+      const double current_transformed = transformed_value(instant_value);
+      m_average_state = (1.0 - m_settings.exponential_term) * current_transformed
+                      +        m_settings.exponential_term * m_average_state;
+    }
 
     restrained_value = inverse_transformed_value(m_average_state);
 
@@ -280,20 +326,44 @@ Colvar_Bias::Result Colvar_Bias::evaluate(double instant_value)
 
   if (use_linear_tail) {
     result.linear = true;
-    result.energy = m_settings.k * m_settings.weight * m_settings.linear_cutoff
-                  * (abs_delta - 0.5 * m_settings.linear_cutoff);
+    result.dE_dlinear_cutoff = m_settings.k * m_settings.weight
+                            * (abs_delta - m_settings.linear_cutoff);
+    result.dE_dk = m_settings.weight * m_settings.linear_cutoff
+                 * (abs_delta - 0.5 * m_settings.linear_cutoff);
 
     result.dE_dvalue = m_settings.k * m_settings.weight
                      * m_settings.linear_cutoff
                      * (delta < 0.0 ? -1.0 : 1.0);
   }
   else {
-    result.energy = 0.5 * m_settings.k * m_settings.weight * delta * delta;
+    result.dE_dk = 0.5 * m_settings.weight * delta * delta;
     result.dE_dvalue = m_settings.k * m_settings.weight * delta;
   }
 
+  result.energy = m_settings.k * result.dE_dk;
   result.dE_dinstant = result.dE_dvalue * dvalue_dinstant;
   return result;
+}
+
+Colvar_Bias::Lambda_Envelope Colvar_Bias::hidden_envelope(
+    double lambda, unsigned int n, unsigned int m)
+{
+  // Combine the logarithms before exponentiation: separate factors can
+  // produce 0*infinity even when their product is finite. Extended precision
+  // also retains cancellation between the two derivative terms.
+  const long double left = 2.0L * lambda;
+  const long double right = 2.0L * (1.0L - lambda);
+  const auto product = [=](unsigned int a, unsigned int b) -> long double {
+    if ((a && left == 0) || (b && right == 0)) return 0.0L;
+    const long double logarithm = (a ? a * std::log(std::fabs(left)) : 0.0L)
+                                + (b ? b * std::log(std::fabs(right)) : 0.0L);
+    // Integer powers remain meaningful just outside [0,1], too.
+    const bool negative = (left < 0 && a % 2) != (right < 0 && b % 2);
+    return (negative ? -1.0L : 1.0L) * std::exp(logarithm);
+  };
+  const long double derivative = (n ? 2.0L * n * product(n - 1, m) : 0.0L)
+                               - (m ? 2.0L * m * product(n, m - 1) : 0.0L);
+  return {static_cast<double>(product(n, m)), static_cast<double>(derivative)};
 }
 
 } // namespace interaction

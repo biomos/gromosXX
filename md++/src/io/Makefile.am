@@ -77,7 +77,15 @@ libgroio_la_SOURCES =	io.cc\
 	topology/in_qmmm.cc\
 	topology/in_symrest.cc\
 	topology/in_rdc.cc\
-	topology/in_colvarres.cc
+	topology/in_colvarres.cc\
+	topology/in_colvarres_bias.cc\
+	topology/in_colvarres_distance.cc\
+	topology/in_colvarres_angular.cc\
+	topology/in_colvarres_coordnum.cc\
+	topology/in_colvarres_eds.cc\
+	topology/in_colvarres_branch.cc\
+	topology/in_colvarres_helpers.cc\
+	topology/in_colvarres_helpers.h
 
 libgroio_la_LIBADD = libgroiocheck.la
 

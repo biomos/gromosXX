@@ -69,7 +69,11 @@ special_total(0.0),
 posrest_total(0.0),
 distanceres_total(0.0),
 disfieldres_total(0.0),
+dfunct_total(0.0),
 colvarres_total(0.0),
+colvarres_type_total(),
+colvarres_status_total(),
+colvarres_type_status_total(),
 angrest_total(0.0),
 dihrest_total(0.0),
 jvalue_total(0.0),
@@ -96,6 +100,26 @@ eds_globminfluc(0.0),
 gamd_DV_total(0.0),
 entropy_term(0.0),
 m_ewarn(1E99){         
+}
+
+const char *configuration::Energy::colvar_type_name(unsigned int type)
+{
+  static const char *names[] = {"DISTANCE", "ANGLE", "DIHEDRAL", "COORDNUM", "DISTANCE_DIFFERENCE"};
+  static_assert(sizeof(names) / sizeof(names[0]) == colvar_type_count, "CV energy type names must match the schema");
+  assert(type < colvar_type_count);
+  return names[type];
+}
+
+void configuration::Energy::add_colvar_energy(const std::string &type, bool perturbed,
+                                              unsigned int group, double energy)
+{
+  unsigned int index = 0;
+  while (index < colvar_type_count && type != colvar_type_name(index)) ++index;
+  if (index == colvar_type_count)
+    throw std::invalid_argument("Unknown CV type in energy accounting: " + type);
+  assert(group < colvarres_energy.size());
+  colvarres_energy[group] += energy;
+  colvarres_type_status_energy[index][perturbed ? 1 : 0][group] += energy;
 }
 
 void configuration::Energy::zero(bool potential, bool kinetic)
@@ -127,6 +151,7 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     posrest_total = 0.0;
     distanceres_total = 0.0;
     disfieldres_total = 0.0;
+    dfunct_total = 0.0;
     colvarres_total = 0.0;
     angrest_total = 0.0;
     dihrest_total = 0.0;
@@ -187,6 +212,7 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     AB_angres.assign(AB_angres.size(),0.0);
     AB_dihres.assign(AB_dihres.size(),0.0);
     AB_disfld.assign(AB_disfld.size(),0.0);
+    AB_colvar.assign(AB_colvar.size(),0.0);
     //AB_dihedral.assign(AB_angle.size(),0.0);
     //
 
@@ -198,7 +224,17 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     posrest_energy.assign(posrest_energy.size(), 0.0);
     distanceres_energy.assign(distanceres_energy.size(), 0.0);
     disfieldres_energy.assign(disfieldres_energy.size(), 0.0);
+    dfunct_energy.assign(dfunct_energy.size(), 0.0);
     colvarres_energy.assign(colvarres_energy.size(), 0.0);
+    for (unsigned int type = 0; type < colvar_type_count; ++type) {
+      colvarres_type_total[type] = 0.0;
+      for (unsigned int status = 0; status < colvar_status_count; ++status) {
+        colvarres_status_total[status] = 0.0;
+        colvarres_type_status_total[type][status] = 0.0;
+        auto &groups = colvarres_type_status_energy[type][status];
+        groups.assign(groups.size(), 0.0);
+      }
+    }
     angrest_energy.assign(angrest_energy.size(), 0.0);
     dihrest_energy.assign(dihrest_energy.size(), 0.0);
     jvalue_energy.assign(jvalue_energy.size(), 0.0);
@@ -286,7 +322,11 @@ void configuration::Energy::resize(unsigned int energy_groups, unsigned int mult
     posrest_energy.resize(energy_groups);
     distanceres_energy.resize(energy_groups);
     disfieldres_energy.resize(energy_groups);
+    dfunct_energy.resize(energy_groups);
     colvarres_energy.resize(energy_groups);
+    for (unsigned int type = 0; type < colvar_type_count; ++type)
+      for (unsigned int status = 0; status < colvar_status_count; ++status)
+        colvarres_type_status_energy[type][status].resize(energy_groups);
     angrest_energy.resize(energy_groups);
     dihrest_energy.resize(energy_groups);
     jvalue_energy.resize(energy_groups);
@@ -319,6 +359,7 @@ void configuration::Energy::resize(unsigned int energy_groups, unsigned int mult
     AB_angres.resize(nr_lambdas);
     AB_dihres.resize(nr_lambdas);
     AB_disfld.resize(nr_lambdas);
+    AB_colvar.resize(nr_lambdas);
     //AB_dihedral.resize(nr_lambdas);
 
     DEBUG(8, "ANITA resizing A_lj_energy to " << nr_lambdas);
@@ -380,7 +421,15 @@ int configuration::Energy::calculate_totals()
   posrest_total = 0.0; 
   distanceres_total = 0.0; 
   disfieldres_total = 0.0; 
+  dfunct_total = 0.0;
   colvarres_total = 0.0;  
+  for (unsigned int type = 0; type < colvar_type_count; ++type) {
+    colvarres_type_total[type] = 0.0;
+    for (unsigned int status = 0; status < colvar_status_count; ++status) {
+      colvarres_status_total[status] = 0.0;
+      colvarres_type_status_total[type][status] = 0.0;
+    }
+  }
   angrest_total = 0.0;
   dihrest_total = 0.0;
   jvalue_total = 0.0; 
@@ -519,7 +568,16 @@ int configuration::Energy::calculate_totals()
     if (colvarres_energy[i] > m_ewarn){
       std::cout << "EWARN: colvarres energy " << i+1 << " = " << colvarres_energy[i] << "\n";
     }
+    dfunct_total += dfunct_energy[i];
     colvarres_total     += colvarres_energy[i];
+    for (unsigned int type = 0; type < colvar_type_count; ++type) {
+      for (unsigned int status = 0; status < colvar_status_count; ++status) {
+        const double component = colvarres_type_status_energy[type][status][i];
+        colvarres_type_status_total[type][status] += component;
+        colvarres_type_total[type] += component;
+        colvarres_status_total[status] += component;
+      }
+    }
     if (angrest_energy[i] > m_ewarn){
       std::cout << "EWARN: angrest energy " << i+1 << " = " << angrest_energy[i] << "\n";
     }
@@ -594,7 +652,7 @@ int configuration::Energy::calculate_totals()
     + angrest_total + dihrest_total
     + constraints_total + jvalue_total + xray_total
     + eds_vr + leus_total + sasa_total + sasa_volume_total + oparam_total
-    + symrest_total + bsleus_total + rdc_total + gamd_DV_total + colvarres_total;
+    + symrest_total + bsleus_total + rdc_total + gamd_DV_total + dfunct_total + colvarres_total;
   
   total = potential_total + kinetic_total + special_total;
 

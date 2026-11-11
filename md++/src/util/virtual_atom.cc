@@ -526,7 +526,7 @@ void util::Virtual_Atom::_force
       calc2+=calch; 
       
       calch= m_c_2*math::Vec(b(1),
-			     b(0),
+			     -b(0),
 			     0)/(abs_t);
       DEBUG(10, "C = " << math::v2s(calch));
       calc3+=calch;
@@ -695,7 +695,7 @@ void util::Virtual_Atom::_force
       m_c=-TETHCO* (m_disc + m_dish / 3.0);
       
       calc1= math::Vec(2*m_c*(abs_s*abs_s - s(0)*s(0)),
-		       -2*m_c*s(1)*s(0), 
+		       -2*m_c*s(1)*s(0),
 		       -2*m_c*s(2)*s(0))/(abs_s*abs_s*abs_s)+math::Vec(1,0,0);
       calc2= math::Vec(-2*m_c*s(1)*s(0),
 		       2*m_c*(abs_s*abs_s - s(1)*s(1)),
@@ -705,15 +705,15 @@ void util::Virtual_Atom::_force
 		       2*m_c*(abs_s*abs_s - s(2)*s(2)))/(abs_s*abs_s*abs_s)+math::Vec(0,0,1);     
       force(m_atom[0])+=math::Vec(math::dot(calc1,f),math::dot(calc2,f),math::dot(calc3,f));
       
-      calc1= m_c*math::Vec(-m_dish*(abs_s*abs_s - s(0)*s(0)),
-			   m_dish*s(1)*s(0), 
-			   m_dish*s(2)*s(0))/(abs_s*abs_s*abs_s);
-      calc2= m_c*math::Vec(m_dish*s(1)*s(0),
-			   -m_dish*(abs_s*abs_s - s(1)*s(1)),
-			   m_dish*s(2)*s(1))/(abs_s*abs_s*abs_s);
-      calc3= m_c*math::Vec(m_dish*s(2)*s(0),
-			   m_dish*s(2)*s(1),
-			   -m_dish*(abs_s*abs_s - s(2)*s(2)))/(abs_s*abs_s*abs_s);
+      calc1= m_c*math::Vec(-(abs_s*abs_s - s(0)*s(0)),
+			   s(1)*s(0),
+			   s(2)*s(0))/(abs_s*abs_s*abs_s);
+      calc2= m_c*math::Vec(s(1)*s(0),
+			   -(abs_s*abs_s - s(1)*s(1)),
+			   s(2)*s(1))/(abs_s*abs_s*abs_s);
+      calc3= m_c*math::Vec(s(2)*s(0),
+			   s(2)*s(1),
+			   -(abs_s*abs_s - s(2)*s(2)))/(abs_s*abs_s*abs_s);
       force(m_atom[1])+=math::Vec(math::dot(calc1,f),math::dot(calc2,f),math::dot(calc3,f));
       force(m_atom[2])+=math::Vec(math::dot(calc1,f),math::dot(calc2,f),math::dot(calc3,f));
       
@@ -768,10 +768,10 @@ void util::Virtual_Atom::_force
       {
         double mass_com=0.0;
         for(unsigned int i=0; i<m_atom.size(); ++i){
-            mass_com += topo.mass()(i);
+            mass_com += topo.mass()(m_atom[i]);
         }
 	        for(unsigned int i=0; i<m_atom.size(); ++i){
-	          force(m_atom[i]) += f * topo.mass()(i) /  mass_com ;
+	          force(m_atom[i]) += f * topo.mass()(m_atom[i]) /  mass_com ;
 	      }
 	    break;
       }

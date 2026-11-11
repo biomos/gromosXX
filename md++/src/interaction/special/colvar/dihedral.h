@@ -9,9 +9,10 @@ namespace interaction {
 
 class Dihedral_Colvar : public Colvar {
 public:
-  Dihedral_Colvar() : Colvar("Dihedral") {}
+  Dihedral_Colvar() : Colvar("Dihedral"), endpoints(NULL) {}
 
   topology::dihedral_restraint_struct *params;
+  const std::vector<util::Virtual_Atom> *endpoints;
 
   int init(
     topology::Topology &topo,

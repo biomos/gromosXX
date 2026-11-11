@@ -48,6 +48,11 @@ namespace interaction {
 
       bool periodic;
       double period;
+      // Paired periodic walls use one image about their allowed arc's midpoint.
+      bool paired_wall;
+      double wall_partner_target;
+      bool explicit_periodic_branch;
+      double branch_delta;
 
       Average_Transform average_transform;
       Force_Scale_Mode force_scale_mode;
@@ -63,12 +68,18 @@ namespace interaction {
       double energy;
       double dE_dinstant;    // derivative wrt instantaneous colvar value
       double dE_dvalue;      // derivative wrt restrained value
+      double dE_dlinear_cutoff;
+      double dE_dk;          // derivative wrt force constant, including at k = 0
       double force_scale;
       bool active;
       bool linear;
 
       Result();
     };
+
+    struct Lambda_Envelope { double value, derivative; };
+    // Normalized hidden-restraint envelope and derivative wrt effective lambda.
+    static Lambda_Envelope hidden_envelope(double lambda, unsigned int n, unsigned int m);
 
     Colvar_Bias();
     explicit Colvar_Bias(const Settings &settings);
@@ -80,8 +91,9 @@ namespace interaction {
     void reset_average(double instant_value);
     bool average_initialised() const;
     double average_state() const;
+    bool restore_average_state(double state, bool initialised);
 
-    Result evaluate(double instant_value);
+    Result evaluate(double instant_value, bool advance_average = true);
 
   private:
     Settings m_settings;

@@ -78,16 +78,9 @@ xxintnbpairlist_HEADERS = nonbonded/pairlist/pairlist.h\
 xxintnbspecialdir = $(includedir)/md++/interaction/special
 xxintnbspecial_HEADERS = special/create_special.h\
 	special/position_restraint_interaction.h\
-	special/distance_restraint_interaction.h\
 	special/distance_field_interaction.h\
-	special/angle_restraint_interaction.h\
-	special/dihedral_restraint_interaction.h\
-	special/perturbed_distance_restraint_interaction.h\
 	special/perturbed_distance_field_interaction.h\
-	special/eds_distance_restraint_interaction.h\
 	special/bs_interaction.h\
-	special/perturbed_angle_restraint_interaction.h\
-	special/perturbed_dihedral_restraint_interaction.h\
 	special/jvalue_restraint_interaction.h\
 	special/pscale.h\
 	special/xray_restraint_interaction.h\
@@ -100,7 +93,17 @@ xxintnbspecial_HEADERS = special/create_special.h\
 	special/symmetry_restraint_interaction.h\
 	special/dfunct_interaction.h\
 	special/colvar_restraint_interaction.h\
-	special/perturbed_colvar_restraint_interaction.h
+	special/perturbed_colvar_restraint_interaction.h\
+	special/eds_colvar_restraint_interaction.h
+
+xxintspeciallegacydir = $(includedir)/md++/interaction/special/tmp_legacy
+xxintspeciallegacy_HEADERS = special/tmp_legacy/distance_restraint_interaction.h\
+	special/tmp_legacy/angle_restraint_interaction.h\
+	special/tmp_legacy/dihedral_restraint_interaction.h\
+	special/tmp_legacy/perturbed_distance_restraint_interaction.h\
+	special/tmp_legacy/perturbed_angle_restraint_interaction.h\
+	special/tmp_legacy/perturbed_dihedral_restraint_interaction.h\
+	special/tmp_legacy/eds_distance_restraint_interaction.h
 
 xxintspecialcolvardir = $(includedir)/md++/interaction/special/colvar
 xxintspecialcolvar_HEADERS = special/colvar/colvar.h\
@@ -109,7 +112,9 @@ xxintspecialcolvar_HEADERS = special/colvar/colvar.h\
 	special/colvar/coordnum.h\
 	special/colvar/dihedral.h\
 	special/colvar/colvar_bias.h\
-	special/colvar/distance.h
+	special/colvar/colvar_state.h\
+	special/colvar/distance.h\
+	special/colvar/distance_difference.h
 	
 xxintspecialxraydir = $(includedir)/md++/interaction/special/xray
 xxintspecialxray_HEADERS = special/xray/dens.h\
@@ -184,16 +189,16 @@ libgrointeraction_la_SOURCES = interaction.cc\
 	bonded/perturbed_dihedral_new_interaction.cc\
 	special/create_special.cc\
 	special/position_restraint_interaction.cc\
-	special/distance_restraint_interaction.cc\
+	special/tmp_legacy/distance_restraint_interaction.cc\
 	special/distance_field_interaction.cc\
-	special/angle_restraint_interaction.cc\
-	special/dihedral_restraint_interaction.cc\
-	special/perturbed_distance_restraint_interaction.cc\
+	special/tmp_legacy/angle_restraint_interaction.cc\
+	special/tmp_legacy/dihedral_restraint_interaction.cc\
+	special/tmp_legacy/perturbed_distance_restraint_interaction.cc\
 	special/perturbed_distance_field_interaction.cc\
-	special/eds_distance_restraint_interaction.cc\
+	special/tmp_legacy/eds_distance_restraint_interaction.cc\
 	special/bs_interaction.cc\
-	special/perturbed_angle_restraint_interaction.cc\
-	special/perturbed_dihedral_restraint_interaction.cc\
+	special/tmp_legacy/perturbed_angle_restraint_interaction.cc\
+	special/tmp_legacy/perturbed_dihedral_restraint_interaction.cc\
 	special/jvalue_restraint_interaction.cc\
 	special/pscale.cc\
 	special/xray_restraint_interaction.cc\
@@ -208,6 +213,7 @@ libgrointeraction_la_SOURCES = interaction.cc\
 	special/rdc_restraint_interaction.cc\
 	special/symmetry_restraint_interaction.cc\
 	special/dfunct_interaction.cc\
+	special/eds_colvar_restraint_interaction.cc\
 	special/colvar_restraint_interaction.cc\
 	special/perturbed_colvar_restraint_interaction.cc\
     special/colvar/colvar.cc\
@@ -216,7 +222,9 @@ libgrointeraction_la_SOURCES = interaction.cc\
 	special/colvar/coordnum.cc\
 	special/colvar/dihedral.cc\
 	special/colvar/distance.cc\
+	special/colvar/distance_difference.cc\
 	special/colvar/colvar_bias.cc\
+	special/colvar/colvar_state.cc\
 	qmmm/qm_link.cc\
 	qmmm/qm_zone.cc\
 	qmmm/qm_worker.cc\

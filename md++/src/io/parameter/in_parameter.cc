@@ -1952,6 +1952,9 @@ void io::In_Parameter::read_DISTANCERES(simulation::Parameter &param,
                              "In_Parameter", io::message::warning);
         }
 
+        if (param.distanceres.distanceres != 0)
+            io::messages.add("DISTANCERES restraints are retired. Use COLVARRES and @colvarres (EDSRESTRAINTS for state-specific EDS biases).",
+                             "In_Parameter", io::message::error);
         block.get_final_messages();
     }
 } // DISTANCERES
@@ -2095,6 +2098,9 @@ void io::In_Parameter::read_ANGLERES(simulation::Parameter &param,
                                  io::message::error);
             }
         }
+        if (angrest == 1 || angrest == 2)
+            io::messages.add("ANGLERES restraints are retired. Use COLVARRES and @colvarres. Mode 3 constraints remain supported.",
+                             "In_Parameter", io::message::error);
         block.get_final_messages();
     }
 } // ANGLERES
@@ -2176,6 +2182,9 @@ void io::In_Parameter::read_DIHEDRALRES(simulation::Parameter &param,
                                  io::message::error);
             }
         }
+        if (dihrest == 1 || dihrest == 2)
+            io::messages.add("DIHEDRALRES restraints are retired. Use COLVARRES and @colvarres. Mode 3 constraints remain supported.",
+                             "In_Parameter", io::message::error);
         block.get_final_messages();
     }
 } // DIHEDRALRES
@@ -4339,7 +4348,7 @@ void io::In_Parameter::read_LAMBDAS(simulation::Parameter & param,
     exampleblock << "# NTLI(1..)  interaction type to treat with individual lambda:\n";
     exampleblock << "#            bond(1), angle(2), dihedral(3), improper(4), vdw(5), vdw_soft(6),\n";
     exampleblock << "#            crf(7), crf_soft(8), distanceres(9), distancefield(10),\n";
-    exampleblock << "#            dihedralres(11), mass(12), angleres(13)\n";
+    exampleblock << "#            dihedralres(11), mass(12), angleres(13), colvarres(14)\n";
     exampleblock << "# NILG1, NILG2 energy groups of interactions that are treated with individual\n";
     exampleblock << "#              lambda values\n";
     exampleblock << "# ALI, BLI, CLI, DLI, ELI polynomial coefficients linking the individual lambda-\n";
@@ -4388,7 +4397,7 @@ void io::In_Parameter::read_LAMBDAS(simulation::Parameter & param,
         int maxnilg = param.force.energy_group.size();
         for (int i = 0; i < num; ++i) {
             std::string idx = io::to_string(i);
-            block.get_next_parameter("NTLI["+idx+"]", nm, "", "1, bond, 2, angle, 3, dihedral, 4, improper, 5, vdw, 6, vdw_soft, 7, crf, 8, crf_soft, 9, distanceres, 10, distancefield, 11, dihedralres, 12, mass");
+            block.get_next_parameter("NTLI["+idx+"]", nm, "", "1, bond, 2, angle, 3, dihedral, 4, improper, 5, vdw, 6, vdw_soft, 7, crf, 8, crf_soft, 9, distanceres, 10, distancefield, 11, dihedralres, 12, mass, 13, angleres, 14, colvarres");
             block.get_next_parameter("NILG1["+idx+"]", n1, ">0", "");
             block.get_next_parameter("NILG2["+idx+"]", n2, ">0", "");
             block.get_next_parameter("ALI["+idx+"]", a, "", "");
@@ -4441,6 +4450,10 @@ void io::In_Parameter::read_LAMBDAS(simulation::Parameter & param,
                 j = simulation::dihres_lambda;
             else if (nm == "mass" || nm == "12")
                 j = simulation::mass_lambda;
+            else if (nm == "angleres" || nm == "13")
+                j = simulation::angres_lambda;
+            else if (nm == "colvarres" || nm == "14")
+                j = simulation::colvarres_lambda;
             
             else {
                 io::messages.add("unknown lambda type in LAMBDAS block: " + nm,
@@ -4503,6 +4516,8 @@ void io::In_Parameter::read_PRECALCLAM(simulation::Parameter & param,
         block.get_next_parameter("MINLAM", param.precalclam.min_lam, ">=0 && <=1", "");
         block.get_next_parameter("MAXLAM", param.precalclam.max_lam, ">=0 && <=1", "");
 
+        if (param.precalclam.nr_lambdas == 1)
+          io::messages.add("PRECALCLAM: NRLAM must be 0 or at least 2.", "In_Parameter", io::message::error);
         if (param.precalclam.min_lam >= param.precalclam.max_lam)
           io::messages.add("PRECALCLAM block: MINLAM should be smaller than MAXLAM",
             "In_Parameter", io::message::error);
@@ -4873,6 +4888,8 @@ void io::In_Parameter::read_LOCALELEV(simulation::Parameter & param,
     exampleblock << "# NLEPID NLEPFR\n";
     exampleblock << "       1      0\n";
     exampleblock << "       2      1\n";
+    exampleblock << "# Optional VIRIAL (0 default, 1 include LE bias virial) after all ID/freeze rows\n";
+    exampleblock << "       0\n";
     exampleblock << "END\n";
 
 
@@ -4930,6 +4947,7 @@ void io::In_Parameter::read_LOCALELEV(simulation::Parameter & param,
                 return;
             }
         }         // for umbrellas
+        block.get_next_parameter("VIRIAL", param.localelev.virial, "", "0,1", true);
         block.get_final_messages();
     }     // if block
 }  //LOCALELEV
@@ -6084,6 +6102,7 @@ void io::In_Parameter::read_COLVARRES(simulation::Parameter &param,
 
   param.colvarres.bias_specs.clear();
   param.colvarres.pert_bias_specs.clear();
+  param.colvarres.eds_bias_specs.clear();
 
   _lineStream.clear();
   std::string s;

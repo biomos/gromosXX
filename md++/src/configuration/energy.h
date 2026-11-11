@@ -35,6 +35,11 @@ namespace configuration
   class Energy
   {
   public:
+    enum { colvar_type_count = 5, colvar_status_count = 2 };
+    static const char *colvar_type_name(unsigned int type);
+    /** Accumulate one CV term once, with a parallel type/status breakdown. */
+    void add_colvar_energy(const std::string &type, bool perturbed,
+                           unsigned int group, double energy);
     /**
      * Constructor
      */
@@ -156,10 +161,13 @@ namespace configuration
      *  total energy of the distancefield restraint interaction
      */
     double disfieldres_total;
-    /**
-     *  total energy of the colvarres restraint interaction
-     */
+    /** Total energy of the independent DFUNCT interaction. */
+    double dfunct_total;
+    /** Total energy of the CV restraint interactions. */
     double colvarres_total;
+    double colvarres_type_total[colvar_type_count];
+    double colvarres_status_total[colvar_status_count];
+    double colvarres_type_status_total[colvar_type_count][colvar_status_count];
     /**
      *  total energy of the angle restraint interaction
      */
@@ -279,6 +287,8 @@ namespace configuration
     std::vector<double> AB_angres;
     std::vector<double> AB_dihres;
     std::vector<double> AB_disfld;
+    /** Perturbed CV bias energy (or its global-lambda derivative) at each grid point. */
+    std::vector<double> AB_colvar;
 
     /**
      * total energy of the dipole-dipole interaction (self energy)
@@ -440,10 +450,11 @@ namespace configuration
      * distancefield restraint energy term
      */
     std::vector<double> disfieldres_energy;
-    /**
-     * colvarres restraint energy term
-     */
+    /** DFUNCT energy per group, separate from geometric CV bias energies. */
+    std::vector<double> dfunct_energy;
+    /** CV restraint energy per group. */
     std::vector<double> colvarres_energy;
+    std::vector<double> colvarres_type_status_energy[colvar_type_count][colvar_status_count];
     /**
      * angle restraint energy term
      */

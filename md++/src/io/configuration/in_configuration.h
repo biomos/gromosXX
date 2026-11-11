@@ -218,6 +218,8 @@ namespace io {
                                           configuration::Configuration &conf, 
                                           simulation::Simulation & sim,
                                           std::ostream & os);
+    bool read_colvar_average_states(configuration::Configuration &conf,
+                                    simulation::Simulation &sim);
     /**
      * read Nose-Hoover-Chains variables
      */

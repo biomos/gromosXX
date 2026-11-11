@@ -1415,6 +1415,21 @@ calculate_constraint_dof(simulation::Multibath &multibath,
 
 }
 
+std::pair<double, double> topology::Topology::individual_lambda_at(
+    int type, unsigned int group1, unsigned int group2, double lambda) const
+{
+  const std::pair<int, int> groups(std::min(group1, group2), std::max(group1, group2));
+  const double a = m_individual_lambda_parameters.a.at(type).at(groups);
+  const double b = m_individual_lambda_parameters.b.at(type).at(groups);
+  const double c = m_individual_lambda_parameters.c.at(type).at(groups);
+  const double d = m_individual_lambda_parameters.d.at(type).at(groups);
+  const double e = m_individual_lambda_parameters.e.at(type).at(groups);
+  return std::make_pair(a * lambda * lambda * lambda * lambda
+                       + b * lambda * lambda * lambda + c * lambda * lambda + d * lambda + e,
+                       4.0 * a * lambda * lambda * lambda + 3.0 * b * lambda * lambda
+                       + 2.0 * c * lambda + d);
+}
+
 void
 topology::Topology::update_for_lambda() {
   DEBUG(10, "update for lambda");

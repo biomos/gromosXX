@@ -475,7 +475,8 @@ int algorithm::Perturbed_Shake ::apply(topology::Topology &topo,
           topo.solute().distance_constraints().size()) &&
          sim.param().constraint.solute.algorithm == simulation::constr_shake &&
          sim.param().constraint.ntc > 1) ||
-        sim.param().dihrest.dihrest == simulation::dihedral_constr)
+        sim.param().dihrest.dihrest == simulation::dihedral_constr ||
+        sim.param().angrest.angrest == simulation::angle_constr)
     {
 
       DEBUG(8, "\twe need to shake perturbed SOLUTE");
@@ -671,6 +672,20 @@ int algorithm::Perturbed_Shake::init(topology::Topology &topo,
       {
         constrained_atoms().insert(it->i);
         constrained_atoms().insert(it->j);
+      }
+    }
+    // Angle-only constraints also need initialization, velocity updates and
+    // constraint-force bookkeeping when solute bond constraints are disabled.
+    if (sim.param().angrest.angrest == simulation::angle_constr) {
+      for (const auto &angle : topo.angle_restraints()) {
+        constrained_atoms().insert(angle.i);
+        constrained_atoms().insert(angle.j);
+        constrained_atoms().insert(angle.k);
+      }
+      for (const auto &angle : topo.perturbed_angle_restraints()) {
+        constrained_atoms().insert(angle.i);
+        constrained_atoms().insert(angle.j);
+        constrained_atoms().insert(angle.k);
       }
     }
     // also add the dihedral constrained atoms

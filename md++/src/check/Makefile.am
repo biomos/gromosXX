@@ -37,7 +37,8 @@ endif
 
 TESTS = aladip.t aladip_unperturbed.t aladip_atomic.t aladip_special.t c16_cg.t lambdas.t #aladip_ls.t 
 
-EXTRA_DIST = data/aladip.topo\
+EXTRA_DIST = data/aladip.colvarres\
+	data/aladip.topo\
 	data/aladip.pttopo\
 	data/aladip.conf\
 	data/aladip.in\

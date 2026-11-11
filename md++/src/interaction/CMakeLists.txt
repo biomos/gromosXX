@@ -43,16 +43,16 @@ set(INTERACTION_CC
     bonded/perturbed_dihedral_new_interaction.cc
     special/create_special.cc
     special/position_restraint_interaction.cc
-    special/distance_restraint_interaction.cc
+    special/tmp_legacy/distance_restraint_interaction.cc
     special/distance_field_interaction.cc
-    special/angle_restraint_interaction.cc
-    special/dihedral_restraint_interaction.cc
-    special/perturbed_distance_restraint_interaction.cc
+    special/tmp_legacy/angle_restraint_interaction.cc
+    special/tmp_legacy/dihedral_restraint_interaction.cc
+    special/tmp_legacy/perturbed_distance_restraint_interaction.cc
     special/perturbed_distance_field_interaction.cc
-    special/eds_distance_restraint_interaction.cc
+    special/tmp_legacy/eds_distance_restraint_interaction.cc
     special/bs_interaction.cc
-    special/perturbed_angle_restraint_interaction.cc
-    special/perturbed_dihedral_restraint_interaction.cc
+    special/tmp_legacy/perturbed_angle_restraint_interaction.cc
+    special/tmp_legacy/perturbed_dihedral_restraint_interaction.cc
     special/jvalue_restraint_interaction.cc
     special/pscale.cc
     special/xray_restraint_interaction.cc
@@ -60,13 +60,16 @@ set(INTERACTION_CC
     special/electric_field_interaction.cc
     special/adde_reweighting.cc
     special/nemd.cc
+    special/eds_colvar_restraint_interaction.cc
     special/colvar_restraint_interaction.cc
     special/perturbed_colvar_restraint_interaction.cc
     special/colvar/angle.cc
     special/colvar/colvar_bias.cc
+    special/colvar/colvar_state.cc
     special/colvar/coordnum.cc
     special/colvar/dihedral.cc
     special/colvar/distance.cc
+    special/colvar/distance_difference.cc
     special/colvar/colvar_utils.cc
     special/colvar/colvar.cc
     special/xray/dens.cc

@@ -53,6 +53,15 @@ namespace simulation {
 
 namespace configuration {
 
+  /** One bias's transformed averaging history, independent of output values. */
+  struct Colvar_Average_State {
+    unsigned int ordinal, index;
+    std::string type;
+    int method;
+    double tau, timestep, average;
+    bool initialised;
+  };
+
   /**
    * @class Configuration
    * holds the state information of
@@ -473,6 +482,7 @@ namespace configuration {
       disres_struct pertdistanceres;
       
       struct colvarres_struct {
+        colvarres_struct() : totv(0.0), tote(0.0), average_state_present(false) {}
       
         /**
          * the sum of all collective variables
@@ -495,6 +505,11 @@ namespace configuration {
          * the energies
          */
         std::vector<double> energies;
+        std::vector<unsigned int> eds_indices;
+        std::vector<double> eds_values;
+        std::vector<std::vector<double> > eds_energies;
+        std::vector<Colvar_Average_State> average_states;
+        bool average_state_present;
       } /** colvarres informaton */ colvarres;
       colvarres_struct pertcolvarres;
 

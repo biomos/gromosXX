@@ -86,6 +86,7 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   read_stochastic_integral(topo, conf, sim, os);
   read_perturbation(topo, sim, os);
   read_distance_restraint_averages(topo, conf, sim, os);
+  read_colvar_average_states(conf, sim);
   read_nose_hoover_chains(topo, conf, sim, os);
   read_rottrans(topo, conf, sim, os);
   read_position_restraints(topo, conf, sim, os);
@@ -932,6 +933,71 @@ bool io::In_Configuration::read_distance_restraint_averages
   return true;
 }
 
+bool io::In_Configuration::read_colvar_average_states(
+    configuration::Configuration &conf, simulation::Simulation &sim)
+{
+  for (int perturbed = 0; perturbed < 2; ++perturbed) {
+    const std::string name = perturbed ? "PERTCOLVARRESSTATE" : "COLVARRESSTATE";
+    auto &state = perturbed ? conf.special().pertcolvarres : conf.special().colvarres;
+    state.average_states.clear();
+    state.average_state_present = false;
+    const auto &buffer = m_block[name];
+    if (buffer.empty()) continue;
+    block_read.insert(name);
+    if (sim.param().colvarres.colvarres == simulation::colvar_restr_off) {
+      io::messages.add(name + " ignored because COLVARRES is off.", "In_Configuration", io::message::warning);
+      continue;
+    }
+    std::ostringstream data;
+    // In_Frame stores data and END, without the block-name line.
+    for (auto line = buffer.begin(); line != buffer.end()-1; ++line)
+      data << line->substr(0, line->find('#')) << '\n';
+    std::istringstream input(data.str());
+    int version = 0;
+    long long count = -1;
+    const auto &specs = perturbed ? sim.param().colvarres.pert_bias_specs : sim.param().colvarres.bias_specs;
+    const size_t terms = specs.size() / (perturbed ? 2 : 1);
+    if (!(input >> version >> count) || version != 1 || count < 0
+        || static_cast<unsigned long long>(count) > terms) {
+      io::messages.add("Invalid version/count in " + name, "In_Configuration", io::message::error);
+      return false;
+    }
+    std::set<unsigned int> ordinals, indices;
+    for (long long i = 0; i < count; ++i) {
+      configuration::Colvar_Average_State record;
+      int initialised = -1;
+      long long ordinal = 0, index = -1;
+      if (!(input >> ordinal >> index >> record.type >> record.method >> record.tau
+                  >> record.timestep >> initialised >> record.average)
+          || ordinal <= 0 || static_cast<unsigned long long>(ordinal) > terms
+          || index < 0 || index > std::numeric_limits<unsigned int>::max()
+          || (initialised != 0 && initialised != 1)
+          || !std::isfinite(record.tau) || record.tau <= 0
+          || !std::isfinite(record.timestep) || record.timestep <= 0
+          || !std::isfinite(record.average)) {
+        io::messages.add("Invalid averaging record in " + name, "In_Configuration", io::message::error);
+        return false;
+      }
+      record.ordinal = ordinal;
+      record.index = index;
+      record.initialised = initialised;
+      if (!ordinals.insert(record.ordinal).second
+          || (record.index != 0 && !indices.insert(record.index).second)) {
+        io::messages.add("Duplicate averaging record in " + name, "In_Configuration", io::message::error);
+        return false;
+      }
+      state.average_states.push_back(record);
+    }
+    std::string extra;
+    if (input >> extra) {
+      io::messages.add("Unexpected data in " + name, "In_Configuration", io::message::error);
+      return false;
+    }
+    state.average_state_present = true;
+  }
+  return true;
+}
+
 bool io::In_Configuration::read_order_parameter_restraint_averages
 (
         topology::Topology &topo,
@@ -1287,7 +1353,7 @@ bool io::In_Configuration::read_leusbias
         os << "\t\t" << conf.special().umbrellas.size() <<
                 " umbrellas found.\n";
       }
-      return result;
+      if (!result) return false;
     } else {
       io::messages.add("no LEUSBIAS block in configuration.",
                        "In_Configuration", io::message::error);
@@ -1302,6 +1368,43 @@ bool io::In_Configuration::read_leusbias
     }
   }
 
+  const auto &metadata=m_block["LEUSSTATE"];
+  if (!metadata.empty()) {
+    block_read.insert("LEUSSTATE");
+    if (!sim.param().localelev.read) {
+      std::vector<std::string> lines;
+      for (auto it=metadata.begin();it!=metadata.end()-1;++it) {
+        const auto row=it->substr(0,it->find('#'));
+        const auto first=row.find_first_not_of(" \t\r\n");
+        if (first!=std::string::npos) lines.push_back(row.substr(first,row.find_last_not_of(" \t\r\n")-first+1));
+      }
+      const auto error=[]() {
+        io::messages.add("Invalid version/count/record in LEUSSTATE.","In_Configuration",io::message::error);
+        return false;
+      };
+      int version=0; long long count=-1; std::string extra;
+      if (lines.empty()) return error();
+      std::istringstream header(lines[0]);
+      if (!(header>>version>>count) || (header>>extra) || version!=1 || count<0
+          || static_cast<size_t>(count)!=conf.special().umbrellas.size()
+          || lines.size()!=1+2*static_cast<size_t>(count)) return error();
+      std::set<int> ids;
+      for (long long i=0;i<count;++i) {
+        int id=0, has=-1; double time=0,dt=0;
+        std::istringstream record(lines[1+2*i]);
+        if (!(record>>id>>has>>time>>dt) || (record>>extra) || !ids.insert(id).second
+            || (has!=0 && has!=1) || !std::isfinite(time) || !std::isfinite(dt)
+            || (has && dt<=0) || (!has && (time!=0 || dt!=0))) return error();
+        auto &umbrellas=conf.special().umbrellas;
+        auto found=std::find_if(umbrellas.begin(),umbrellas.end(),[=](const util::Umbrella &u){return u.id==id;});
+        if (found==umbrellas.end()) return error();
+        found->has_deposition=has;
+        found->last_deposition_time=time;
+        found->deposition_timestep=dt;
+        found->restart_signature=lines[2+2*i];
+      }
+    }
+  }
   return true;
 }
 
@@ -3179,7 +3282,7 @@ bool io::In_Configuration::_read_leusbias(
     int id = 0, dim = 0;
     _lineStream >> id >> dim;
 
-    if(_lineStream.fail()){
+    if(_lineStream.fail() || id <= 0 || dim <= 0){
       io::messages.add("bad line in LEUSBIAS block: NDIM",
 		       "In_Configuration",
 		       io::message::error);
@@ -3245,12 +3348,11 @@ bool io::In_Configuration::_read_leusbias(
       return false;
     }
     for(unsigned int c = 0; c < num_conf; ++c) {
-      for(unsigned int dim = 0; dim < u.dim(); ++dim) {
-        int di = 0;
-        _lineStream >> di;
-      }
-      std::string ds;
-      _lineStream >> ds;
+      // Provider-specific weights can be floating point. Skip tokens without
+      // interpreting the first token as an integer grid index.
+      std::string token;
+      for(unsigned int field = 0; field <= u.dim(); ++field)
+        _lineStream >> token;
       if (_lineStream.fail()) {
         std::ostringstream os; os << "LEUSBIAS block: Could not read configuration " << (c+1);
         io::messages.add(os.str(), "In_Configuration", io::message::error);

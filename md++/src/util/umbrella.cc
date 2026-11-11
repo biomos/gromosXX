@@ -44,6 +44,7 @@
 
 util::Umbrella::Umbrella(int id, unsigned int dim, Umbrella_Weight_Factory * factory) {
   this->id = id;
+  force_constant = 0.0;
   // don't resize the coordinates. They'll get attached
   functional_form.resize(dim);
   variable_type.resize(dim);
@@ -58,6 +59,8 @@ util::Umbrella::Umbrella(int id, unsigned int dim, Umbrella_Weight_Factory * fac
   grid_max_rel.resize(dim);
   grid_spacing_rel.resize(dim);
   grid_periodic.resize(dim);
+  has_deposition = false;
+  last_deposition_time = deposition_timestep = 0;
   building = false;
   enabled = false;
   umbrella_weight_factory = factory;
@@ -71,6 +74,24 @@ util::Umbrella::Umbrella(const Umbrella& u) {
 }
 
 util::Umbrella & util::Umbrella::operator=(const util::Umbrella& u) {
+  if (this == &u) return *this;
+  auto owner = u.m_visit_factory_owner;
+  auto provider = u.umbrella_weight_factory;
+  auto history = u.configurations;
+  if (dynamic_cast<Number_Of_Visits_Umbrella_Weight_Factory*>(provider)) {
+    owner.reset(new Number_Of_Visits_Umbrella_Weight_Factory());
+    provider = owner.get();
+    history.clear();
+    for (const auto &entry : u.configurations) {
+      std::ostringstream saved;
+      entry.second->write(saved);
+      std::istringstream input(saved.str());
+      auto *weight = provider->get_instance();
+      weight->read(input);
+      if (input.fail()) throw std::runtime_error("Could not copy LE visit-count history");
+      history.emplace(entry.first,weight);
+    }
+  }
   id = u.id;
   coordinates = u.coordinates;
   force_constant = u.force_constant;
@@ -86,22 +107,81 @@ util::Umbrella & util::Umbrella::operator=(const util::Umbrella& u) {
   grid_max = u.grid_max;
   grid_max_rel = u.grid_max_rel;
   grid_spacing_rel = u.grid_spacing_rel;
-  configurations = u.configurations;
+  configurations.swap(history);
   grid_periodic = u.grid_periodic;
   building = u.building;
   enabled = u.enabled;
-  umbrella_weight_factory = u.umbrella_weight_factory;
+  m_visit_factory_owner = owner;
+  umbrella_weight_factory = provider;
+  has_deposition = u.has_deposition;
+  last_deposition_time = u.last_deposition_time;
+  deposition_timestep = u.deposition_timestep;
+  restart_signature = u.restart_signature;
   configuration_block = u.configuration_block;
   configuration_block_pos = u.configuration_block_pos;
 
   return *this;
 }
 
-util::Umbrella::~Umbrella() {
-/*
-  if (umbrella_weight_factory != NULL)
-    delete umbrella_weight_factory;
-*/
+util::Umbrella::~Umbrella() {}
+
+void util::Umbrella::initialise_weight_factory() {
+  if (umbrella_weight_factory == NULL) {
+    m_visit_factory_owner.reset(new Number_Of_Visits_Umbrella_Weight_Factory());
+    umbrella_weight_factory = m_visit_factory_owner.get();
+  }
+}
+
+bool util::Umbrella::validate_grid() const {
+  bool valid = dim() > 0 && std::isfinite(force_constant);
+  for (unsigned int axis = 0; axis < dim(); ++axis) {
+    const bool periodic = variable_type[axis] == vt_dihedral && grid_min[axis] == grid_max[axis];
+    valid = valid && std::isfinite(grid_min[axis]) && std::isfinite(grid_max[axis])
+        && std::isfinite(width[axis]) && width[axis] > 0
+        && std::isfinite(cutoff[axis]) && cutoff[axis] >= 0
+        && (functional_form[axis] == ff_polynomial || functional_form[axis] == ff_gaussian)
+        && (periodic ? num_grid_points[axis] > 0
+                     : (num_grid_points[axis] > 1 && grid_max[axis] > grid_min[axis]));
+    if (variable_type[axis] == vt_angle)
+      valid = valid && grid_min[axis] >= 0 && grid_max[axis] <= 180;
+    if (variable_type[axis] == vt_coordnum)
+      valid = valid && grid_min[axis] >= 0;
+  }
+  if (!valid) io::messages.add("Invalid LE grid: check dimensions, finite bounds/strength, positive width/grid count, cutoff and functional form.","Umbrella",io::message::error);
+  return valid;
+}
+
+std::string util::Umbrella::definition_signature() const {
+  std::ostringstream out;
+  out.setf(std::ios::scientific,std::ios::floatfield);
+  out.precision(std::numeric_limits<double>::max_digits10);
+  out << dim() << ' ' << coordinates.size();
+  for (unsigned int axis = 0; axis < dim(); ++axis)
+    out << ' ' << variable_type[axis] << ' ' << num_grid_points[axis]
+        << ' ' << grid_min[axis] << ' ' << grid_max[axis];
+  for (auto coordinate : coordinates) out << " | " << coordinate->definition();
+  return out.str();
+}
+
+int util::Umbrella::deposition_due(double time,double timestep) const {
+  if (!std::isfinite(time) || !std::isfinite(timestep) || timestep <= 0) {
+    io::messages.add("Adaptive LE requires finite time and a positive timestep.","Umbrella",io::message::error);
+    return -1;
+  }
+  if (!has_deposition) return 1;
+  const double tolerance = std::min(.25*timestep,8*std::numeric_limits<double>::epsilon()
+      * std::max(1.0,std::max(std::fabs(time),std::fabs(last_deposition_time))));
+  if (deposition_timestep != timestep || time < last_deposition_time-tolerance) {
+    io::messages.add("LEUSSTATE time/timestep mismatch: keep the continuation timestep and time consistent.","Umbrella",io::message::error);
+    return -1;
+  }
+  return std::fabs(time-last_deposition_time) <= tolerance ? 0 : 1;
+}
+
+void util::Umbrella::mark_deposition(double time,double timestep) {
+  has_deposition = true;
+  last_deposition_time = time;
+  deposition_timestep = timestep;
 }
 
 
@@ -146,7 +226,7 @@ void util::Umbrella::build(
 
     // don't add it if it is not on the grid!
     if (outside)
-      return;
+      continue;
 
     const util::Umbrella::leus_conf grid_point(pos);
     // binary search this grid point
@@ -166,7 +246,7 @@ void util::Umbrella::build(
 }
 
 void util::Umbrella::apply(
-        configuration::Configuration & conf) {
+        configuration::Configuration & conf,bool include_virial) {
   DEBUG(6, "Applying umbrella " << id);
   const unsigned int dim = this->dim();
 
@@ -256,7 +336,7 @@ void util::Umbrella::apply(
       for (unsigned int i = 0; i < dim; ++i) {
         const double d = deriv[i] * force_constant * conf_it->second->get_weight();
         DEBUG(7, "\tderiv[" << i << "]: " << d);
-        coordinates[crd * dim + i]->apply(d);
+        coordinates[crd * dim + i]->apply(d,include_virial);
       }
     } // for visited configurations
   } // for coordinate sets
@@ -265,9 +345,15 @@ void util::Umbrella::apply(
 
 void util::Umbrella::transform_units() {
   for(unsigned int i = 0; i < dim(); ++i) {
+    grid_periodic[i] = false;
     double conversion_factor = 1.0;
     double conversion_factor_grid = 1.0;
     switch(variable_type[i]) {
+      case util::Umbrella::vt_angle:
+        conversion_factor = math::Pi / 180.0;
+        conversion_factor_grid = conversion_factor * (grid_max[i]-grid_min[i])
+                               / (num_grid_points[i]-1.0);
+        break;
       case util::Umbrella::vt_dihedral:
         conversion_factor = math::Pi / 180.0;
         conversion_factor_grid = math::Pi * 2.0 / num_grid_points[i];
@@ -306,6 +392,13 @@ void util::Umbrella::calculate_coordinates(
   }
 }
 
+int util::Umbrella::calculate_coordinates(topology::Topology &topo,
+    configuration::Configuration &conf, simulation::Simulation &sim) {
+  for (auto coordinate : coordinates)
+    if (coordinate->calculate_checked(topo,conf,sim)) return 1;
+  return 0;
+}
+
 void util::Umbrella::read_configuration() {
   DEBUG(4, "Converting read configurations of umbrella " << id);
   std::istringstream _lineStream(configuration_block);
@@ -330,9 +423,18 @@ void util::Umbrella::read_configuration() {
                 "Umbrella", io::message::error);
         return;
       }
+      if (cnf.pos[i] < 1 || static_cast<unsigned int>(cnf.pos[i]) > num_grid_points[i]) {
+        io::messages.add("LEUSBIAS block: stored grid index out of range",
+                        "Umbrella", io::message::error);
+        return;
+      }
       --cnf.pos[i]; // our arrays start at 0 and not 1 as in the format
     }
-    configurations.insert(std::pair<util::Umbrella::leus_conf, util::Umbrella_Weight*>(cnf, weight));
+    if (!configurations.emplace(cnf, weight).second) {
+      io::messages.add("LEUSBIAS block: duplicate stored grid point",
+                      "Umbrella", io::message::error);
+      return;
+    }
   } // for configurations
 }
 

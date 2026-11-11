@@ -11,7 +11,6 @@
 #include "../../configuration/configuration.h"
 #include "../../interaction/interaction.h"
 
-#include "../../math/periodicity.h"
 
 // special interactions
 #include "../../interaction/interaction_types.h"
@@ -19,12 +18,13 @@
 #include "../../interaction/special/colvar_restraint_interaction.h"
 #include "../../interaction/special/colvar/colvar.h"
 #include "../../interaction/special/colvar/colvar_bias.h"
+#include "../../interaction/special/colvar/colvar_state.h"
 #include "../../interaction/special/colvar/angle.h"
 #include "../../interaction/special/colvar/coordnum.h"
 #include "../../interaction/special/colvar/dihedral.h"
 #include "../../interaction/special/colvar/distance.h"
+#include "../../interaction/special/colvar/distance_difference.h"
 
-#include "../../util/template_split.h"
 #include "../../util/debug.h"
 
 #undef MODULE
@@ -110,31 +110,6 @@ size_t count_specs(
   return n;
 }
 
-template<math::boundary_enum B>
-static void _apply_colvar_virial(
-  topology::Topology &topo,
-  configuration::Configuration &conf,
-  const std::vector<util::Virtual_Atom*> &atoms,
-  const std::vector<math::Vec> &forces)
-{
-  if (atoms.size() < 2 || forces.size() != atoms.size()) {
-    return;
-  }
-
-  math::Periodicity<B> periodicity(conf.current().box);
-  const math::Vec ref = atoms[0]->pos(conf, topo);
-
-  for (size_t i = 1; i < atoms.size(); ++i) {
-    math::Vec rel;
-    periodicity.nearest_image(atoms[i]->pos(conf, topo), ref, rel);
-
-    for (int a = 0; a < 3; ++a) {
-      for (int b = 0; b < 3; ++b) {
-        conf.current().virial_tensor(a, b) += rel(a) * forces[i](b);
-      }
-    }
-  }
-}
 
 } // anonymous namespace
 
@@ -171,6 +146,10 @@ interaction::Colvar_Restraint_Interaction::settings_from_spec(
 
   settings.periodic = (spec.type == "DIHEDRAL");
   settings.period = settings.periodic ? 2.0 * math::Pi : 0.0;
+  settings.paired_wall = spec.paired_wall;
+  settings.wall_partner_target = spec.wall_partner_target;
+  settings.explicit_periodic_branch = spec.explicit_periodic_branch;
+  settings.branch_delta = spec.branch_delta;
 
   settings.use_time_average = (spec.averaging != 0);
   if (spec.averaging == 2) {
@@ -223,6 +202,9 @@ int interaction::Colvar_Restraint_Interaction
  simulation::Simulation & sim)
 {
   m_timer.start(sim);
+  const bool advance_average = m_average_step != static_cast<long long>(sim.steps());
+  conf.special().colvarres.average_states.clear();
+  conf.special().colvarres.average_state_present = false;
   double Ctot=0;
   double Etot=0;
   conf.special().colvarres.energies.clear();
@@ -242,6 +224,9 @@ int interaction::Colvar_Restraint_Interaction
       io::messages.add("Error in colvar calc",
                        "Colvar",
                        io::message::error);
+      m_timer.stop_subtimer("calculate");
+      m_timer.stop();
+      return 1;
     }
     m_timer.stop_subtimer("calculate");
 
@@ -256,18 +241,16 @@ int interaction::Colvar_Restraint_Interaction
 
     if (!sum) {
       double E = apply_restraint(topo, conf, sim,
-                                 cv->atoms,
-                                 cv->derivatives,
-                                 cv->ct,
+                                 *cv,
                                  i < m_colvar_types.size() ? m_colvar_types[i] : cv->name,
-                                 *bias);
+                                 *bias, advance_average);
       conf.special().colvarres.energies.push_back(E);
       Etot += E;
 
       // add to the energy group of the first atom of first list
       util::Virtual_Atom *firstatom = (cv->atoms)[0];
-      conf.current().energies.colvarres_energy[topo.atom_energy_group()
-        [(*firstatom).atom(0)]] += E;
+      conf.current().energies.add_colvar_energy(m_colvar_types[i], false,
+        topo.atom_energy_group()[firstatom->atom(0)], E);
     }
   }
 
@@ -280,6 +263,11 @@ int interaction::Colvar_Restraint_Interaction
                      "Colvar", io::message::error);
   }
 
+  const auto &specs = sim.param().colvarres.bias_specs;
+  for (size_t i = 0; i < m_biases.size(); ++i)
+    checkpoint_colvar_average(*m_biases[i], specs[m_spec_ordinals[i]-1], m_spec_ordinals[i],
+                              sim.time_step_size(), conf, false);
+  m_average_step = sim.steps();
   conf.special().colvarres.tote=Etot;
   m_timer.stop();
   return 0;
@@ -291,11 +279,11 @@ double interaction::Colvar_Restraint_Interaction
   ::apply_restraint(topology::Topology & topo,
  configuration::Configuration & conf,
  simulation::Simulation & sim,
- const std::vector< util::Virtual_Atom* > &atoms,
- const math::VArray &derivatives,
- double curr,
+ const Colvar &cv,
  const std::string &type,
- Colvar_Bias &bias) {
+ Colvar_Bias &bias, bool advance_average) {
+
+  const double curr = cv.ct;
 
   double E = 0.0;
 
@@ -309,7 +297,7 @@ double interaction::Colvar_Restraint_Interaction
       return E;
   }
 
-  Colvar_Bias::Result result = bias.evaluate(curr);
+  Colvar_Bias::Result result = bias.evaluate(curr, advance_average);
   E = result.energy;
 
 
@@ -346,19 +334,8 @@ double interaction::Colvar_Restraint_Interaction
           << " dE/dinstant " << result.dE_dinstant);
   }
 
-  std::vector<math::Vec> forces(atoms.size(), math::Vec(0));
-  for (size_t i=0; i<atoms.size(); i++) {
-    forces[i] = -result.dE_dinstant * derivatives[i];
-    DEBUG(15, "COLVARRES step " << sim.steps()
-          << " atom " << i + 1
-          << " derivative " << math::v2s(derivatives[i])
-          << " force " << math::v2s(forces[i]));
-    (*atoms[i]).force(conf, topo, forces[i]);
-  }
-
-  if (settings.virial) {
-    SPLIT_BOUNDARY(_apply_colvar_virial, topo, conf, atoms, forces);
-  }
+  cv.apply_forces(topo, conf, result.dE_dinstant, settings.virial,
+                  sim.param().pcouple.virial==math::molecular_virial);
 
   return E;
 }
@@ -369,7 +346,10 @@ int interaction::Colvar_Restraint_Interaction::init(topology::Topology &topo,
              std::ostream &os,
              bool quiet)
 {
+  m_average_step = -1;
+  m_spec_ordinals.clear();
   size_t distance_index = 0;
+  size_t difference_index = 0;
   size_t angle_index = 0;
   size_t dihedral_index = 0;
   size_t coordnum_index = 0;
@@ -377,6 +357,7 @@ int interaction::Colvar_Restraint_Interaction::init(topology::Topology &topo,
 
   const std::vector<simulation::Parameter::colvar_bias_spec> &specs =
     sim.param().colvarres.bias_specs;
+  if (!check_colvar_average_count(conf, specs, false)) return 1;
   const size_t pert_distance_count =
     count_specs(sim.param().colvarres.pert_bias_specs, "DISTANCE") / 2;
   const size_t pert_angle_count =
@@ -402,26 +383,35 @@ int interaction::Colvar_Restraint_Interaction::init(topology::Topology &topo,
       distance_cv->params = &topo.distance_restraints()[distance_index++];
       cv = distance_cv;
     }
+    else if (spec.type == "DISTANCE_DIFFERENCE") {
+      if (difference_index >= topo.distance_difference_restraints().size()) {
+        io::messages.add("Missing DISTANCEDIFFRESSPEC geometry.", "Colvar", io::message::error);
+        return 1;
+      }
+      Distance_Difference_Colvar *difference_cv = new Distance_Difference_Colvar();
+      difference_cv->params = &topo.distance_difference_restraints()[difference_index++];
+      cv = difference_cv;
+    }
     else if (spec.type == "ANGLE") {
-      if (angle_index >= topo.angle_restraints().size()) {
+      if (angle_index >= topo.colvar_angle_geometries().size()) {
         io::messages.add("COLVARRES contains more ANGLE entries than ANGRESSPEC geometries.",
                          "Colvar", io::message::error);
         continue;
       }
 
       interaction::Angle_Colvar *angle_cv = new interaction::Angle_Colvar();
-      angle_cv->params = &topo.angle_restraints()[angle_index++];
+      angle_cv->params = &topo.colvar_angle_geometries()[angle_index++];
       cv = angle_cv;
     }
     else if (spec.type == "DIHEDRAL") {
-      if (dihedral_index >= topo.dihedral_restraints().size()) {
+      if (dihedral_index >= topo.colvar_dihedral_geometries().size()) {
         io::messages.add("COLVARRES contains more DIHEDRAL entries than DIHEDRALRESSPEC geometries.",
                          "Colvar", io::message::error);
         continue;
       }
 
       interaction::Dihedral_Colvar *dihedral_cv = new interaction::Dihedral_Colvar();
-      dihedral_cv->params = &topo.dihedral_restraints()[dihedral_index++];
+      dihedral_cv->params = &topo.colvar_dihedral_geometries()[dihedral_index++];
       cv = dihedral_cv;
     }
     else if (spec.type == "COORDNUM") {
@@ -436,7 +426,7 @@ int interaction::Colvar_Restraint_Interaction::init(topology::Topology &topo,
       cv = coordnum_cv;
     }
     else {
-      io::messages.add("COLVARRES: unknown TYPE '" + spec.type + "'. Use DISTANCE, COORDNUM, ANGLE, or DIHEDRAL.",
+      io::messages.add("COLVARRES: unknown TYPE '" + spec.type + "'. Use DISTANCE, COORDNUM, ANGLE, DIHEDRAL, or DISTANCE_DIFFERENCE.",
                        "Colvar", io::message::error);
       continue;
     }
@@ -448,6 +438,8 @@ int interaction::Colvar_Restraint_Interaction::init(topology::Topology &topo,
       io::messages.add("Error in colvar init",
                        "Colvar",
                        io::message::error);
+      delete cv;
+      return 1;
     }
 
     Ctot0 += spec.target;
@@ -478,28 +470,47 @@ int interaction::Colvar_Restraint_Interaction::init(topology::Topology &topo,
 
     Colvar_Bias *bias = new Colvar_Bias(settings);
 
-    if (settings.use_time_average) {
+    if (settings.use_time_average && conf.special().colvarres.average_state_present) {
+      if (!restore_colvar_average(*bias, spec, i+1, sim.time_step_size(), conf, false)) {
+        delete bias;
+        delete cv;
+        return 1;
+      }
+    } else if (settings.use_time_average) {
       // Initialise the average from the current instantaneous value.
-      cv->calculate(topo, conf, sim);
+      if (cv->calculate(topo, conf, sim)) {
+        io::messages.add("Error initialising colvar average",
+                         "Colvar", io::message::error);
+        delete bias;
+        delete cv;
+        return 1;
+      }
       bias->reset_average(cv->ct);
     }
 
     m_colvars.push_back(cv);
     m_biases.push_back(bias);
+    m_spec_ordinals.push_back(i+1);
     m_colvar_types.push_back(spec.type);
   }
+
+  conf.special().colvarres.average_states.clear();
+  conf.special().colvarres.average_state_present = false;
+  for (size_t i = 0; i < m_biases.size(); ++i)
+    checkpoint_colvar_average(*m_biases[i], specs[m_spec_ordinals[i]-1], m_spec_ordinals[i],
+                              sim.time_step_size(), conf, false);
 
   if (distance_index + pert_distance_count < topo.distance_restraints().size()) {
     io::messages.add("DISTANCERESSPEC contains more geometries than COLVARRES DISTANCE entries; extra geometries are ignored.",
                      "Colvar", io::message::warning);
   }
 
-  if (angle_index + pert_angle_count < topo.angle_restraints().size()) {
+  if (angle_index + pert_angle_count < topo.colvar_angle_geometries().size()) {
     io::messages.add("ANGRESSPEC contains more geometries than COLVARRES ANGLE entries; extra geometries are ignored.",
                      "Colvar", io::message::warning);
   }
 
-  if (dihedral_index + pert_dihedral_count < topo.dihedral_restraints().size()) {
+  if (dihedral_index + pert_dihedral_count < topo.colvar_dihedral_geometries().size()) {
     io::messages.add("DIHEDRALRESSPEC contains more geometries than COLVARRES DIHEDRAL entries; extra geometries are ignored.",
                      "Colvar", io::message::warning);
   }

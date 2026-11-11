@@ -55,7 +55,7 @@
 
 // Energy trajectory version
 // For details, see definition in out_configuration.cc
-const std::string io::Out_Configuration::ene_version = "2023-04-15";
+const std::string io::Out_Configuration::ene_version = "2026-11-06-compact";
 
 // declarations
 static void _print_energyred_helper(std::ostream & os, configuration::Energy const &e);
@@ -544,6 +544,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     if (sim.param().distanceres.distanceres < 0) {
       _print_distance_restraint_averages(conf, topo, m_final_conf);
     }
+    _print_colvar_average_states(conf, m_final_conf);
 
     if(sim.param().distancefield.printgrid) {
       _print_disfield_grid(sim.param(), conf, topo, m_final_conf);
@@ -859,6 +860,7 @@ void io::Out_Configuration
   m_every_blockaverage = every;
   m_write_blockaverage_energy = true;
   _print_title(m_title, "block averaged energies", m_blockaveraged_energy);
+  _print_ene_version(m_blockaveraged_energy);
 }
 
 void io::Out_Configuration
@@ -873,6 +875,7 @@ void io::Out_Configuration
   m_every_blockaverage = every;
   m_write_blockaverage_free_energy = true;
   _print_title(m_title, "block averaged free energies", m_blockaveraged_free_energy);
+  _print_ene_version(m_blockaveraged_free_energy);
 }
 
 void io::Out_Configuration
@@ -2574,6 +2577,41 @@ void io::Out_Configuration::_print_colvar_restraints(
     }
     os << "END" << std::endl;
   }
+  const auto &eds = conf.special().colvarres;
+  if (!eds.eds_values.empty()) {
+    os << "EDSCOLVARRESDATA\n# NTERMS NSTATES\n"
+       << eds.eds_values.size() << ' ' << eds.eds_energies[0].size()
+       << "\n# INDX STATE DISTANCE ENERGY\n";
+    for (size_t term = 0; term < eds.eds_values.size(); ++term)
+      for (size_t state = 0; state < eds.eds_energies[term].size(); ++state)
+        os << eds.eds_indices[term] << ' ' << state+1 << ' '
+           << eds.eds_values[term] << ' ' << eds.eds_energies[term][state] << '\n';
+    os << "END\n";
+  }
+
+}
+
+void io::Out_Configuration::_print_colvar_average_states(
+    configuration::Configuration const &conf, std::ostream &os)
+{
+  const std::ios::fmtflags flags = os.flags();
+  const std::streamsize precision = os.precision();
+  os.setf(std::ios::scientific, std::ios::floatfield);
+  os.precision(std::numeric_limits<double>::max_digits10);
+  for (int perturbed = 0; perturbed < 2; ++perturbed) {
+    const auto &state = perturbed ? conf.special().pertcolvarres : conf.special().colvarres;
+    if (state.average_states.empty()) continue;
+    os << (perturbed ? "PERTCOLVARRESSTATE\n" : "COLVARRESSTATE\n")
+       << "# VERSION NRECORDS\n1 " << state.average_states.size()
+       << "\n# ROW INDX TYPE METHOD TAU DT INITIALISED TRANSFORMED_AVERAGE\n";
+    for (const auto &record : state.average_states)
+      os << record.ordinal << ' ' << record.index << ' ' << record.type << ' '
+         << record.method << ' ' << record.tau << ' ' << record.timestep << ' '
+         << int(record.initialised) << ' ' << record.average << '\n';
+    os << "END\n";
+  }
+  os.flags(flags);
+  os.precision(precision);
 }
 
 void io::Out_Configuration::_print_distance_restraint_averages(
@@ -3095,7 +3133,7 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
   const int numbaths = unsigned(e.kinetic_energy.size());
   // const int energy_group_size = numenergygroups * (numenergygroups + 1) /2;
 
-  os << "# totals\n";
+  os << "# totals: 50 fields\n";
   
   os << std::setw(18) << e.total << "\n"// 1
           << std::setw(18) << e.kinetic_total << "\n" // 2
@@ -3121,34 +3159,32 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
           << std::setw(18) << e.sasa_total << "\n" // 22
           << std::setw(18) << e.sasa_volume_total << "\n" // 23
           << std::setw(18) << e.constraints_total << "\n" // 24
-          << std::setw(18) << e.distanceres_total << "\n" // 25
-          << std::setw(18) << e.disfieldres_total << "\n" // 26
-          << std::setw(18) << e.dihrest_total << "\n" // 27
-          << std::setw(18) << e.posrest_total << "\n" // 28
-          << std::setw(18) << e.jvalue_total << "\n" // 29
-          << std::setw(18) << e.xray_total << "\n" // 30
-          << std::setw(18) << e.leus_total << "\n" // 31
-          << std::setw(18) << e.oparam_total << "\n" // 32
-          << std::setw(18) << e.symrest_total << "\n" // 33
-          << std::setw(18) << e.eds_vmix << "\n" // 34
-          << std::setw(18) << e.eds_vr << "\n" // 35
-          << std::setw(18) << e.eds_emax << "\n" // 36
-          << std::setw(18) << e.eds_emin << "\n" // 37
-          << std::setw(18) << e.eds_globmin << "\n" // 38
-          << std::setw(18) << e.eds_globminfluc << "\n" // 39
-          << std::setw(18) << e.entropy_term << "\n" // 40
-          << std::setw(18) << e.qm_total << "\n" // 41
-          << std::setw(18) << e.bsleus_total << "\n" // 42
-          << std::setw(18) << e.rdc_total << "\n" // 43
-          << std::setw(18) << e.angrest_total << "\n" // 44
-          << std::setw(18) << e.nn_valid << "\n" // 45
-          << std::setw(18) << e.nn_valid_maxF << "\n" // 46
-          << std::setw(18) << e.total + e.shift_extra_orig_total << "\n" // 47
-          << std::setw(18) << e.total + e.shift_extra_phys_total << "\n" // 48
-          << std::setw(18) << e.eds_vr_shift_orig << "\n" // 49
-          << std::setw(18) << e.eds_vr_shift_phys << "\n"  // 50
-          << std::setw(18) << e.gamd_DV_total << "\n" // 51
-          << std::setw(18) << e.colvarres_total << "\n"; // 52
+          << std::setw(18) << e.disfieldres_total << "\n" // 25
+          << std::setw(18) << e.posrest_total << "\n" // 26
+          << std::setw(18) << e.jvalue_total << "\n" // 27
+          << std::setw(18) << e.xray_total << "\n" // 28
+          << std::setw(18) << e.leus_total << "\n" // 29
+          << std::setw(18) << e.oparam_total << "\n" // 30
+          << std::setw(18) << e.symrest_total << "\n" // 31
+          << std::setw(18) << e.eds_vmix << "\n" // 32
+          << std::setw(18) << e.eds_vr << "\n" // 33
+          << std::setw(18) << e.eds_emax << "\n" // 34
+          << std::setw(18) << e.eds_emin << "\n" // 35
+          << std::setw(18) << e.eds_globmin << "\n" // 36
+          << std::setw(18) << e.eds_globminfluc << "\n" // 37
+          << std::setw(18) << e.entropy_term << "\n" // 38
+          << std::setw(18) << e.qm_total << "\n" // 39
+          << std::setw(18) << e.bsleus_total << "\n" // 40
+          << std::setw(18) << e.rdc_total << "\n" // 41
+          << std::setw(18) << e.nn_valid << "\n" // 42
+          << std::setw(18) << e.nn_valid_maxF << "\n" // 43
+          << std::setw(18) << e.total + e.shift_extra_orig_total << "\n" // 44
+          << std::setw(18) << e.total + e.shift_extra_phys_total << "\n" // 45
+          << std::setw(18) << e.eds_vr_shift_orig << "\n" // 46
+          << std::setw(18) << e.eds_vr_shift_phys << "\n"  // 47
+          << std::setw(18) << e.gamd_DV_total << "\n" // 48
+          << std::setw(18) << e.colvarres_total << "\n" // 49
+          << std::setw(18) << e.dfunct_total << "\n"; // 50
 
 
   os << "# baths\n";
@@ -3190,17 +3226,15 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
   for (int i = 0; i < numenergygroups; i++) {
     os << std::setw(18) << e.constraints_energy[i]
             << std::setw(18) << e.posrest_energy[i]
-            << std::setw(18) << e.distanceres_energy[i] // disres
             << std::setw(18) << e.disfieldres_energy[i] // disfieldres
-            << std::setw(18) << e.angrest_energy[i]// angle res
-            << std::setw(18) << e.dihrest_energy[i] // dihedral res
             << std::setw(18) << e.sasa_energy[i]
             << std::setw(18) << e.sasa_volume_energy[i]
             << std::setw(18) << 0.0 // jval
             << std::setw(18) << e.rdc_energy[i] // rdc
             << std::setw(18) << 0.0 // local elevation
-            << std::setw(18) << 0.0 // colvarres
-            << std::setw(18) << 0.0 << "\n"; //path integral
+            << std::setw(18) << e.colvarres_energy[i] // colvarres
+            << std::setw(18) << 0.0 //path integral
+            << std::setw(18) << e.dfunct_energy[i] << "\n"; // DFUNCT
   }
 
   // eds energy of end states
@@ -3260,10 +3294,8 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
      << std::setw(18) << "AB_angle"
      << std::setw(18) << "AB_improper"
      // special interactions - Betty
-     << std::setw(18) << "AB_disres"
-     << std::setw(18) << "AB_angres"
-     << std::setw(18) << "AB_dihres"
-     << std::setw(18) << "AB_disfld\n";
+     << std::setw(18) << "AB_disfld"
+     << std::setw(18) << "AB_colvar\n";
      /*<< std::setw(18) << /"AB_dihedral\n";*/
   
   for (unsigned i = 0; i < nr_lambdas; i++) {
@@ -3276,10 +3308,8 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
        << std::setw(18) << e.AB_angle[i]
        << std::setw(18) << e.AB_improper[i]
        // special interations - Betty
-       << std::setw(18) << e.AB_disres[i]
-       << std::setw(18) << e.AB_angres[i]
-       << std::setw(18) << e.AB_dihres[i]
        << std::setw(18) << e.AB_disfld[i]
+       << std::setw(18) << e.AB_colvar[i]
        //<< std::setw(18) << e.AB_dihedral[i]
        << "\n";
   }
@@ -3289,6 +3319,26 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
   os << std::setw(18) << e.A_dihedral
      << std::setw(18) << e.B_dihedral << "\n";
  // ANITA
+
+  os << "# colvar totals: ordinary perturbed combined\n";
+  for (unsigned int type = 0; type < configuration::Energy::colvar_type_count; ++type) {
+    os << "# " << configuration::Energy::colvar_type_name(type) << '\n';
+    os << std::setw(18) << e.colvarres_type_status_total[type][0]
+       << std::setw(18) << e.colvarres_type_status_total[type][1]
+       << std::setw(18) << e.colvarres_type_total[type] << '\n';
+  }
+  os << "# all CV types\n"
+     << std::setw(18) << e.colvarres_status_total[0]
+     << std::setw(18) << e.colvarres_status_total[1]
+     << std::setw(18) << e.colvarres_total << '\n';
+  os << "# colvar groups: five ordinary types, then five perturbed types\n";
+  for (int group = 0; group < numenergygroups; ++group) {
+    for (unsigned int status = 0; status < configuration::Energy::colvar_status_count; ++status)
+      for (unsigned int type = 0; type < configuration::Energy::colvar_type_count; ++type)
+        os << std::setw(18) << e.colvarres_type_status_energy[type][status][group];
+    os << '\n';
+  }
+
 }
 
 static void _print_volumepressurered_helper(std::ostream &os,
@@ -3503,22 +3553,27 @@ _print_umbrellas(configuration::Configuration const & conf, std::ostream & os) {
   os.setf(std::ios::fixed, std::ios::floatfield);
   os.precision(m_precision);
   const std::vector<util::Umbrella> & umb = conf.special().umbrellas;
+  os.setf(std::ios::scientific,std::ios::floatfield);
+  os.precision(std::numeric_limits<double>::max_digits10);
   os << "LEUSBIAS\n# NUMUMBRELLAS\n"
      << umb.size()
      << "\n";
   for(unsigned int i = 0; i < umb.size(); ++i) {
+    // A specialized weight writer may have changed the stream format.
+    os.setf(std::ios::scientific,std::ios::floatfield);
+    os.precision(std::numeric_limits<double>::max_digits10);
     os << "# NLEPID NDIM CLES\n";
-    os << std::setw(10) << umb[i].id << std::setw(10) << umb[i].dim() << std::setw(15)
+    os << std::setw(10) << umb[i].id << ' ' << std::setw(10) << umb[i].dim() << ' ' << std::setw(15)
             << umb[i].force_constant << "\n";
     os << "# VARTYPE(N) NTLEFU(N) WLES(N) RLES(N) NGRID(N) GRIDMIN(N) GRIDMAX(N)\n";
     for(unsigned int j = 0; j < umb[i].dim(); ++j) {
       os << std::setw(10) << umb[i].variable_type[j]
-              << std::setw(10) << umb[i].functional_form[j]
-              << std::setw(15) << umb[i].width[j]
-              << std::setw(15) << umb[i].cutoff[j]
-              << std::setw(10) << umb[i].num_grid_points[j]
-              << std::setw(15) << umb[i].grid_min[j]
-              << std::setw(15) << umb[i].grid_max[j] << "\n";
+              << ' ' << std::setw(10) << umb[i].functional_form[j]
+              << ' ' << std::setw(15) << umb[i].width[j]
+              << ' ' << std::setw(15) << umb[i].cutoff[j]
+              << ' ' << std::setw(10) << umb[i].num_grid_points[j]
+              << ' ' << std::setw(15) << umb[i].grid_min[j]
+              << ' ' << std::setw(15) << umb[i].grid_max[j] << "\n";
     }
     os << "# NCONLE\n";
     os << std::setw(10) << umb[i].configurations.size() << "\n";
@@ -3530,12 +3585,24 @@ _print_umbrellas(configuration::Configuration const & conf, std::ostream & os) {
       for(unsigned int j = 0; j < umb[i].dim(); j++) {
         // here we have to convert to fortran and add 1 because the grid
         // goes form 1 to NDIM in the output format
-        os << std::setw(10) << conf_it->first.pos[j]+1;
+        os << ' ' << std::setw(10) << conf_it->first.pos[j]+1;
       }
       os << "\n";
     }
   }
   os << "END\n";
+  os.setf(std::ios::scientific,std::ios::floatfield);
+  os.precision(std::numeric_limits<double>::max_digits10);
+  os << "LEUSSTATE\n# VERSION NUMUMBRELLAS\n1 " << umb.size() << '\n';
+  for (const auto &umbrella : umb) {
+    os << "# ID HAS_DEPOSITION LAST_TIME DT; next line is coordinate/grid signature\n"
+       << umbrella.id << ' ' << int(umbrella.has_deposition) << ' '
+       << umbrella.last_deposition_time << ' ' << umbrella.deposition_timestep << '\n'
+       << umbrella.definition_signature() << '\n';
+  }
+  os << "END\n";
+  os.setf(std::ios::fixed,std::ios::floatfield);
+  os.precision(m_precision);
   os << "LEUSPOS\n# NUMUMBRELLAS\n"
      << umb.size()
      << "\n";
@@ -3543,13 +3610,15 @@ _print_umbrellas(configuration::Configuration const & conf, std::ostream & os) {
     os << "# NLEPID NDIM\n";
     os << std::setw(10) << umb[i].id << std::setw(10) << umb[i].dim() << "\n";
     os << "# POS(1..NDIM)\n";
-    std::vector<util::LE_Coordinate*>::const_iterator coord_it =
-    umb[i].coordinates.begin(), coord_to = umb[i].coordinates.end();
-    for(; coord_it != coord_to; ++coord_it) {
-      for(unsigned int j = 0; j < umb[i].dim(); j++) {
-        os << std::setw(10) << (*coord_it)->get_value(umb[i].grid_min[j], umb[i].grid_max[j]);
+    for (unsigned int set=0;set<umb[i].coordinates.size()/umb[i].dim();++set) {
+      for (unsigned int axis=0;axis<umb[i].dim();++axis) {
+        double value=umb[i].coordinates[set*umb[i].dim()+axis]->get_value(
+            umb[i].grid_min_rel[axis],umb[i].grid_max_rel[axis]);
+        if (umb[i].variable_type[axis]==util::Umbrella::vt_dihedral
+            || umb[i].variable_type[axis]==util::Umbrella::vt_angle) value*=180.0/math::Pi;
+        os << std::setw(m_width) << value << ' ';
       }
-      os << "\n";
+      os << '\n';
     }
   }
   os << "END\n";

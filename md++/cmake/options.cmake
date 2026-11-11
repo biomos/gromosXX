@@ -8,6 +8,7 @@ endif()
 option(OMP "enable OMP" OFF)
 option(MPI "enable MPI" OFF)
 option(CUKERNEL "enable CUDA" OFF)
+option(COLVAR_TESTS "build collective-variable numerical checks" OFF)
 option(XTB "enable XTB" OFF)
 
 # TODO do we still want to support these options?

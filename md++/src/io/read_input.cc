@@ -75,6 +75,13 @@ int io::read_input(io::Argument const & args,
 
   // read this before configuration, as it contains topological data...
   if (read_special(args, topo, conf, sim, os, quiet) != 0) return -1;
+  if (sim.param().eds.eds && args.count("pttopo") < 1
+      && sim.param().colvarres.eds_bias_specs.empty()) {
+    io::messages.add("EDS without @pttopo requires non-empty EDSRESTRAINTS in @colvarres.",
+                     "read_input",io::message::error);
+    return -1;
+  }
+
 
   // error if no perturbed parameters were read from pttop or restraints
   if(!sim.param().perturbation.perturbed_par && sim.param().perturbation.perturbation){
@@ -223,6 +230,13 @@ int io::read_input_repex(io::Argument const & args,
   }
   // read this before configuration, as it contains topological data...
   if (read_special(args, topo, conf, sim, os, quiet) != 0) return -1;
+  if (sim.param().eds.eds && args.count("pttopo") < 1
+      && sim.param().colvarres.eds_bias_specs.empty()) {
+    io::messages.add("EDS without @pttopo requires non-empty EDSRESTRAINTS in @colvarres.",
+                     "read_input",io::message::error);
+    return -1;
+  }
+
 
   // error if no perturbed parameters were read from pttop or restraints
   if(!sim.param().perturbation.perturbed_par && sim.param().perturbation.perturbation){
@@ -413,7 +427,8 @@ int io::read_topology(io::Argument const & args,
 		       "read_input", io::message::critical);
       return -1;
   }
-  else if(args.count(argname_pttopo)<1 && sim.param().eds.eds){
+  else if(args.count(argname_pttopo)<1 && sim.param().eds.eds
+          && sim.param().colvarres.colvarres == simulation::colvar_restr_off){
       io::messages.add("EDS on but no perturbation topology specified",
 		       "read_input", io::message::critical);
       return -1;

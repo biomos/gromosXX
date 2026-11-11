@@ -30,6 +30,9 @@ namespace configuration {
   class Configuration;
 }
 
+namespace topology { class Topology; }
+namespace simulation { class Simulation; }
+
 namespace util {
   /**
    * @class LE_Coordinate
@@ -74,6 +77,13 @@ namespace util {
      *             it will also be used to store the force
      */
     virtual void calculate(configuration::Configuration & conf) = 0;
+    /** Context-aware evaluation; legacy coordinates retain their implementation. */
+    virtual int calculate_checked(topology::Topology &, configuration::Configuration &conf,
+                                  simulation::Simulation &) {
+      calculate(conf);
+      return 0;
+    }
+
     /**
      * get the value of the local elevation coordinate.
      * For periodic coordinates it will try to move to coordinate
@@ -101,10 +111,15 @@ namespace util {
      *              variable @f$ \frac{\partial{}V}{\partial{}Q} @f$
      */
     virtual void apply(double deriv) = 0;
+    virtual bool supports_virial() const { return false; }
+    // Legacy coordinates keep their force-only interface. LE init rejects
+    // enabling virial unless every enabled coordinate supports it.
+    virtual void apply(double deriv, bool) { apply(deriv); }
     /**
      * convert to string
      */
     virtual std::string str() const { return "LE_Coordinate"; }
+    virtual std::string definition() const { return str(); }
   private:
     int m_umbrella_id;
   };
